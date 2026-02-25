@@ -1,0 +1,170 @@
+/* Import Font "Public Sans" dan Icon "FontAwesome" */
+@import url("https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;600;700&display=swap");
+@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css");
+
+/* Variabel warna disamakan dengan Landing.page.css */
+:root {
+  --blue: #0056b3;
+  --light-blue: #e7f1ff;
+  --dark: #212529;
+  --gray: #6c757d;
+  --white: #ffffff;
+  --bg-main: #f8f9fa;
+  --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.dashboard-container {
+  display: flex;
+  height: 100vh;
+  font-family: 'Public Sans', sans-serif;
+  background-color: var(--bg-main);
+  color: var(--dark);
+}
+
+/* --- Desain Sidebar --- */
+.sidebar {
+  width: 280px;
+  background-color: var(--white);
+  border-right: 1px solid #eaeaea;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.03);
+  z-index: 10;
+}
+
+.sidebar-logo {
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.sidebar-logo img {
+  height: 45px;
+}
+
+.logo-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--blue);
+}
+
+.tag {
+  font-size: 0.65rem;
+  color: var(--gray);
+  font-weight: 600;
+}
+
+.sidebar-nav {
+  padding: 25px 0;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.menu-label {
+  padding: 0 25px;
+  font-size: 0.75rem;
+  color: var(--gray);
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin-bottom: 15px;
+}
+
+.sidebar-nav a {
+  color: var(--dark);
+  text-decoration: none;
+  padding: 12px 25px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: var(--transition);
+  border-left: 4px solid transparent; /* Efek garis biru saat hover */
+}
+
+/* Icon menu */
+.sidebar-nav a i {
+  width: 20px;
+  text-align: center;
+  color: var(--gray);
+  font-size: 1.1rem;
+  transition: var(--transition);
+}
+
+/* Efek Hover (mirip dengan list skema di landing page) */
+.sidebar-nav a:hover {
+  background-color: var(--light-blue);
+  color: var(--blue);
+  border-left-color: var(--blue);
+}
+
+.sidebar-nav a:hover i {
+  color: var(--blue);
+}
+
+/* Tombol Keluar / Logout */
+.logout-btn {
+  margin-top: auto;
+  border-top: 1px solid #eaeaea;
+  color: #dc3545 !important; /* Warna Merah */
+}
+.logout-btn i {
+  color: #dc3545 !important;
+}
+.logout-btn:hover {
+  background-color: #ffe6e6 !important;
+  border-left-color: #dc3545 !important;
+}
+
+/* --- Desain Konten Utama --- */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.top-navbar {
+  height: 70px;
+  background-color: var(--white);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 30px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  z-index: 5;
+}
+
+.nav-title {
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--gray);
+}
+
+.user-profile i {
+  font-size: 1.8rem;
+  color: var(--blue);
+}
+
+.content-area {
+  padding: 30px;
+  overflow-y: auto;
+  /* Latar belakang dengan sedikit gradasi agar lebih elegan */
+  background: linear-gradient(135deg, var(--light-blue) 0%, var(--bg-main) 100%);
+}
