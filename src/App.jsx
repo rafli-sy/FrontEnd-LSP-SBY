@@ -1,25 +1,23 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
-import LandingPage from './pages/LandingPage'; // Import halaman Landing
+import LandingPage from './pages/LandingPage';
+import LoginPage from './pages/LoginPage'; // Import halaman Login yang baru
 
-// Komponen Halaman Sederhana
-const Login = () => <div style={{padding: '50px', textAlign: 'center'}}><h1>Halaman Login</h1><p>Masuk ke sistem sesuai wewenang (Super Admin, Admin LSP, dll).</p></div>;
-const DashboardSuperAdmin = () => <div><h2>Selamat Datang, Super Admin</h2><p>Di sini tempat mengatur semua data LSP dan BLK.</p></div>;
-const DashboardAdminLSP = () => <div><h2>Selamat Datang, Admin LSP</h2><p>Di sini tempat manajemen Asesor dan Skema Sertifikasi.</p></div>;
-const DashboardAdminBLK = () => <div><h2>Selamat Datang, Admin BLK</h2><p>Di sini tempat kelola peserta dan jadwal pelatihan.</p></div>;
-const DashboardAsesor = () => <div><h2>Selamat Datang, Asesor</h2><p>Di sini tempat memberikan nilai uji kompetensi.</p></div>;
+// Komponen Dummy untuk Dashboard (Sementara)
+const DashboardSuperAdmin = () => <div><h2>Dashboard Super Admin</h2><p>Selamat datang di panel kendali utama.</p></div>;
+const DashboardAdminLSP = () => <div><h2>Dashboard Admin LSP</h2><p>Panel pengelolaan skema dan jadwal.</p></div>;
+const DashboardAdminBLK = () => <div><h2>Dashboard Admin BLK</h2><p>Panel E-Pendaftaran Pelatihan.</p></div>;
+const DashboardAsesor = () => <div><h2>Dashboard Asesor</h2><p>Panel form penilaian peserta.</p></div>;
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Rute Awal: Menampilkan Landing Page */}
+        {/* Rute Halaman Publik */}
         <Route path="/" element={<LandingPage />} />
-        
-        {/* Rute Login */}
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={<LoginPage />} /> {/* Rute ini sekarang menggunakan komponen baru */}
 
-        {/* Rute Dashboard dengan Sidebar */}
+        {/* Rute Halaman Admin (Dibungkus Layout Sidebar) */}
         <Route element={<Layout />}>
           <Route path="/super-admin" element={<DashboardSuperAdmin />} />
           <Route path="/admin-lsp" element={<DashboardAdminLSP />} />

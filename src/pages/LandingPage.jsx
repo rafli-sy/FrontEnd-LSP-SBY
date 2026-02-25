@@ -127,9 +127,9 @@ const LandingPage = () => {
             <h4 className="brand">LSP BLK SURABAYA</h4>
             <p>Mencetak tenaga kerja profesional yang kompeten dan bersertifikat BNSP untuk masa depan Jawa Timur.</p>
             <div className="social-links-footer">
-              <a href="#"><i className="fab fa-instagram"></i></a>
-              <a href="#"><i className="fab fa-facebook"></i></a>
-              <a href="#"><i className="fab fa-youtube"></i></a>
+              <a href="https://www.instagram.com/uptblksurabaya"><i className="fab fa-instagram"></i></a>
+              <a href="https://web.facebook.com/blksurabaya/?_rdc=1&_rdr#"><i className="fab fa-facebook"></i></a>
+              <a href="https://www.youtube.com/@uptblksurabaya5838"><i className="fab fa-youtube"></i></a>
             </div>
           </div>
           <div className="footer-links">
