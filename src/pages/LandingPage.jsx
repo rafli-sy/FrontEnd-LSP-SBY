@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import AOS from 'aos';
 import 'aos/dist/aos.css'; 
-import './LandingPage.css'; // Menggunakan CSS Landing Page
-import logoLSP from '../assets/logo.png'; // Path logo dari folder assets
+import './LandingPage.css'; 
+import logoLSP from '../assets/logo.png'; 
 
 const LandingPage = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -12,10 +12,11 @@ const LandingPage = () => {
     AOS.init({ duration: 1000, once: true });
   }, []);
 
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const closeMenu = () => setIsMenuOpen(false);
 
   return (
-    <div className="App">
+    <div className="landing-page-container">
       <header id="header">
         <div className="container header-flex">
           <div className="logo">
@@ -26,16 +27,18 @@ const LandingPage = () => {
             </div>
           </div>
 
-          <div className="menu-toggle" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+          {/* Icon menu yang berubah jadi 'X' saat terbuka */}
+          <div className="menu-toggle" onClick={toggleMenu}>
             <i className={`fas ${isMenuOpen ? 'fa-times' : 'fa-bars'}`}></i>
           </div>
 
           <nav>
             <ul className={`nav-links ${isMenuOpen ? 'active' : ''}`}>
               <li><a href="#hero" onClick={closeMenu}>Beranda</a></li>
+              <li><a href="#tentang" onClick={closeMenu}>Tentang</a></li>
               <li><a href="#skema" onClick={closeMenu}>Skema</a></li>
+              <li><a href="#prosedur" onClick={closeMenu}>Prosedur</a></li>
               <li><a href="#" onClick={closeMenu}>Cek Kelulusan</a></li>
-              {/* Tombol Login Paling Kanan */}
               <li>
                 <Link to="/login" className="btn-nav" onClick={closeMenu}>
                   Login Sistem
@@ -53,6 +56,7 @@ const LandingPage = () => {
             <p>LSP BLK Surabaya menyelenggarakan sertifikasi kompetensi untuk memastikan keahlian Anda diakui secara nasional.</p>
             <div className="hero-actions">
               <a href="#skema" className="btn-main">Lihat Skema</a>
+              <a href="#" className="btn-outline">Panduan Daftar</a>
             </div>
           </div>
           <div className="hero-image" data-aos="zoom-in">
@@ -119,10 +123,24 @@ const LandingPage = () => {
           <div className="footer-about">
             <h4 className="brand">LSP BLK SURABAYA</h4>
             <p>Mencetak tenaga kerja profesional yang kompeten dan bersertifikat BNSP untuk masa depan Jawa Timur.</p>
+            <div className="social-links-footer">
+              <a href="https://www.instagram.com/uptblksurabaya"><i className="fab fa-instagram"></i></a>
+              <a href="https://web.facebook.com/blksurabaya/"><i className="fab fa-facebook"></i></a>
+              <a href="https://www.youtube.com/@uptblksurabaya5838"><i className="fab fa-youtube"></i></a>
+            </div>
+          </div>
+          <div className="footer-links">
+            <h4>Tautan Cepat</h4>
+            <ul>
+              <li><a href="#hero">Beranda</a></li>
+              <li><a href="#tentang">Tentang Kami</a></li>
+              <li><a href="#skema">Skema Sertifikasi</a></li>
+            </ul>
           </div>
           <div className="footer-contact">
             <h4>Hubungi Kami</h4>
             <p><i className="fas fa-map-marker-alt"></i> Jl. Dukuh Menanggal III/29, Surabaya</p>
+            <p><i className="fas fa-phone"></i> (031) 8290071</p>
             <p><i className="fas fa-envelope"></i> lsp.blksurabaya@gmail.com</p>
           </div>
         </div>

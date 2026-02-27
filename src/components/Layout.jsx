@@ -35,7 +35,7 @@ const Layout = () => {
             </>
           )}
 
-          {/* 2. ROLE: ADMIN LSP (K, L, M) */}
+          {/* 2. ROLE: ADMIN LSP */}
           {currentPath.startsWith('/admin-lsp') && (
             <>
               <p className="menu-label">THE CONTROLLER</p>
@@ -49,7 +49,6 @@ const Layout = () => {
               <p className="menu-label">KONTROL & REPORT</p>
               <Link to="/admin-lsp/penugasan" className={getActiveClass('/admin-lsp/penugasan')}><i className="fas fa-tasks"></i> Plotting Penugasan</Link>
               <Link to="/admin-lsp/buku-induk" className={getActiveClass('/admin-lsp/buku-induk')}><i className="fas fa-book"></i> Buku Induk</Link>
-              <Link to="/staff-lsp/verifikasi" className={getActiveClass('/staff-lsp/verifikasi')}><i className="fas fa-check-double"></i> Verifikasi Peserta</Link>
             </>
           )}
 
@@ -58,11 +57,12 @@ const Layout = () => {
             <>
               <p className="menu-label">THE ADMINISTRATOR</p>
               <Link to="/staff-lsp" className={getActiveClass('/staff-lsp')}><i className="fas fa-home"></i> Dashboard</Link>
+              <Link to="/staff-lsp/verifikasi" className={getActiveClass('/staff-lsp/verifikasi')}><i className="fas fa-check-double"></i> Verifikasi Peserta</Link>
               <Link to="/staff-lsp/cetak" className={getActiveClass('/staff-lsp/cetak')}><i className="fas fa-print"></i> Manajemen Cetak</Link>
             </>
           )}
 
-          {/* 4. ROLE: ADMIN BLK (A - G) */}
+          {/* 4. ROLE: ADMIN BLK */}
           {currentPath.startsWith('/admin-blk') && (
             <>
               <p className="menu-label">THE REQUESTER</p>
@@ -82,8 +82,9 @@ const Layout = () => {
             </>
           )}
           
+          {/* Tombol Logout - Sekarang sudah tertutup dengan benar */}
           <Link to="/login" className="logout-btn" style={{ marginTop: '30px' }}>
-            <i className="fas fa-sign-out-alt"></i> Keluar
+            <i className="fas fa-sign-out-alt"></i> <span>Logout</span>
           </Link>
         </nav>
       </aside>
