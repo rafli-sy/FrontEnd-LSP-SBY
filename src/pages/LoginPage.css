@@ -34,7 +34,7 @@
 
 .login-header {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 25px;
 }
 
 .login-logo {
@@ -57,6 +57,29 @@
 .login-header p {
   color: #6c757d;
   font-size: 0.9rem;
+}
+
+/* --- Desain Pesan Error --- */
+.error-message {
+  background-color: #f8d7da;
+  color: #842029;
+  padding: 12px 15px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  margin-bottom: 20px;
+  border: 1px solid #f5c2c7;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: shake 0.5s ease-in-out;
+}
+
+/* Animasi getar kecil saat error muncul */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  50% { transform: translateX(5px); }
+  75% { transform: translateX(-5px); }
 }
 
 /* Form Styling */
@@ -91,8 +114,7 @@
   font-size: 1rem;
 }
 
-.input-with-icon input,
-.input-with-icon select {
+.input-with-icon input {
   width: 100%;
   padding: 12px 15px 12px 45px;
   border: 1px solid #ced4da;
@@ -104,24 +126,7 @@
   background-color: #f8f9fa;
 }
 
-.input-with-icon select {
-  cursor: pointer;
-  appearance: none; /* Menghilangkan panah bawaan browser untuk select */
-}
-
-/* Menambahkan panah kustom untuk Select */
-.form-group:last-of-type .input-with-icon::after {
-  content: '\f0d7';
-  font-family: "Font Awesome 6 Free";
-  font-weight: 900;
-  position: absolute;
-  right: 15px;
-  color: #6c757d;
-  pointer-events: none;
-}
-
-.input-with-icon input:focus,
-.input-with-icon select:focus {
+.input-with-icon input:focus {
   outline: none;
   border-color: #0056b3;
   background-color: #ffffff;

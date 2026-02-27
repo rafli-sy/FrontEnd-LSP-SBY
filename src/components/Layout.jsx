@@ -51,10 +51,10 @@ const Layout = () => {
             <>
               <p className="menu-label">ADMIN BLK PANEL</p>
               <Link to="/admin-blk"><i className="fas fa-home"></i> Dashboard BLK</Link>
-              <Link to="/admin-blk/pendaftaran"><i className="fas fa-clipboard-list"></i> E-Pendaftaran Pelatihan</Link>
-              <Link to="/admin-blk/kejuruan"><i className="fas fa-tools"></i> Data Kejuruan</Link>
-              <Link to="/admin-blk/feedback"><i className="fas fa-star"></i> Sistem Feedback</Link>
-              <Link to="/admin-blk/laporan"><i className="fas fa-chart-bar"></i> Laporan Pelatihan</Link>
+              <Link to="/admin-blk/pendaftaran"><i className="fas fa-clipboard-list"></i> Skema</Link>
+              <Link to="/admin-blk/kejuruan"><i className="fas fa-tools"></i> Pengajuan UJK</Link>
+              <Link to="/admin-blk/feedback"><i className="fas fa-star"></i> Tanggal UJK</Link>
+              <Link to="/admin-blk/laporan"><i className="fas fa-chart-bar"></i> Unggah File Surat</Link>
             </>
           )}
 
@@ -63,9 +63,9 @@ const Layout = () => {
             <>
               <p className="menu-label">ASESOR PANEL</p>
               <Link to="/asesor"><i className="fas fa-home"></i> Dashboard Asesor</Link>
-              <Link to="/asesor/jadwal"><i className="fas fa-calendar-check"></i> Jadwal Menguji</Link>
-              <Link to="/asesor/penilaian"><i className="fas fa-edit"></i> Form Penilaian</Link>
-              <Link to="/asesor/riwayat"><i className="fas fa-history"></i> Riwayat Asesmen</Link>
+              <Link to="/asesor/jadwal"><i className="fas fa-calendar-check"></i> Jenis Kejuruan</Link>
+              <Link to="/asesor/penilaian"><i className="fas fa-edit"></i> Nomor Registrasi</Link>
+              <Link to="/asesor/riwayat"><i className="fas fa-history"></i> Masa Sertifikat</Link>
             </>
           )}
           
