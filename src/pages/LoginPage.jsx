@@ -31,6 +31,8 @@ const LoginPage = () => {
       navigate('/super-admin');
     } else if (email === 'adminlsp@gmail.com') {
       navigate('/admin-lsp');
+    } else if (email === 'stafflsp@gmail.com') {
+      navigate('/staff-lsp');
     } else if (email === 'adminblk@gmail.com') {
       navigate('/admin-blk');
     } else if (email === 'asesor@gmail.com') {

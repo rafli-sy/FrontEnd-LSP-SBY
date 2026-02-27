@@ -3,96 +3,110 @@ import './Layout.css';
 import logoLSP from '../assets/logo.png'; 
 
 const Layout = () => {
-  // Mengambil informasi URL saat ini (misal: "/admin-blk/pendaftaran")
   const location = useLocation();
   const currentPath = location.pathname;
+
+  // Fungsi untuk memberi class 'active' pada link yang sedang dikunjungi
+  const getActiveClass = (path) => currentPath === path ? 'active-link' : '';
 
   return (
     <div className="dashboard-container">
       
-      {/* --- Sidebar (Menu Samping) --- */}
+      {/* --- SIDEBAR KIRI --- */}
       <aside className="sidebar">
         <div className="sidebar-logo">
-          <img src={logoLSP} alt="Logo LSP BLK Surabaya" />
+          <Link to="/">
+            <img src={logoLSP} alt="Logo LSP BLK Surabaya" />
+          </Link>
           <div className="logo-text">
             <span className="brand">LSP BLK SURABAYA</span>
-            <span className="tag">UPT Pelatihan Kerja Surabaya</span>
           </div>
         </div>
 
-        {/* Menu Navigasi Dinamis Berdasarkan Role (URL) */}
-        <nav className="sidebar-nav">
+        <nav className="sidebar-nav" style={{ overflowY: 'auto' }}>
           
-          {/* 1. MENU KHUSUS SUPER ADMIN */}
+          {/* 1. ROLE: SUPER ADMIN */}
           {currentPath.startsWith('/super-admin') && (
             <>
-              <p className="menu-label">SUPER ADMIN PANEL</p>
-              <Link to="/super-admin"><i className="fas fa-home"></i> Dashboard Utama</Link>
-              <Link to="/super-admin/users"><i className="fas fa-users-cog"></i> Manajemen User</Link>
-              <Link to="/super-admin/master-data"><i className="fas fa-database"></i> Master Data</Link>
-              <Link to="/super-admin/settings"><i className="fas fa-cogs"></i> Pengaturan Sistem</Link>
+              <p className="menu-label">SYSTEM MANAGER</p>
+              <Link to="/super-admin" className={getActiveClass('/super-admin')}><i className="fas fa-home"></i> Dashboard</Link>
+              <Link to="/super-admin/users" className={getActiveClass('/super-admin/users')}><i className="fas fa-users-cog"></i> Manajemen Akun</Link>
+              <Link to="/super-admin/audit" className={getActiveClass('/super-admin/audit')}><i className="fas fa-history"></i> Audit Trail</Link>
             </>
           )}
 
-          {/* 2. MENU KHUSUS ADMIN LSP */}
+          {/* 2. ROLE: ADMIN LSP (K, L, M) */}
           {currentPath.startsWith('/admin-lsp') && (
             <>
-              <p className="menu-label">ADMIN LSP PANEL</p>
-              <Link to="/admin-lsp"><i className="fas fa-home"></i> Dashboard LSP</Link>
-              <Link to="/admin-lsp/skema"><i className="fas fa-list-alt"></i> Skema Sertifikasi</Link>
-              <Link to="/admin-lsp/asesor"><i className="fas fa-user-tie"></i> Data Asesor</Link>
-              <Link to="/admin-lsp/jadwal"><i className="fas fa-calendar-alt"></i> Jadwal Uji (TUK)</Link>
-              <Link to="/admin-lsp/peserta"><i className="fas fa-users"></i> Peserta Sertifikasi</Link>
+              <p className="menu-label">THE CONTROLLER</p>
+              <Link to="/admin-lsp" className={getActiveClass('/admin-lsp')}><i className="fas fa-home"></i> Dashboard</Link>
+              
+              <p className="menu-label">MASTER DATA</p>
+              <Link to="/admin-lsp/skema" className={getActiveClass('/admin-lsp/skema')}><i className="fas fa-file-code"></i> Data Skema</Link>
+              <Link to="/admin-lsp/asesor" className={getActiveClass('/admin-lsp/asesor')}><i className="fas fa-user-tie"></i> Data Asesor</Link>
+              <Link to="/admin-lsp/tuk" className={getActiveClass('/admin-lsp/tuk')}><i className="fas fa-map-marker-alt"></i> Penyelia & TUK</Link>
+              
+              <p className="menu-label">KONTROL & REPORT</p>
+              <Link to="/admin-lsp/penugasan" className={getActiveClass('/admin-lsp/penugasan')}><i className="fas fa-tasks"></i> Plotting Penugasan</Link>
+              <Link to="/admin-lsp/buku-induk" className={getActiveClass('/admin-lsp/buku-induk')}><i className="fas fa-book"></i> Buku Induk</Link>
+              <Link to="/staff-lsp/verifikasi" className={getActiveClass('/staff-lsp/verifikasi')}><i className="fas fa-check-double"></i> Verifikasi Peserta</Link>
             </>
           )}
 
-          {/* 3. MENU KHUSUS ADMIN BLK */}
+          {/* 3. ROLE: STAFF LSP */}
+          {currentPath.startsWith('/staff-lsp') && (
+            <>
+              <p className="menu-label">THE ADMINISTRATOR</p>
+              <Link to="/staff-lsp" className={getActiveClass('/staff-lsp')}><i className="fas fa-home"></i> Dashboard</Link>
+              <Link to="/staff-lsp/cetak" className={getActiveClass('/staff-lsp/cetak')}><i className="fas fa-print"></i> Manajemen Cetak</Link>
+            </>
+          )}
+
+          {/* 4. ROLE: ADMIN BLK (A - G) */}
           {currentPath.startsWith('/admin-blk') && (
             <>
-              <p className="menu-label">ADMIN BLK PANEL</p>
-              <Link to="/admin-blk"><i className="fas fa-home"></i> Dashboard BLK</Link>
-              <Link to="/admin-blk/pendaftaran"><i className="fas fa-clipboard-list"></i> Skema</Link>
-              <Link to="/admin-blk/kejuruan"><i className="fas fa-tools"></i> Pengajuan UJK</Link>
-              <Link to="/admin-blk/feedback"><i className="fas fa-star"></i> Tanggal UJK</Link>
-              <Link to="/admin-blk/laporan"><i className="fas fa-chart-bar"></i> Unggah File Surat</Link>
+              <p className="menu-label">THE REQUESTER</p>
+              <Link to="/admin-blk" className={getActiveClass('/admin-blk')}><i className="fas fa-chart-line"></i> Dashboard BLK</Link>
+              <Link to="/admin-blk/pengajuan" className={getActiveClass('/admin-blk/pengajuan')}><i className="fas fa-paper-plane"></i> Pengajuan UJK</Link>
+              <Link to="/admin-blk/peserta" className={getActiveClass('/admin-blk/peserta')}><i className="fas fa-file-import"></i> Import Peserta</Link>
             </>
           )}
 
-          {/* 4. MENU KHUSUS ASESOR */}
+          {/* 5. ROLE: ASESOR */}
           {currentPath.startsWith('/asesor') && (
             <>
-              <p className="menu-label">ASESOR PANEL</p>
-              <Link to="/asesor"><i className="fas fa-home"></i> Dashboard Asesor</Link>
-              <Link to="/asesor/jadwal"><i className="fas fa-calendar-check"></i> Jenis Kejuruan</Link>
-              <Link to="/asesor/penilaian"><i className="fas fa-edit"></i> Nomor Registrasi</Link>
-              <Link to="/asesor/riwayat"><i className="fas fa-history"></i> Masa Sertifikat</Link>
+              <p className="menu-label">THE FIELD EXPERT</p>
+              <Link to="/asesor" className={getActiveClass('/asesor')}><i className="fas fa-home"></i> Dashboard</Link>
+              <Link to="/asesor/tugas" className={getActiveClass('/asesor/tugas')}><i className="fas fa-calendar-check"></i> Tugas Saya</Link>
+              <Link to="/asesor/sertifikasi" className={getActiveClass('/asesor/sertifikasi')}><i className="fas fa-certificate"></i> Sertifikasi Saya</Link>
             </>
           )}
           
-          {/* Tombol Logout (Muncul di semua role) */}
-          <Link to="/login" className="logout-btn">
+          <Link to="/login" className="logout-btn" style={{ marginTop: '30px' }}>
             <i className="fas fa-sign-out-alt"></i> Keluar
           </Link>
         </nav>
       </aside>
 
-      {/* --- Area Konten Utama --- */}
+      {/* --- KONTEN KANAN --- */}
       <div className="main-content">
-        
-        {/* Navbar Atas */}
         <header className="top-navbar">
-          <div className="nav-title">Panel Manajemen Sistem</div>
+          <div className="nav-title">Sistem Manajemen UJK</div>
           <div className="user-profile">
-            <span>Halo, Pengguna!</span>
+            <span>
+              {currentPath.startsWith('/super-admin') && 'Super Admin'}
+              {currentPath.startsWith('/admin-lsp') && 'Admin LSP'}
+              {currentPath.startsWith('/staff-lsp') && 'Staff LSP'}
+              {currentPath.startsWith('/admin-blk') && 'Admin BLK'}
+              {currentPath.startsWith('/asesor') && 'Asesor'}
+            </span>
             <i className="fas fa-user-circle"></i>
           </div>
         </header>
 
-        {/* Outlet: Area tengah yang akan berubah-ubah isinya */}
         <main className="content-area">
-          <Outlet />
+          <Outlet /> 
         </main>
-        
       </div>
     </div>
   );

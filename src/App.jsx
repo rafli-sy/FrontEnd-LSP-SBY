@@ -1,7 +1,8 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import LandingPage from './pages/LandingPage';
-import LoginPage from './pages/LoginPage'; // Import halaman Login yang baru
+import LoginPage from './pages/LoginPage'; 
+import DashboardStaffLSP from './pages/dashboard/DashboardStaffLSP'; // Import halaman Staff LSP yang asli
 
 // Komponen Dummy untuk Dashboard (Sementara)
 const DashboardSuperAdmin = () => <div><h2>Dashboard Super Admin</h2><p>Selamat datang di panel kendali utama.</p></div>;
@@ -15,7 +16,7 @@ function App() {
       <Routes>
         {/* Rute Halaman Publik */}
         <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<LoginPage />} /> {/* Rute ini sekarang menggunakan komponen baru */}
+        <Route path="/login" element={<LoginPage />} />
 
         {/* Rute Halaman Admin (Dibungkus Layout Sidebar) */}
         <Route element={<Layout />}>
@@ -23,6 +24,9 @@ function App() {
           <Route path="/admin-lsp" element={<DashboardAdminLSP />} />
           <Route path="/admin-blk" element={<DashboardAdminBLK />} />
           <Route path="/asesor" element={<DashboardAsesor />} />
+          
+          {/* Rute untuk Staff LSP (Verifikasi & Cetak Sertifikat) */}
+          <Route path="/staff-lsp" element={<DashboardStaffLSP />} />
         </Route>
       </Routes>
     </BrowserRouter>
