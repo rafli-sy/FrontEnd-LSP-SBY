@@ -91,7 +91,7 @@ const Layout = () => {
       {/* --- KONTEN KANAN --- */}
       <div className="main-content">
         <header className="top-navbar">
-          <div className="nav-title">Sistem Manajemen UJK</div>
+          <div className="nav-title">Sistem Manajemen</div>
           <div className="user-profile">
             <span>
               {currentPath.startsWith('/super-admin') && 'Super Admin'}

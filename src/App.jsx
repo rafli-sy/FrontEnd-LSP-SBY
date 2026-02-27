@@ -3,7 +3,11 @@ import Layout from './components/Layout';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import ManajemenPesertaImport from './pages/dashboard/ManajemenPesertaImport';
-import DashboardStaffLSP from './pages/dashboard/DashboardStaffLSP'; 
+import DashboardStaffLSP from './pages/dashboard/DashboardStaffLSP';
+import FormPengajuanUJK from './pages/dashboard/FormPengajuanUJK';
+import PenugasanPage from './pages/dashboard/PenugasanPage';
+import BukuIndukPage from './pages/dashboard/BukuIndukPage';
+import VerifikasiPeserta from './pages/dashboard/VerifikasiPeserta';
 
 const DashboardSuperAdmin = () => <div className="dashboard-content"><h2>Dashboard Super Admin</h2></div>;
 const DashboardAdminLSP = () => <div className="dashboard-content"><h2>Dashboard Admin LSP</h2></div>;
@@ -12,11 +16,7 @@ const DashboardAsesor = () => <div className="dashboard-content"><h2>Dashboard A
 const MasterDataSkema = () => <div className="dashboard-content"><h2>Master Data Skema</h2></div>;
 const MasterDataAsesor = () => <div className="dashboard-content"><h2>Master Data Asesor</h2></div>;
 const DataTUK = () => <div className="dashboard-content"><h2>Data Penyelia & TUK</h2></div>;
-const PenugasanPage = () => <div className="dashboard-content"><h2>Plotting Asesor & Jadwal</h2></div>;
-const BukuIndukPage = () => <div className="dashboard-content"><h2>Buku Induk Kelulusan</h2></div>;
-const VerifikasiPeserta = () => <div className="dashboard-content"><h2>Verifikasi Data Peserta</h2></div>;
 const ManajemenCetak = () => <div className="dashboard-content"><h2>Manajemen Cetak Sertifikat</h2></div>;
-const FormPengajuanUJK = () => <div className="dashboard-content"><h2>Form Pengajuan Surat UJK</h2></div>;
 
 function App() {
   return (
