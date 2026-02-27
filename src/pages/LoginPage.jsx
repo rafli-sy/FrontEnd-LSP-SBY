@@ -6,15 +6,29 @@ import logoLSP from '../assets/logo.png';
 const LoginPage = () => {
   const navigate = useNavigate();
   
-  // State untuk menyimpan pilihan wewenang (role)
-  const [role, setRole] = useState('super-admin');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-  // Fungsi yang dipanggil saat tombol login ditekan
   const handleLogin = (e) => {
-    e.preventDefault(); // Mencegah halaman reload
+    e.preventDefault(); 
     
-    // Simulasi Login: Langsung arahkan (redirect) ke URL sesuai role yang dipilih
-    navigate(`/${role}`);
+    // SIMULASI LOGIN BERDASARKAN ROLE (Berdasarkan Email)
+    const userEmail = email.toLowerCase();
+
+    if (userEmail.includes('super')) {
+      navigate('/super-admin');
+    } else if (userEmail.includes('staff')) {
+      navigate('/staff-lsp'); // Staff LSP
+    } else if (userEmail.includes('lsp')) {
+      navigate('/admin-lsp'); // Admin LSP (K, L, M)
+    } else if (userEmail.includes('blk')) {
+      navigate('/admin-blk'); // Admin BLK (A - G)
+    } else if (userEmail.includes('asesor')) {
+      navigate('/asesor'); // Asesor
+    } else {
+      // Default jika tidak ada yang cocok
+      alert('Email tidak dikenali sistem. Coba gunakan kata kunci: super, lsp, staff, blk, atau asesor di email Anda.');
+    }
   };
 
   return (
@@ -27,17 +41,23 @@ const LoginPage = () => {
             <img src={logoLSP} alt="Logo LSP BLK Surabaya" className="login-logo" />
           </Link>
           <h2>Masuk ke Sistem</h2>
-          <p>Silakan login sesuai dengan wewenang Anda.</p>
+          <p>Gunakan email sesuai wewenang (contoh: admin.blk@mail.com)</p>
         </div>
 
         {/* Form Login */}
         <form className="login-form" onSubmit={handleLogin}>
-          
           <div className="form-group">
-            <label htmlFor="username">Username / Email</label>
+            <label htmlFor="email">Email / Username</label>
             <div className="input-with-icon">
-              <i className="fas fa-user"></i>
-              <input type="text" id="username" placeholder="Masukkan username" required />
+              <i className="fas fa-envelope"></i>
+              <input 
+                type="email" 
+                id="email" 
+                placeholder="Contoh: lsp@mail.com" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required 
+              />
             </div>
           </div>
 
@@ -45,37 +65,25 @@ const LoginPage = () => {
             <label htmlFor="password">Password</label>
             <div className="input-with-icon">
               <i className="fas fa-lock"></i>
-              <input type="password" id="password" placeholder="Masukkan password" required />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="role">Pilih Wewenang (Role)</label>
-            <div className="input-with-icon">
-              <i className="fas fa-id-card-alt"></i>
-              <select 
-                id="role" 
-                value={role} 
-                onChange={(e) => setRole(e.target.value)}
-              >
-                <option value="super-admin">Super Admin</option>
-                <option value="admin-lsp">Admin LSP</option>
-                <option value="admin-blk">Admin BLK</option>
-                <option value="asesor">Asesor</option>
-              </select>
+              <input 
+                type="password" 
+                id="password" 
+                placeholder="Masukkan password" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required 
+              />
             </div>
           </div>
 
           <button type="submit" className="login-submit-btn">
             Masuk <i className="fas fa-sign-in-alt"></i>
           </button>
-          
         </form>
 
         <div className="login-footer">
           <Link to="/"><i className="fas fa-arrow-left"></i> Kembali ke Beranda</Link>
         </div>
-        
       </div>
     </div>
   );

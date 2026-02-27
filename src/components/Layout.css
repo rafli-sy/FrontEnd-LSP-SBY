@@ -1,35 +1,26 @@
-/* Import Font "Public Sans" dan Icon "FontAwesome" */
-@import url("https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;600;700&display=swap");
-@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css");
-
-/* Variabel warna disamakan dengan Landing.page.css */
-:root {
-  --blue: #0056b3;
-  --light-blue: #e7f1ff;
-  --dark: #212529;
-  --gray: #6c757d;
-  --white: #ffffff;
-  --bg-main: #f8f9fa;
-  --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-}
-
+/* ==========================================================
+   1. STRUKTUR UTAMA (BINGKAI DASHBOARD)
+   ========================================================== */
 .dashboard-container {
   display: flex;
-  height: 100vh;
-  font-family: 'Public Sans', sans-serif;
-  background-color: var(--bg-main);
-  color: var(--dark);
+  min-height: 100vh;
+  background-color: #f4f7f6; /* Warna background abu-abu muda yang elegan */
+  font-family: "Public Sans", sans-serif;
 }
 
-/* --- Desain Sidebar --- */
+/* ==========================================================
+   2. SIDEBAR KIRI
+   ========================================================== */
 .sidebar {
-  width: 280px;
-  background-color: var(--white);
-  border-right: 1px solid #eaeaea;
+  width: 260px;
+  background-color: #ffffff;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.03);
-  z-index: 10;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  z-index: 100;
 }
 
 .sidebar-logo {
@@ -37,115 +28,109 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  border-bottom: 1px solid #eaeaea;
+  border-bottom: 1px solid #eee;
 }
 
 .sidebar-logo img {
-  height: 45px;
+  height: 40px;
 }
 
-.logo-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.brand {
+.sidebar-logo .brand {
+  font-size: 1rem;
   font-weight: 700;
-  font-size: 1.1rem;
-  color: var(--blue);
-}
-
-.tag {
-  font-size: 0.65rem;
-  color: var(--gray);
-  font-weight: 600;
+  color: #0056b3;
+  display: block;
+  line-height: 1.2;
 }
 
 .sidebar-nav {
-  padding: 25px 0;
   display: flex;
   flex-direction: column;
+  padding: 20px 15px;
+  gap: 5px;
   flex: 1;
 }
 
 .menu-label {
-  padding: 0 25px;
   font-size: 0.75rem;
-  color: var(--gray);
   font-weight: 700;
+  color: #adb5bd;
+  margin-top: 15px;
+  margin-bottom: 10px;
+  padding-left: 10px;
   letter-spacing: 1px;
-  margin-bottom: 15px;
 }
 
 .sidebar-nav a {
-  color: var(--dark);
   text-decoration: none;
-  padding: 12px 25px;
+  color: #495057;
+  padding: 12px 15px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 15px;
-  font-weight: 600;
-  font-size: 0.95rem;
-  transition: var(--transition);
-  border-left: 4px solid transparent; /* Efek garis biru saat hover */
+  gap: 12px;
+  transition: all 0.2s ease-in-out;
 }
 
-/* Icon menu */
 .sidebar-nav a i {
   width: 20px;
   text-align: center;
-  color: var(--gray);
   font-size: 1.1rem;
-  transition: var(--transition);
+  color: #6c757d;
+  transition: color 0.2s;
 }
 
-/* Efek Hover (mirip dengan list skema di landing page) */
 .sidebar-nav a:hover {
-  background-color: var(--light-blue);
-  color: var(--blue);
-  border-left-color: var(--blue);
+  background-color: #e7f1ff;
+  color: #0056b3;
 }
 
 .sidebar-nav a:hover i {
-  color: var(--blue);
+  color: #0056b3;
 }
 
-/* Tombol Keluar / Logout */
 .logout-btn {
-  margin-top: auto;
-  border-top: 1px solid #eaeaea;
-  color: #dc3545 !important; /* Warna Merah */
-}
-.logout-btn i {
+  margin-top: auto; /* Mendorong tombol keluar ke paling bawah */
   color: #dc3545 !important;
 }
+
 .logout-btn:hover {
-  background-color: #ffe6e6 !important;
-  border-left-color: #dc3545 !important;
+  background-color: #ffeeba !important;
 }
 
-/* --- Desain Konten Utama --- */
+.logout-btn:hover i {
+  color: #dc3545 !important;
+}
+
+/* ==========================================================
+   3. AREA KONTEN KANAN & NAVBAR ATAS
+   ========================================================== */
 .main-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
 .top-navbar {
   height: 70px;
-  background-color: var(--white);
+  background-color: #ffffff;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   padding: 0 30px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  z-index: 5;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+  position: sticky;
+  top: 0;
+  z-index: 99;
 }
 
 .nav-title {
-  font-weight: 700;
   font-size: 1.1rem;
+  font-weight: 600;
+  color: #212529;
 }
 
 .user-profile {
@@ -153,18 +138,212 @@
   align-items: center;
   gap: 10px;
   font-weight: 600;
-  font-size: 0.9rem;
-  color: var(--gray);
+
+  color: #495057;
+  cursor: pointer;
 }
 
 .user-profile i {
   font-size: 1.8rem;
-  color: var(--blue);
+  color: #0056b3;
 }
 
 .content-area {
   padding: 30px;
-  overflow-y: auto;
-  /* Latar belakang dengan sedikit gradasi agar lebih elegan */
-  background: linear-gradient(135deg, var(--light-blue) 0%, var(--bg-main) 100%);
+  flex: 1;
+}
+
+/* ==========================================================
+   4. KONTEN DASHBOARD (Tabel, Form, Card)
+   ========================================================== */
+.dashboard-content {
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+.dashboard-content h2 {
+  color: #212529;
+  margin-bottom: 5px;
+  font-size: 1.8rem;
+}
+
+.dashboard-content p {
+  color: #6c757d;
+  font-size: 0.95rem;
+}
+
+.dashboard-card {
+  background: #ffffff;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+  border: 1px solid #f1f1f1;
+}
+
+.dashboard-card h3 {
+  font-size: 1.2rem;
+  color: #343a40;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f8f9fa;
+}
+
+.mt-20 {
+  margin-top: 20px;
+}
+
+/* --- Tabel Admin --- */
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  font-size: 0.95rem;
+}
+
+.admin-table th, 
+.admin-table td {
+  padding: 14px 15px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.admin-table th {
+  background-color: #f8f9fa;
+  color: #495057;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+}
+
+.admin-table tbody tr {
+  transition: background-color 0.2s;
+}
+
+.admin-table tbody tr:hover {
+  background-color: #fcfcfc;
+}
+
+.admin-table a {
+  color: #0056b3;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.admin-table a:hover {
+  text-decoration: underline;
+}
+
+/* --- Formulir (Forms) --- */
+.admin-form {
+  margin-top: 15px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-weight: 600;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  color: #495057;
+}
+
+.form-input, 
+.form-select {
+  padding: 12px 15px;
+  border: 1px solid #ced4da;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: #212529;
+  background-color: #fff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-input:focus, 
+.form-select:focus {
+  outline: none;
+  border-color: #0056b3;
+  box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.1);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+/* --- Tombol & Badge --- */
+.btn-add {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: background-color 0.2s;
+}
+
+.btn-add:hover {
+  background: #218838;
+}
+
+.btn-action {
+  background: #0056b3;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.btn-action:hover {
+  background: #004085;
+}
+
+.badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: inline-block;
+}
+
+.badge.warning { 
+  background: #fff3cd; 
+  color: #856404; 
+}
+
+.badge.info { 
+  background: #cce5ff; 
+  color: #004085; 
+}
+
+/* Styling untuk link yang aktif (diklik) */
+.sidebar-nav a.active-link {
+  background-color: #0056b3;
+  color: #ffffff;
+}
+.sidebar-nav a.active-link i {
+  color: #ffffff;
+}
+
+/* Animasi Muncul Halus */
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(10px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
 }
