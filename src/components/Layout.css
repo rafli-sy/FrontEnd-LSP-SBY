@@ -136,10 +136,17 @@
 .user-profile {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   font-weight: 600;
   color: #495057;
   cursor: pointer;
+  padding: 5px 10px;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.user-profile:hover {
+  background-color: #f8f9fa;
 }
 
 .user-profile i {
@@ -345,4 +352,118 @@
     opacity: 1; 
     transform: translateY(0); 
   }
+}
+
+/* ==========================================================
+   5. TAMBAHAN FITUR ADMIN LSP & ROLE SWITCHER
+   ========================================================== */
+
+/* Input kecil untuk revisi tanggal & no dokumen */
+.form-input-small { 
+  padding: 8px 10px; 
+  border: 1px solid #ced4da; 
+  border-radius: 6px; 
+  width: 140px; 
+  font-family: inherit;
+  font-size: 0.85rem;
+}
+
+.form-input-small:focus {
+  outline: none;
+  border-color: #0056b3;
+}
+
+/* Tombol Aksi Verifikasi */
+.action-buttons { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 6px; 
+}
+
+.btn-approve { 
+  background: #28a745; 
+  color: white; 
+  border: none; 
+  padding: 6px 12px; 
+  border-radius: 6px; 
+  cursor: pointer; 
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: background-color 0.2s;
+}
+.btn-approve:hover { background: #218838; }
+
+.btn-reject { 
+  background: #dc3545; 
+  color: white; 
+  border: none; 
+  padding: 6px 12px; 
+  border-radius: 6px; 
+  cursor: pointer; 
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: background-color 0.2s;
+}
+.btn-reject:hover { background: #c82333; }
+
+/* Status Badge Tambahan (Menyesuaikan style .badge yang sudah ada) */
+.status-badge { 
+  padding: 6px 12px; 
+  border-radius: 20px; 
+  font-size: 0.8rem; 
+  font-weight: 700; 
+  display: inline-block;
+  text-transform: capitalize;
+}
+.status-badge.disetujui { background-color: #d4edda; color: #155724; }
+.status-badge.menunggu { background-color: #fff3cd; color: #856404; }
+.status-badge.ditolak { background-color: #f8d7da; color: #721c24; }
+
+/* --- ROLE SWITCHER AESTHETICS --- */
+
+.role-switcher-dropdown { 
+  padding: 8px 30px 8px 15px; /* Ruang lebih untuk panah kustom */
+  margin-right: 5px; 
+  border-radius: 20px; /* Bentuk lebih membulat menyerupai pill */
+  border: 1px solid #e0e0e0; 
+  font-weight: 600;
+  color: #343a40;
+  background-color: #f8f9fa;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.85rem;
+  transition: all 0.3s ease;
+  appearance: none; /* Menghilangkan panah bawaan browser */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  /* Menambahkan icon panah ke bawah kustom sebagai background */
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236c757d%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px top 50%;
+  background-size: 10px auto;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.role-switcher-dropdown:hover:not(:disabled) {
+  background-color: #fff;
+  border-color: #0056b3;
+  box-shadow: 0 2px 8px rgba(0, 86, 179, 0.15);
+  color: #0056b3;
+}
+
+.role-switcher-dropdown:focus {
+  outline: none;
+  border-color: #0056b3;
+  box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.2);
+}
+
+/* Tampilan khusus ketika Role Switcher di-lock (disabled) */
+.role-switcher-dropdown:disabled {
+  background-color: #e9ecef;
+  color: #6c757d;
+  cursor: not-allowed;
+  border-color: #ced4da;
+  opacity: 0.8;
+  background-image: none; /* Hilangkan panah jika tidak bisa diputar */
+  padding-right: 15px; /* Kembalikan padding normal tanpa panah */
 }

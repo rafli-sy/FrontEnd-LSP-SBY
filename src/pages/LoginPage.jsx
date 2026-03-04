@@ -6,39 +6,35 @@ import logoLSP from '../assets/logo.png';
 const LoginPage = () => {
   const navigate = useNavigate();
   
-  // State untuk menyimpan input user dari form
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [errorMsg, setErrorMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState(''); 
 
-  // Fungsi yang dipanggil saat tombol login ditekan
   const handleLogin = (e) => {
-    e.preventDefault(); // Mencegah halaman reload
-    setErrorMsg(''); // Reset pesan error setiap kali tombol ditekan
+    e.preventDefault(); 
+    setErrorMsg(''); 
     
-    // --- SIMULASI AUTENTIKASI BACKEND ---
-    // Nanti bagian ini akan diganti dengan request API (fetch/axios) ke server.
-    // Untuk saat ini, kita gunakan logika IF dasar untuk mengecek email.
-
-    // 1. Cek validitas password (simulasi: semua password diset "rahasia123")
+    // --- TAMBAHKAN REVISI DI SINI ---
+    // Cek apakah password sesuai
     if (password !== 'rahasia123') {
       setErrorMsg('Password salah. (Petunjuk: rahasia123)');
-      return; // Hentikan eksekusi kode di bawahnya
+      return; 
     }
+    // --------------------------------
 
-    // 2. Cek email dan arahkan (redirect) ke dashboard yang sesuai
-    if (email === 'superadmin@gmail.com') {
+    const userEmail = email.toLowerCase();
+
+    if (userEmail === 'superadmin@gmail.com') {
       navigate('/super-admin');
-    } else if (email === 'adminlsp@gmail.com') {
+    } else if (userEmail === 'adminlsp@gmail.com') {
       navigate('/admin-lsp');
-    } else if (email === 'stafflsp@gmail.com') {
-      navigate('/staff-lsp');
-    } else if (email === 'adminblk@gmail.com') {
+    } else if (userEmail === 'adminblk@gmail.com') {
       navigate('/admin-blk');
-    } else if (email === 'asesor@gmail.com') {
+    } else if (userEmail === 'asesor@gmail.com') {
       navigate('/asesor');
+    } else if (userEmail === 'stafflsp@gmail.com') { // Saya kembalikan rute Staff LSP ke sini
+      navigate('/staff-lsp');
     } else {
-      // Jika email tidak terdaftar di atas
       setErrorMsg('Email tidak ditemukan di dalam sistem.');
     }
   };
@@ -53,10 +49,10 @@ const LoginPage = () => {
             <img src={logoLSP} alt="Logo LSP BLK Surabaya" className="login-logo" />
           </Link>
           <h2>Masuk ke Sistem</h2>
-          <p>Masukkan email dan kata sandi Anda.</p>
+          <p>Gunakan email sesuai wewenang (contoh: admin@gmail.com)</p>
         </div>
 
-        {/* Notifikasi Error (Hanya muncul jika errorMsg ada isinya) */}
+        {/* Notifikasi Error */}
         {errorMsg && (
           <div className="error-message">
             <i className="fas fa-exclamation-circle"></i> {errorMsg}
@@ -65,15 +61,14 @@ const LoginPage = () => {
 
         {/* Form Login */}
         <form className="login-form" onSubmit={handleLogin}>
-          
           <div className="form-group">
-            <label htmlFor="email">Alamat Email</label>
+            <label htmlFor="email">Email / Username</label>
             <div className="input-with-icon">
               <i className="fas fa-envelope"></i>
               <input 
                 type="email" 
                 id="email" 
-                placeholder="contoh: admin@gmail.com" 
+                placeholder="Contoh: admin@gmail.com" 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required 
@@ -99,13 +94,11 @@ const LoginPage = () => {
           <button type="submit" className="login-submit-btn">
             Masuk Sistem <i className="fas fa-sign-in-alt"></i>
           </button>
-          
         </form>
 
         <div className="login-footer">
           <Link to="/"><i className="fas fa-arrow-left"></i> Kembali ke Beranda</Link>
         </div>
-        
       </div>
     </div>
   );

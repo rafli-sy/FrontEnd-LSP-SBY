@@ -1,29 +1,22 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import AOS from 'aos';
-import 'aos/dist/aos.css'; // Import CSS bawaan AOS
-import './LandingPage.css'; // Import CSS buatanmu
-import logoLSP from '../assets/logo.png';
+import 'aos/dist/aos.css'; 
+import './LandingPage.css'; 
+import logoLSP from '../assets/logo.png'; 
 
 const LandingPage = () => {
-  // State untuk mengatur buka/tutup menu di tampilan mobile
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Inisialisasi animasi AOS saat halaman dimuat
   useEffect(() => {
     AOS.init({ duration: 1000, once: true });
   }, []);
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
-
-  const closeMenu = () => {
-    setIsMenuOpen(false);
-  };
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+  const closeMenu = () => setIsMenuOpen(false);
 
   return (
-    <>
+    <div className="landing-page-container">
       <header id="header">
         <div className="container header-flex">
           <div className="logo">
@@ -34,19 +27,23 @@ const LandingPage = () => {
             </div>
           </div>
 
+          {/* Icon menu yang berubah jadi 'X' saat terbuka */}
           <div className="menu-toggle" onClick={toggleMenu}>
-            <i className="fas fa-bars"></i>
+            <i className={`fas ${isMenuOpen ? 'fa-times' : 'fa-bars'}`}></i>
           </div>
 
           <nav>
-            {/* Class 'active' ditambahkan jika isMenuOpen bernilai true */}
             <ul className={`nav-links ${isMenuOpen ? 'active' : ''}`}>
               <li><a href="#hero" onClick={closeMenu}>Beranda</a></li>
               <li><a href="#tentang" onClick={closeMenu}>Tentang</a></li>
               <li><a href="#skema" onClick={closeMenu}>Skema</a></li>
               <li><a href="#prosedur" onClick={closeMenu}>Prosedur</a></li>
-              {/* Tombol ini akan mengarahkan user ke halaman Login Dashboard */}
-              <li><Link to="/login" className="btn-nav" onClick={closeMenu}>Login Sistem</Link></li>
+              <li><a href="#" onClick={closeMenu}>Cek Kelulusan</a></li>
+              <li>
+                <Link to="/login" className="btn-nav" onClick={closeMenu}>
+                  Login Sistem
+                </Link>
+              </li>
             </ul>
           </nav>
         </div>
@@ -128,7 +125,7 @@ const LandingPage = () => {
             <p>Mencetak tenaga kerja profesional yang kompeten dan bersertifikat BNSP untuk masa depan Jawa Timur.</p>
             <div className="social-links-footer">
               <a href="https://www.instagram.com/uptblksurabaya"><i className="fab fa-instagram"></i></a>
-              <a href="https://web.facebook.com/blksurabaya/?_rdc=1&_rdr#"><i className="fab fa-facebook"></i></a>
+              <a href="https://web.facebook.com/blksurabaya/"><i className="fab fa-facebook"></i></a>
               <a href="https://www.youtube.com/@uptblksurabaya5838"><i className="fab fa-youtube"></i></a>
             </div>
           </div>
@@ -147,8 +144,13 @@ const LandingPage = () => {
             <p><i className="fas fa-envelope"></i> lsp.blksurabaya@gmail.com</p>
           </div>
         </div>
+        <div className="footer-bottom text-center">
+          <div className="container">
+            <p>&copy; 2026 LSP UPT Pelatihan Kerja Surabaya</p>
+          </div>
+        </div>
       </footer>
-    </>
+    </div>
   );
 };
 
