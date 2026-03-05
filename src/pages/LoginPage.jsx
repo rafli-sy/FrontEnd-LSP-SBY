@@ -27,7 +27,7 @@ const LoginPage = () => {
       navigate('/asesor'); // Asesor
     } else {
       // Default jika tidak ada yang cocok
-      alert('Email tidak dikenali sistem. Coba gunakan kata kunci: super, lsp, staff, blk, atau asesor di email Anda.');
+      alert('Email tidak dikenali sistem. ');
     }
   };
 
