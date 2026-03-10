@@ -7,7 +7,7 @@ const MasterDataAsesor = () => {
     { id: 2, nama: 'Jay Park', noReg: 'MET.000.008457.2021', kejuruan: 'Listrik', asal: 'Sampang', exp: '26/04/2027' },
     { id: 3, nama: 'Dita Karang', noReg: 'MET.000.004596.2023', kejuruan: 'TIK', asal: 'Bojonegoro', exp: '19/06/2026' },
     { id: 4, nama: 'Nyoman Ayu Carmenita', noReg: 'MET.000.004831.2019', kejuruan: 'TIK', asal: 'Bojonegoro', exp: '12/12/2025' },
-    { id: 5, nama: 'Naomi Rei', noReg: 'MET.000.004599.2023', kejuruan: 'Las', asal: 'Kota Surabaya', exp: '19/06/2026' },
+    { id: 5, nama: 'Naoi Rei', noReg: 'MET.000.004599.2023', kejuruan: 'Las', asal: 'Kota Surabaya', exp: '19/06/2026' },
   ]);
 
   // 2. STATE: Form & Modal Controls

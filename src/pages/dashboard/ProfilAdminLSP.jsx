@@ -20,7 +20,7 @@ const ProfilAdminLSP = () => {
   return (
     <div className="dashboard-content">
       <div className="dashboard-header">
-        <h2>Manajemen Akun</h2>
+        <h2>Profil Admin LSP</h2>
         <p>Perbarui informasi data pribadi Anda sebagai Admin LSP.</p>
       </div>
 

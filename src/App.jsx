@@ -14,8 +14,8 @@ import BukuIndukPage from './pages/dashboard/BukuIndukPage';
 import VerifikasiPeserta from './pages/dashboard/VerifikasiPeserta';
 import FormPengajuanUJK from './pages/dashboard/FormPengajuanUJK';
 import ManajemenPesertaImport from './pages/dashboard/ManajemenPesertaImport';
-
 import ProfilAsesor from './pages/dashboard/ProfilAsesor';
+import ManajemenAkunAsesor from './pages/dashboard/ManajemenAkunAsesor';
 import UjianAktifAsesor from './pages/dashboard/UjianAktifAsesor';
 
 import MasterDataSkema from './pages/dashboard/MasterDataSkema';
@@ -58,6 +58,12 @@ function App() {
           <Route path="/asesor" element={<DashboardAsesor />} />
           <Route path="/asesor/tugas" element={<UjianAktifAsesor />} />
           <Route path="/asesor/profil" element={<ProfilAsesor />} />
+
+          {/* --- ROUTING KHUSUS ASESOR --- */}
+          <Route path="/asesor" element={<DashboardAsesor />} />
+          <Route path="/asesor/tugas" element={<UjianAktifAsesor />} />
+          <Route path="/asesor/profil" element={<ProfilAsesor />} />
+          <Route path="/asesor/manajemen-akun" element={<ManajemenAkunAsesor />} />
         </Route>
       </Routes>
     </BrowserRouter>

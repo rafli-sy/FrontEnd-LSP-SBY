@@ -1,14 +1,10 @@
 import { useState } from 'react';
 
 const ProfilAsesor = () => {
-  // State diperbarui dengan penambahan namaLengkap dan noTelp
   const [formData, setFormData] = useState({
     namaLengkap: 'Mitsuri Kanroji',
     noTelp: '081234567890',
-    kejuruan: 'Teknologi Informasi',
-    noReg: 'REG-IT-2025-00192',
-    masaBerlaku: '2027-03-04',
-    fileSertifikat: null
+    email: 'asesor-mitsuri@blksurabaya.com', // Menambahkan email seperti di contoh Admin
   });
 
   const handleInputChange = (e) => {
@@ -16,116 +12,57 @@ const ProfilAsesor = () => {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleFileChange = (e) => {
-    setFormData({ ...formData, fileSertifikat: e.target.files[0] });
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
-    alert('Perubahan data pribadi dan profil berhasil disimpan!');
-    console.log('Data yang disimpan:', formData);
+    alert('Perubahan data profil Asesor berhasil disimpan!');
+    console.log('Data profil yang disimpan:', formData);
   };
 
   return (
     <div className="dashboard-content">
       <div className="dashboard-header">
-        <h2>Manajemen Akun Asesor</h2>
-        <p>Kelola data pribadi, profil kompetensi kejuruan, dan sertifikat Anda di sini.</p>
+        <h2>Profil Asesor</h2>
+        <p>Perbarui informasi data pribadi Anda sebagai Asesor.</p>
       </div>
 
       <div className="dashboard-card mt-20">
-        <h3 style={{ marginBottom: '20px', fontSize: '1.2rem', borderBottom: 'none' }}>
-          Update Data Pribadi & Kejuruan
-        </h3>
+        <h3 style={{ marginBottom: '20px' }}>Update Data Pribadi</h3>
         
         <form className="admin-form" onSubmit={handleSubmit}>
-          
-          {/* --- TAMBAHAN DATA PRIBADI --- */}
           <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
             <div className="form-group">
               <label>Nama Lengkap</label>
               <input 
-                type="text" 
-                name="namaLengkap" 
-                className="form-input" 
-                value={formData.namaLengkap}
-                onChange={handleInputChange}
-                required
+                type="text" name="namaLengkap" className="form-input" 
+                value={formData.namaLengkap} onChange={handleInputChange} required
                 placeholder="Masukkan nama lengkap"
               />
             </div>
-
             <div className="form-group">
               <label>Nomor Telepon (WhatsApp)</label>
               <input 
-                type="tel" 
-                name="noTelp" 
-                className="form-input" 
-                value={formData.noTelp}
-                onChange={handleInputChange}
-                required
+                type="tel" name="noTelp" className="form-input" 
+                value={formData.noTelp} onChange={handleInputChange} required
                 placeholder="Contoh: 081234567890"
               />
             </div>
           </div>
-          {/* ----------------------------- */}
 
           <div className="form-group mt-20">
-            <label>Asal Kejuruan</label>
-            <select 
-              name="kejuruan" 
-              className="form-select" 
-              value={formData.kejuruan}
-              onChange={handleInputChange}
-            >
-              <option value="Teknologi Informasi">Teknologi Informasi</option>
-              <option value="Listrik">Listrik</option>
-              <option value="Manufaktur">Manufaktur</option>
-              <option value="Pariwisata">Pariwisata</option>
-              <option value="Bisnis Manajemen">Bisnis Manajemen</option>
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label>Nomor Registrasi</label>
+            <label>Email Login</label>
             <input 
-              type="text" 
-              name="noReg" 
-              className="form-input" 
-              value={formData.noReg}
-              onChange={handleInputChange}
-              placeholder="Masukkan nomor registrasi Anda"
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Masa Berlaku Sertifikat</label>
-            <input 
-              type="date" 
-              name="masaBerlaku" 
-              className="form-input" 
-              value={formData.masaBerlaku}
-              onChange={handleInputChange}
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Upload Sertifikat Baru (PDF/JPG)</label>
-            <input 
-              type="file" 
-              className="form-input" 
-              accept=".pdf, .jpg, .jpeg, .png"
-              onChange={handleFileChange}
-              style={{ padding: '9px 15px' }} 
+              type="email" name="email" className="form-input" 
+              value={formData.email} disabled 
+              style={{ backgroundColor: '#e9ecef', cursor: 'not-allowed' }}
+              title="Email tidak dapat diubah secara mandiri."
             />
           </div>
 
           <div className="form-group" style={{ marginTop: '25px' }}>
-            <button type="submit" className="btn-action" style={{ padding: '10px 24px', fontSize: '0.95rem' }}>
-              Simpan Perubahan
+            <button type="submit" className="btn-action" style={{ padding: '10px 24px' }}>
+              Simpan Perubahan Profil
             </button>
           </div>
-          
         </form>
       </div>
     </div>
