@@ -103,7 +103,6 @@ const Layout = () => {
                 <Link to="/super-admin/audit" className={getActiveClass('/super-admin/audit')}><i className="fas fa-history"></i> Audit Trail</Link>
               </>
             )}
-
             {/* 2. ROLE: ADMIN LSP */}
             {currentPath.startsWith('/admin-lsp') && (
               <>
@@ -114,8 +113,11 @@ const Layout = () => {
                 <Link to="/admin-lsp/asesor" className={getActiveClass('/admin-lsp/asesor')}><i className="fas fa-user-tie"></i> Data Asesor</Link>
                 <Link to="/admin-lsp/tuk" className={getActiveClass('/admin-lsp/tuk')}><i className="fas fa-map-marker-alt"></i> Penyelia & TUK</Link>
                 <p className="menu-label">Manajemen UJK</p>
-                <Link to="/admin-lsp/penugasan" className={getActiveClass('/admin-lsp/penugasan')}><i className="fas fa-tasks"></i> Penugasan & Plotting</Link>
+                {/* Teks disesuaikan menjadi Penugasan Asesor */}
+                <Link to="/admin-lsp/penugasan" className={getActiveClass('/admin-lsp/penugasan')}><i className="fas fa-tasks"></i> Penugasan Asesor</Link>
                 <Link to="/admin-lsp/buku-induk" className={getActiveClass('/admin-lsp/buku-induk')}><i className="fas fa-book"></i> Buku Induk</Link>
+                {/* FITUR BARU: Verifikasi Sertifikat */}
+                <Link to="/admin-lsp/verifikasi-sertifikat" className={getActiveClass('/admin-lsp/verifikasi-sertifikat')}><i className="fas fa-certificate"></i> Verifikasi Sertifikat</Link>
                 <Link to="/admin-lsp/profil" className={getActiveClass('/admin-lsp/profil')}><i className="fas fa-user-edit"></i> Profil</Link>
               </>
             )}
