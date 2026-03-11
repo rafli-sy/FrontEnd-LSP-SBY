@@ -100,10 +100,13 @@ body {
   transition: color 0.2s;
 }
 
+/* PERBAIKAN: Menyamakan desain menu aktif Asesor dengan Admin (Garis biru di kiri) */
 .sidebar-nav a:hover,
 .sidebar-nav a.active-link {
   background-color: #e7f1ff;
   color: #0056b3;
+  border-left: 4px solid #0056b3;
+  border-radius: 0 8px 8px 0;
 }
 
 .sidebar-nav a:hover i,
@@ -423,4 +426,33 @@ button { font-family: inherit; }
   opacity: 0.8;
   background-image: none; 
   padding-right: 15px; 
+}
+
+/* ==========================================================
+   5. TAMBAHAN KOMPONEN ASESOR (Info Box & Badges)
+   ========================================================== */
+
+/* Info Box Kebijakan Penugasan */
+.info-box {
+  background-color: #e7f1ff;
+  border-left: 4px solid #0056b3;
+  padding: 15px 20px;
+  border-radius: 8px;
+  color: #0056b3;
+  margin-bottom: 20px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.95rem;
+}
+
+/* Badge Status Khusus Asesor */
+.status-badge.mendatang { 
+  background-color: #198754; 
+  color: white; 
+}
+.status-badge.menunggu-jadwal { 
+  background-color: #ffc107; 
+  color: #212529; 
 }

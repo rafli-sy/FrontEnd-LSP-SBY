@@ -5,7 +5,9 @@ const ManajemenAkunAsesor = () => {
     kejuruan: 'Teknologi Informasi',
     noReg: 'REG-IT-2025-00192',
     masaBerlaku: '2027-03-04',
-    fileSertifikat: null
+    fileSertifikat: null,
+    // Dummy link untuk simulasi sertifikat lama yang ada di database
+    sertifikatLama: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' 
   });
 
   const handleInputChange = (e) => {
@@ -14,7 +16,23 @@ const ManajemenAkunAsesor = () => {
   };
 
   const handleFileChange = (e) => {
-    setFormData({ ...formData, fileSertifikat: e.target.files[0] });
+    const file = e.target.files[0];
+    if (file) {
+      setFormData({ ...formData, fileSertifikat: file });
+    }
+  };
+
+  const handleLihatSertifikat = () => {
+    if (formData.fileSertifikat) {
+      // Jika ada file baru yang di-upload, buat URL object sementara untuk preview
+      const fileUrl = URL.createObjectURL(formData.fileSertifikat);
+      window.open(fileUrl, '_blank');
+    } else if (formData.sertifikatLama) {
+      // Jika tidak ada file baru, buka sertifikat lama dari database
+      window.open(formData.sertifikatLama, '_blank');
+    } else {
+      alert('Belum ada sertifikat yang tersedia.');
+    }
   };
 
   const handleSubmit = (e) => {
@@ -77,13 +95,38 @@ const ManajemenAkunAsesor = () => {
 
           <div className="form-group">
             <label>Upload Sertifikat Baru (PDF/JPG)</label>
-            <input 
-              type="file" 
-              className="form-input" 
-              accept=".pdf, .jpg, .jpeg, .png"
-              onChange={handleFileChange}
-              style={{ padding: '9px 15px' }} 
-            />
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <input 
+                type="file" 
+                className="form-input" 
+                accept=".pdf, .jpg, .jpeg, .png"
+                onChange={handleFileChange}
+                style={{ padding: '9px 15px', flex: 1, marginBottom: '0' }} 
+              />
+              <button 
+                type="button" 
+                onClick={handleLihatSertifikat} 
+                className="btn-action" 
+                style={{ 
+                  padding: '10px 20px', 
+                  backgroundColor: '#6c757d', 
+                  color: '#fff', 
+                  border: 'none', 
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                <i className="fas fa-eye" style={{ marginRight: '8px' }}></i>
+                Lihat Sertifikat
+              </button>
+            </div>
+            {/* Indikator visual opsional jika file baru berhasil dimuat ke memori browser */}
+            {formData.fileSertifikat && (
+              <small style={{ color: '#198754', display: 'block', marginTop: '8px' }}>
+                <i className="fas fa-check-circle"></i> File baru dipilih: {formData.fileSertifikat.name}
+              </small>
+            )}
           </div>
 
           <div className="form-group" style={{ marginTop: '25px' }}>

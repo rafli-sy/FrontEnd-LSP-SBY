@@ -93,14 +93,6 @@ const DataTUK = () => {
                   <td>{item.alamat}</td>
                   <td>{item.kota}</td>
                   <td>
-                    {/* Tombol Detail */}
-                    <button 
-                      className="btn-action" 
-                      style={{ marginRight: '5px', backgroundColor: '#17a2b8' }} 
-                      onClick={() => handleDetailClick(item)}
-                    >
-                      Detail
-                    </button>
                     {/* Tombol Edit */}
                     <button 
                       className="btn-action" 

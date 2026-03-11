@@ -8,7 +8,7 @@ const Layout = () => {
   const navigate = useNavigate();
   const currentPath = location.pathname;
 
-  // --- LOGIKA PRIMARY ROLE (Dari kodemu) ---
+  // --- LOGIKA PRIMARY ROLE ---
   const [primaryRole, setPrimaryRole] = useState('');
 
   useEffect(() => {
@@ -21,7 +21,7 @@ const Layout = () => {
     }
   }, [currentPath, primaryRole]);
 
-  // --- STATE UNTUK CUSTOM DROPDOWN (Dari kode temanmu) ---
+  // --- STATE UNTUK CUSTOM DROPDOWN ---
   const [isRoleMenuOpen, setIsRoleMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -58,8 +58,6 @@ const Layout = () => {
   };
 
   const roles = getAvailableRoles();
-  // Disable dropdown jika hanya punya 1 role
-  const isRoleSwitchDisabled = primaryRole === 'staff-lsp' || primaryRole === 'asesor';
 
   const handleRoleSelect = (path) => {
     setIsRoleMenuOpen(false);
@@ -102,7 +100,6 @@ const Layout = () => {
                 <p className="menu-label">System Manager</p>
                 <Link to="/super-admin" className={getActiveClass('/super-admin')}><i className="fas fa-home"></i> Beranda Admin</Link>
                 <Link to="/super-admin/users" className={getActiveClass('/super-admin/users')}><i className="fas fa-users-cog"></i> Manajemen Akun</Link>
-                {/* Tambahan dari kodemu */}
                 <Link to="/super-admin/audit" className={getActiveClass('/super-admin/audit')}><i className="fas fa-history"></i> Audit Trail</Link>
               </>
             )}
@@ -111,16 +108,14 @@ const Layout = () => {
             {currentPath.startsWith('/admin-lsp') && (
               <>
                 <p className="menu-label">The Controller</p>
-                <Link to="/admin-lsp" className={getActiveClass('/admin-lsp')}><i className="fas fa-home"></i> Dashboard & Riwayat</Link>
+                <Link to="/admin-lsp" className={getActiveClass('/admin-lsp')}><i className="fas fa-home"></i> Dashboard</Link>
                 <p className="menu-label">Master Data</p>
                 <Link to="/admin-lsp/skema" className={getActiveClass('/admin-lsp/skema')}><i className="fas fa-file-code"></i> Data Skema</Link>
                 <Link to="/admin-lsp/asesor" className={getActiveClass('/admin-lsp/asesor')}><i className="fas fa-user-tie"></i> Data Asesor</Link>
-                {/* Tambahan dari kodemu */}
                 <Link to="/admin-lsp/tuk" className={getActiveClass('/admin-lsp/tuk')}><i className="fas fa-map-marker-alt"></i> Penyelia & TUK</Link>
                 <p className="menu-label">Manajemen UJK</p>
                 <Link to="/admin-lsp/penugasan" className={getActiveClass('/admin-lsp/penugasan')}><i className="fas fa-tasks"></i> Penugasan & Plotting</Link>
                 <Link to="/admin-lsp/buku-induk" className={getActiveClass('/admin-lsp/buku-induk')}><i className="fas fa-book"></i> Buku Induk</Link>
-                {/* Tambahan dari kodemu */}
                 <Link to="/admin-lsp/profil" className={getActiveClass('/admin-lsp/profil')}><i className="fas fa-user-edit"></i> Profil</Link>
               </>
             )}
@@ -148,11 +143,9 @@ const Layout = () => {
             {/* 5. ROLE: ASESOR */}
             {currentPath.startsWith('/asesor') && (
               <>
-                <p className="menu-label">The Field Expert</p>
-                <Link to="/asesor" className={getActiveClass('/asesor')}><i className="fas fa-home"></i> Dashboard Utama</Link>
-                {/* Tambahan dari kodemu dan temanmu digabungkan */}
-                <Link to="/asesor/tugas" className={getActiveClass('/asesor/tugas')}><i className="fas fa-calendar-check"></i> Ujian Aktif</Link>
-                <Link to="/asesor/sertifikasi" className={getActiveClass('/asesor/sertifikasi')}><i className="fas fa-certificate"></i> Kompetensi Saya</Link>
+                <p className="menu-label">Pelayanan Asesor</p>
+                <Link to="/asesor" className={getActiveClass('/asesor')}><i className="fas fa-home"></i> Dashboard</Link>
+                <Link to="/asesor/tugas" className={getActiveClass('/asesor/tugas')}><i className="fas fa-calendar-check"></i> Ujian Aktif</Link> 
                 <Link to="/asesor/manajemen-akun" className={getActiveClass('/asesor/manajemen-akun')}><i className="fas fa-user-edit"></i> Manajemen Akun</Link>
                 <Link to="/asesor/profil" className={getActiveClass('/asesor/profil')}><i className="fas fa-user"></i> Profil</Link>
               </>
@@ -168,12 +161,13 @@ const Layout = () => {
                 <span className="status-indicator"></span>
               </div>
               <div className="user-details">
-                <span className="user-name">Kartika Nova</span>
+                <span className="user-name">Angga Yunanda</span>
                 <span className="user-role-text">Online</span>
               </div>
             </div>
 
-            {!currentPath.startsWith('/super-admin') && (
+            {/* REVISI: Sembunyikan dropdown Ganti Akses untuk Super Admin DAN Asesor */}
+            {!currentPath.startsWith('/super-admin') && !currentPath.startsWith('/asesor') && (
               <div className="switch-role-container" ref={dropdownRef}>
                 <div 
                   className={`switch-role-ui ${isRoleMenuOpen ? 'active' : ''}`} 
