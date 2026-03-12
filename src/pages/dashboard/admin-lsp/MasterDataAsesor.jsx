@@ -2,12 +2,13 @@ import { useState } from 'react';
 
 const MasterDataAsesor = () => {
   // 1. STATE: Data List (Read)
+  // Format tanggal diubah ke 'yyyy-mm-dd' agar kompatibel dengan <input type="date">
   const [asesorList, setAsesorList] = useState([
-    { id: 1, nama: 'Haruto', noReg: 'MET.000.007716.2024', kejuruan: 'Listrik', asal: 'Sampang', exp: '01/11/2027' },
-    { id: 2, nama: 'Jay Park', noReg: 'MET.000.008457.2021', kejuruan: 'Listrik', asal: 'Sampang', exp: '26/04/2027' },
-    { id: 3, nama: 'Dita Karang', noReg: 'MET.000.004596.2023', kejuruan: 'TIK', asal: 'Bojonegoro', exp: '19/06/2026' },
-    { id: 4, nama: 'Nyoman Ayu Carmenita', noReg: 'MET.000.004831.2019', kejuruan: 'TIK', asal: 'Bojonegoro', exp: '12/12/2025' },
-    { id: 5, nama: 'Naomi Rei', noReg: 'MET.000.004599.2023', kejuruan: 'Las', asal: 'Kota Surabaya', exp: '19/06/2026' },
+    { id: 1, nama: 'Haruto', noReg: 'MET.000.007716.2024', kejuruan: 'Listrik', asal: 'Sampang', exp: '2027-11-01' },
+    { id: 2, nama: 'Jay Park', noReg: 'MET.000.008457.2021', kejuruan: 'Listrik', asal: 'Sampang', exp: '2027-04-26' },
+    { id: 3, nama: 'Nyoman Ayu Carmenita', noReg: 'MET.000.004596.2023', kejuruan: 'TIK', asal: 'Bojonegoro', exp: '2026-06-19' },
+    { id: 4, nama: 'Dita Karang', noReg: 'MET.000.004831.2019', kejuruan: 'TIK', asal: 'Bojonegoro', exp: '2025-12-12' },
+    { id: 5, nama: 'Naomi Rei', noReg: 'MET.000.004599.2023', kejuruan: 'Las', asal: 'Kota Surabaya', exp: '2026-06-19' },
   ]);
 
   // 2. STATE: Form & Modal Controls
@@ -55,16 +56,38 @@ const MasterDataAsesor = () => {
     setIsModalOpen(false);
   };
 
-  // Fungsi sederhana untuk menentukan warna status berdasarkan tahun
+  // Fungsi Pembantu: Mengubah 'yyyy-mm-dd' menjadi 'dd/mm/yyyy' untuk tampilan di Tabel
+  const formatDateDisplay = (dateString) => {
+    if (!dateString) return '';
+    const [year, month, day] = dateString.split('-');
+    return `${day}/${month}/${year}`;
+  };
+
+  // 8. FUNGSI: Status Badge Otomatis Berdasarkan Waktu Nyata
   const getStatusBadge = (expDate) => {
-    // Memastikan format yang dimasukkan mengandung '/', misal 'dd/mm/yyyy'
-    const parts = expDate.split('/');
-    if (parts.length === 3) {
-      const year = parseInt(parts[2]);
-      if (year <= 2025) return <span className="status-badge ditolak">Expired</span>;
-      if (year === 2026) return <span className="status-badge menunggu">Akan Habis</span>;
+    if (!expDate) return <span className="status-badge" style={{ backgroundColor: '#ccc' }}>-</span>;
+
+    // Karena expDate sekarang formatnya yyyy-mm-dd, kita bisa langsung memasukkannya ke Date()
+    const expirationDate = new Date(expDate);
+    expirationDate.setHours(0, 0, 0, 0);
+    
+    // Ambil tanggal hari ini (waktu diset ke 00:00 agar akurat membandingkan hari)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Hitung batas waktu "Akan Habis" (misal: 6 bulan dari hari ini)
+    const sixMonthsFromNow = new Date();
+    sixMonthsFromNow.setMonth(today.getMonth() + 6);
+    sixMonthsFromNow.setHours(0, 0, 0, 0);
+
+    // Logika Penentuan Status
+    if (expirationDate < today) {
+      return <span className="status-badge ditolak">Expired</span>;
+    } else if (expirationDate <= sixMonthsFromNow) {
+      return <span className="status-badge menunggu">Akan Habis</span>;
+    } else {
+      return <span className="status-badge disetujui">Aktif</span>;
     }
-    return <span className="status-badge disetujui">Aktif</span>;
   };
 
   return (
@@ -98,7 +121,8 @@ const MasterDataAsesor = () => {
                   <td>{item.noReg}</td>
                   <td>{item.kejuruan}</td>
                   <td>{item.asal}</td>
-                  <td>{item.exp}</td>
+                  {/* Gunakan formatDateDisplay agar di tabel tetap terlihat format dd/mm/yyyy */}
+                  <td>{formatDateDisplay(item.exp)}</td>
                   <td>{getStatusBadge(item.exp)}</td>
                   <td>
                     <button 
@@ -174,10 +198,11 @@ const MasterDataAsesor = () => {
 
               <div className="form-group">
                 <label>Tanggal Expired Sertifikat</label>
+                {/* Diubah menjadi type="date" */}
                 <input 
-                  type="text" name="exp" className="form-input" 
+                  type="date" name="exp" className="form-input" 
                   value={formData.exp} onChange={handleInputChange} 
-                  required placeholder="Format: dd/mm/yyyy"
+                  required 
                 />
               </div>
               

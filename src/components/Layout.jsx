@@ -112,19 +112,21 @@ const Layout = () => {
                 <Link to="/admin-blk/pengajuan" className={getActiveClass('/admin-blk/pengajuan')}><i className="fas fa-envelope-open-text"></i> Data Pengajuan BLK</Link>
               </>
             )}
-
             {/* 2. ROLE: ADMIN LSP */}
             {currentPath.startsWith('/admin-lsp') && primaryRole !== 'super-admin' && (
               <>
                 <p className="menu-label">The Controller</p>
-                <Link to="/admin-lsp" className={getActiveClass('/admin-lsp')}><i className="fas fa-home"></i> Dashboard </Link>
+                <Link to="/admin-lsp" className={getActiveClass('/admin-lsp')}><i className="fas fa-home"></i> Dashboard</Link>
                 <p className="menu-label">Master Data</p>
                 <Link to="/admin-lsp/skema" className={getActiveClass('/admin-lsp/skema')}><i className="fas fa-file-code"></i> Data Skema</Link>
                 <Link to="/admin-lsp/asesor" className={getActiveClass('/admin-lsp/asesor')}><i className="fas fa-user-tie"></i> Data Asesor</Link>
                 <Link to="/admin-lsp/tuk" className={getActiveClass('/admin-lsp/tuk')}><i className="fas fa-map-marker-alt"></i> Penyelia & TUK</Link>
                 <p className="menu-label">Manajemen UJK</p>
-                <Link to="/admin-lsp/penugasan" className={getActiveClass('/admin-lsp/penugasan')}><i className="fas fa-tasks"></i> Penugasan & Plotting</Link>
+                {/* Teks disesuaikan menjadi Penugasan Asesor */}
+                <Link to="/admin-lsp/penugasan" className={getActiveClass('/admin-lsp/penugasan')}><i className="fas fa-tasks"></i> Penugasan Asesor</Link>
                 <Link to="/admin-lsp/buku-induk" className={getActiveClass('/admin-lsp/buku-induk')}><i className="fas fa-book"></i> Buku Induk</Link>
+                {/* FITUR BARU: Verifikasi Sertifikat */}
+                <Link to="/admin-lsp/verifikasi-sertifikat" className={getActiveClass('/admin-lsp/verifikasi-sertifikat')}><i className="fas fa-certificate"></i> Verifikasi Sertifikat</Link>
                 <Link to="/admin-lsp/profil" className={getActiveClass('/admin-lsp/profil')}><i className="fas fa-user-edit"></i> Profil</Link>
               </>
             )}
@@ -149,9 +151,9 @@ const Layout = () => {
             {/* 5. ROLE: ASESOR */}
             {currentPath.startsWith('/asesor') && primaryRole !== 'super-admin' && (
               <>
-                <p className="menu-label">The Field Expert</p>
-                <Link to="/asesor" className={getActiveClass('/asesor')}><i className="fas fa-home"></i> Dashboard </Link>
-                <Link to="/asesor/tugas" className={getActiveClass('/asesor/tugas')}><i className="fas fa-calendar-check"></i> Ujian Aktif</Link>
+                <p className="menu-label">Pelayanan Asesor</p>
+                <Link to="/asesor" className={getActiveClass('/asesor')}><i className="fas fa-home"></i> Dashboard</Link>
+                <Link to="/asesor/tugas" className={getActiveClass('/asesor/tugas')}><i className="fas fa-calendar-check"></i> Ujian Aktif</Link> 
                 <Link to="/asesor/manajemen-akun" className={getActiveClass('/asesor/manajemen-akun')}><i className="fas fa-user-edit"></i> Manajemen Akun</Link>
                 <Link to="/asesor/profil" className={getActiveClass('/asesor/profil')}><i className="fas fa-user"></i> Profil</Link>
               </>
@@ -167,7 +169,7 @@ const Layout = () => {
                 <span className="status-indicator"></span>
               </div>
               <div className="user-details">
-                <span className="user-name">Pengguna</span>
+                <span className="user-name">Angga Yunanda</span>
                 <span className="user-role-text">Online</span>
               </div>
             </div>

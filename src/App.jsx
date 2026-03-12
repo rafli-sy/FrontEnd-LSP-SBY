@@ -15,6 +15,8 @@ import MasterDataSkema from './pages/dashboard/admin-lsp/MasterDataSkema';
 import MasterDataAsesor from './pages/dashboard/admin-lsp/MasterDataAsesor';
 import DataTUK from './pages/dashboard/admin-lsp/DataTUK';
 import ProfilAdminLSP from './pages/dashboard/admin-lsp/ProfilAdminLSP';
+// PERBAIKAN: Menambahkan folder admin-lsp pada path import
+import VerifikasiSertifikat from './pages/dashboard/admin-lsp/VerifikasiSertifikat';
 
 // Staff LSP
 import DashboardStaffLSP from './pages/dashboard/staff-lsp/DashboardStaffLSP';
@@ -54,6 +56,7 @@ function App() {
           <Route path="/admin-lsp/penugasan" element={<PenugasanPage />} />
           <Route path="/admin-lsp/buku-induk" element={<BukuIndukPage />} />
           <Route path="/admin-lsp/profil" element={<ProfilAdminLSP />} />
+          <Route path="/admin-lsp/verifikasi-sertifikat" element={<VerifikasiSertifikat />} />
 
           {/* Routes Staff LSP */}
           <Route path="/staff-lsp" element={<DashboardStaffLSP />} />

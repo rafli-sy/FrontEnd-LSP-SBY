@@ -1,21 +1,9 @@
 import { useState } from 'react';
 
 const DashboardAdminLSP = () => {
-  // Ditambahkan data pendanaan dan jumlah asesi (kuota)
   const [pengajuanList, setPengajuanList] = useState([
     {
       id: 1,
-      blk: 'UPT BLK Surabaya',
-      skema: 'Pemasangan CCTV',
-      pendanaan: 'APBD',
-      kuota: 16,
-      tanggalMulai: '2026-03-10',
-      tanggalSelesai: '2026-03-12',
-      status: 'Menunggu Verifikasi',
-      dokumenUsulan: 'usulan_cctv_blk_sby.pdf'
-    },
-    {
-      id: 2,
       blk: 'UPT BLK Singosari',
       skema: 'Operator Mesin Bubut',
       pendanaan: 'APBN',
@@ -24,6 +12,61 @@ const DashboardAdminLSP = () => {
       tanggalSelesai: '2026-03-18',
       status: 'Disetujui',
       dokumenUsulan: 'usulan_bubut_sgs.pdf'
+    },
+    {
+      id: 2,
+      blk: 'UPT BLK Wonojati',
+      skema: 'Barista',
+      pendanaan: 'APBD',
+      kuota: 20,
+      tanggalMulai: '2026-03-22',
+      tanggalSelesai: '2026-03-24',
+      status: 'Menunggu Verifikasi',
+      dokumenUsulan: 'usulan_barista_wnj.pdf'
+    },
+    {
+      id: 3,
+      blk: 'UPT BLK Jombang',
+      skema: 'Junior Administrative Assistant',
+      pendanaan: 'Mandiri',
+      kuota: 15,
+      tanggalMulai: '2026-03-28',
+      tanggalSelesai: '2026-03-30',
+      status: 'Menunggu Verifikasi',
+      dokumenUsulan: 'usulan_admin_jbg.pdf'
+    },
+    {
+      id: 4,
+      blk: 'UPT BLK Surabaya',
+      skema: 'Junior Web Developer',
+      pendanaan: 'APBD',
+      kuota: 16,
+      tanggalMulai: '2026-04-05',
+      tanggalSelesai: '2026-04-07',
+      status: 'Menunggu Verifikasi',
+      dokumenUsulan: 'usulan_webdev_sby.pdf'
+    },
+    {
+      id: 5,
+      blk: 'UPT BLK Nganjuk',
+      skema: 'Practical Office Advance',
+      pendanaan: 'APBN',
+      kuota: 16,
+      tanggalMulai: '2026-03-31',
+      tanggalSelesai: '2026-04-01',
+      status: 'Disetujui',
+      dokumenUsulan: 'usulan_poa_ngj.pdf'
+    },
+    {
+      id: 6,
+      blk: 'UPT BLK Bangkalan',
+      skema: 'Pembuatan Roti dan Kue',
+      pendanaan: 'APBD',
+      kuota: 16,
+      tanggalMulai: '2026-03-01',
+      tanggalSelesai: '2026-03-03',
+      status: 'Ditolak',
+      dokumenUsulan: 'usulan_roti_bkl.pdf'
     }
   ]);
 
@@ -44,8 +87,9 @@ const DashboardAdminLSP = () => {
                 <th style={{ width: '20%' }}>Pengusul & Info</th>
                 <th style={{ width: '20%' }}>Skema & Kuota</th>
                 <th style={{ width: '25%' }}>Revisi Jadwal (Jika Perlu)</th>
-                <th style={{ width: '10%', textAlign: 'center' }}>Dokumen</th>
+                {/* --- HEADER DITUKAR POSISINYA --- */}
                 <th style={{ width: '25%', textAlign: 'center' }}>Aksi Verifikasi</th>
+                <th style={{ width: '10%', textAlign: 'center' }}>Dokumen</th>
               </tr>
             </thead>
             <tbody>
@@ -53,14 +97,13 @@ const DashboardAdminLSP = () => {
                 <tr key={item.id}>
                   <td style={{ verticalAlign: 'middle' }}>
                     <strong style={{ color: '#0056b3' }}>{item.blk}</strong><br/>
-                    <span className="badge info" style={{ marginTop: '5px', fontSize: '0.7rem' }}>Dana: {item.pendanaan}</span>
+                    <span className="badge-dana" style={{ marginTop: '5px' }}>Dana: {item.pendanaan}</span>
                   </td>
                   <td style={{ verticalAlign: 'middle', fontWeight: '500' }}>
                     {item.skema}<br/>
                     <small style={{ color: '#6c757d' }}>Peserta: {item.kuota} Orang</small>
                   </td>
                   
-                  {/* Perbaikan Tampilan Jadwal dengan Flexbox */}
                   <td style={{ verticalAlign: 'middle' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -74,18 +117,7 @@ const DashboardAdminLSP = () => {
                     </div>
                   </td>
                   
-                  {/* Perbaikan Tampilan Tombol Dokumen */}
-                  <td style={{ verticalAlign: 'middle', textAlign: 'center' }}>
-                    <button 
-                      className="btn-action" 
-                      style={{ backgroundColor: '#6c757d', padding: '6px 12px', fontSize: '0.8rem' }}
-                      title="Unduh Dokumen Usulan"
-                    >
-                      <i className="fas fa-file-pdf"></i> Cek
-                    </button>
-                  </td>
-                  
-                  {/* Perbaikan Tampilan Aksi dengan Grid/Flexbox agar sejajar */}
+                  {/* --- ISI KOLOM AKSI VERIFIKASI (SEKARANG DI KIRI) --- */}
                   <td style={{ verticalAlign: 'middle' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', backgroundColor: '#f8f9fa', padding: '10px', borderRadius: '8px', border: '1px solid #eee' }}>
                       <input 
@@ -112,6 +144,18 @@ const DashboardAdminLSP = () => {
                       </div>
                     </div>
                   </td>
+
+                  {/* --- ISI KOLOM DOKUMEN (SEKARANG DI KANAN) --- */}
+                  <td style={{ verticalAlign: 'middle', textAlign: 'center' }}>
+                    <button 
+                      className="btn-action" 
+                      style={{ backgroundColor: '#E11C2A', padding: '6px 12px', fontSize: '0.8rem' }}
+                      title="Unduh Dokumen Usulan"
+                    >
+                      <i className="fas fa-file-pdf"></i> Cek
+                    </button>
+                  </td>
+
                 </tr>
               ))}
               {pengajuanList.filter(p => p.status === 'Menunggu Verifikasi').length === 0 && (
