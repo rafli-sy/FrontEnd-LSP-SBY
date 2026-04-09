@@ -17,7 +17,7 @@ const DashboardAsesor = () => {
 
   const getStatusStyle = (status) => {
     switch(status) {
-      case 'Selesai': return { bg: '#6c757d', text: 'white' };
+      case 'Selesai': return { bg: '#00bb0c', text: 'white' };
       case 'Sedang Berlangsung': return { bg: '#0dcaf0', text: 'black' };
       case 'Menunggu Jadwal': return { bg: '#ffc107', text: 'black' };
       default: return { bg: '#e9ecef', text: 'black' };
