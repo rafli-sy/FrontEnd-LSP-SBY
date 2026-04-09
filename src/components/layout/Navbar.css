@@ -1,0 +1,105 @@
+.top-navbar {
+  height: 75px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px); 
+  display: flex;
+  align-items: center;
+  justify-content: space-between; 
+  padding: 0 35px;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  z-index: 5;
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.mobile-menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #0f172a;
+  cursor: pointer;
+  padding: 5px;
+  transition: color 0.2s;
+}
+
+.mobile-menu-btn:hover {
+  color: #3b82f6;
+}
+
+.page-title { 
+  font-size: 1.3rem; 
+  font-weight: 800; 
+  color: #0f172a; 
+  margin: 0;
+  line-height: 1.2;
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.nav-date-badge {
+  font-size: 0.85rem;
+  font-weight: 600;
+  background-color: #f1f5f9;
+  color: #475569;
+  padding: 8px 16px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-date-badge i {
+  color: #3b82f6;
+  font-size: 1rem;
+}
+
+/* Secara default, sembunyikan tanggal versi pendek */
+.date-text-short {
+  display: none;
+}
+
+/* ==========================================================
+   RESPONSIVE DESIGN
+============================================================= */
+@media (max-width: 992px) {
+  .top-navbar {
+    padding: 0 20px;
+  }
+  .mobile-menu-btn {
+    display: block;
+  }
+  .page-title {
+    font-size: 1.15rem;
+  }
+}
+
+/* Khusus Layar HP / Sempit */
+@media (max-width: 576px) {
+  .top-navbar {
+    padding: 0 15px;
+  }
+  .page-title {
+    font-size: 1.05rem;
+  }
+  .nav-date-badge {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+  
+  /* Sembunyikan tanggal panjang, dan Tampilkan tanggal pendek */
+  .date-text-long {
+    display: none;
+  }
+  .date-text-short {
+    display: inline;
+  }
+}

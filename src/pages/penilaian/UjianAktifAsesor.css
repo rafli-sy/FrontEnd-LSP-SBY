@@ -1,0 +1,243 @@
+/* --- TABS NAVIGATION --- */
+.ua-tab-container {
+  display: flex;
+  gap: 15px;
+  border-bottom: 2px solid #e2e8f0;
+  margin-bottom: 20px;
+}
+
+.ua-tab-btn {
+  background: none;
+  border: none;
+  padding: 12px 20px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s ease;
+  margin-bottom: -2px;
+}
+
+.ua-tab-btn:hover {
+  color: #0f172a;
+}
+.ua-tab-btn.active {
+  color: #1d4ed8;
+  border-bottom-color: #1d4ed8;
+}
+
+/* --- VIEW 1: KARTU JADWAL UJIAN --- */
+.ujian-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.ujian-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-left: 6px solid #10b981;
+  padding: 20px 25px;
+  transition: all 0.2s ease-in-out;
+}
+
+.ujian-card.riwayat-card {
+  border-left: 6px solid #cbd5e1;
+  background-color: #f8fafc;
+}
+
+.ujian-card:hover {
+  transform: translateX(5px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.05);
+}
+
+.ujian-card-title {
+  margin: 0 0 8px 0;
+  color: #0f172a;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+.ujian-card-info {
+  margin: 0 0 12px 0;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+.ujian-card-info i {
+  color: #94a3b8;
+  margin-right: 4px;
+}
+
+.ujian-status-badge {
+  display: inline-block;
+  background-color: #ecfdf5;
+  color: #059669;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.ujian-status-badge.badge-selesai {
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+
+.btn-back-icon {
+  background: none;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 10px 15px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-back-icon:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+/* --- VIEW 2: BOX INFORMASI UJIAN --- */
+.box-title {
+  margin: 0 0 20px 0;
+  font-size: 1.2rem;
+  color: #1e293b;
+  border-bottom: 2px solid #f1f5f9;
+  padding-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+.info-item {
+  background: #f8fafc;
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+.info-label {
+  display: block;
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+.info-value {
+  display: block;
+  font-size: 1.05rem;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+/* --- VIEW 2: TABEL PENILAIAN --- */
+.penilaian-table th {
+  background-color: #1e293b !important;
+  color: white !important;
+}
+.peserta-name {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: #0f172a;
+}
+.peserta-nik {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.nilai-input {
+  width: 80px;
+  padding: 10px;
+  text-align: center;
+  border: 2px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e293b;
+  outline: none;
+  transition: 0.2s;
+}
+.nilai-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+.nilai-readonly {
+  display: inline-block;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #1e293b;
+  padding: 10px;
+  background-color: #f8fafc;
+  border-radius: 8px;
+  min-width: 60px;
+  border: 1px dashed #cbd5e1;
+}
+
+/* Lencana (Badge) Status Otomatis */
+.status-badge-auto {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  transition: all 0.3s ease;
+}
+
+.status-k {
+  background-color: #10b981;
+  color: white;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+}
+
+.status-bk {
+  background-color: #ef4444;
+  color: white;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
+}
+
+.status-empty {
+  background-color: #f1f5f9;
+  color: #94a3b8;
+  border: 1px dashed #cbd5e1;
+}
+
+.penilaian-actions {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 768px) {
+  .ujian-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+  .penilaian-actions {
+    justify-content: center;
+  }
+  .status-badge-auto {
+    width: 100%;
+    justify-content: center;
+  }
+}

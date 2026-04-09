@@ -1,0 +1,177 @@
+/* --- BACKGROUND OVERLAY --- */
+.alert-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  padding: 20px;
+  /* Animasi fade in yang sangat ringan */
+  animation: smoothFade 0.2s ease-out forwards;
+}
+
+/* --- KOTAK POP-UP --- */
+.alert-card {
+  background-color: #ffffff;
+  border-radius: 24px;
+  width: 100%;
+  max-width: 380px;
+  padding: 40px 30px;
+  text-align: center;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  /* Animasi membesar (scale) yang smooth dan tidak memantul berlebihan */
+  animation: smoothScaleUp 0.3s ease-out forwards;
+}
+
+/* --- PEMBUNGKUS IKON --- */
+.alert-icon-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 25px;
+  height: 90px;
+}
+
+/* 1. Ikon Konfirmasi (Tanda Tanya) */
+.icon-save-group {
+  position: relative;
+  font-size: 4.5rem;
+  color: #4b5563;
+  animation: smoothPopIcon 0.4s ease-out backwards;
+}
+.icon-save-group .icon-base {
+  font-weight: 300;
+}
+.icon-save-group .icon-badge {
+  position: absolute;
+  bottom: -5px;
+  right: -10px;
+  font-size: 2.2rem;
+  color: #3b82f6;
+  background: white;
+  border-radius: 50%;
+  padding: 2px;
+}
+
+/* 2. Ikon Sukses (Centang Hijau) */
+.icon-success-group {
+  width: 85px;
+  height: 85px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  box-shadow: 0 0 0 6px rgba(74, 222, 128, 0.2);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: smoothPopIcon 0.4s ease-out backwards;
+}
+.icon-success-group i {
+  color: #10b981;
+  font-size: 2.8rem;
+}
+
+/* 3. Ikon Batal/Hapus (Silang Merah) */
+.icon-cancel-group {
+  width: 85px;
+  height: 85px;
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border-radius: 22px;
+  box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.2);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #ef4444;
+  font-size: 3.2rem;
+  animation: smoothPopIcon 0.4s ease-out backwards;
+}
+
+/* --- TEKS --- */
+.alert-title {
+  font-size: 1.35rem;
+  color: #1e293b;
+  font-weight: 800;
+  margin: 0 0 10px 0;
+  letter-spacing: -0.5px;
+}
+
+.alert-text {
+  font-size: 0.95rem;
+  color: #64748b;
+  margin: 0 0 30px 0;
+  line-height: 1.5;
+}
+
+/* --- TOMBOL --- */
+.alert-actions {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.alert-btn {
+  flex: 1;
+  padding: 14px 20px;
+  border-radius: 12px;
+  border: none;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  color: white;
+  transition: all 0.2s ease;
+}
+
+.btn-red {
+  background-color: #ef4444;
+}
+.btn-red:hover {
+  background-color: #dc2626;
+  transform: translateY(-2px); /* Sedikit naik saat di-hover */
+}
+
+.btn-green {
+  background-color: #10b981;
+}
+.btn-green:hover {
+  background-color: #059669;
+  transform: translateY(-2px);
+}
+
+/* =========================================
+   DAFTAR KEYFRAMES (ANIMASI RINGAN & SMOOTH)
+========================================= */
+
+@keyframes smoothFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes smoothScaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes smoothPopIcon {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

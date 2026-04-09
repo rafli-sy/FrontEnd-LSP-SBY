@@ -1,0 +1,136 @@
+/* --- CSS CEK SERTIFIKAT --- */
+.cert-page {
+  background-color: #f8fafc;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.cert-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background-color: #fff;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 15px 20px;
+  display: flex;
+  justify-content: center;
+}
+.cert-container {
+  flex: 1;
+  padding: 40px 20px;
+}
+
+.cert-card-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+.cert-card {
+  max-width: 600px;
+  width: 100%;
+  background: #fff;
+  padding: 45px;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f1f5f9;
+}
+
+.cert-icon {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 3.5rem;
+  color: #3b82f6;
+}
+.cert-title {
+  color: #0f172a;
+  font-size: 1.8rem;
+  font-weight: 800;
+  margin-bottom: 10px;
+  text-align: center;
+}
+.cert-subtitle {
+  color: #64748b;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.cert-input {
+  width: 100%;
+  padding: 16px;
+  border-radius: 8px;
+  border: 2px solid #e2e8f0;
+  font-size: 1rem;
+  outline: none;
+}
+.cert-input:focus {
+  border-color: #3b82f6;
+}
+.cert-btn {
+  padding: 16px;
+  font-size: 1.1rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  background: #1d4ed8;
+  color: #fff;
+  font-weight: bold;
+  margin-top: 15px;
+  width: 100%;
+}
+
+/* Hasil Pencarian */
+.cert-result {
+  margin-top: 30px;
+  padding: 25px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+}
+.result-valid {
+  border-color: #10b981;
+  background: #ecfdf5;
+}
+.result-invalid {
+  border-color: #ef4444;
+  background: #fef2f2;
+  text-align: center;
+}
+
+.res-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+.result-valid .res-head {
+  color: #059669;
+}
+.result-invalid .res-head {
+  color: #b91c1c;
+  justify-content: center;
+}
+
+.res-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.95rem;
+}
+.res-table td {
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+.res-table tr:last-child td {
+  border-bottom: none;
+}
+.res-table .label {
+  color: #64748b;
+  width: 40%;
+}
+.res-table .value {
+  font-weight: 700;
+  color: #1e293b;
+}
