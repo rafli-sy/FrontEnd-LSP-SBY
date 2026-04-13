@@ -1,0 +1,107 @@
+/* --- CSS DAFTAR SKEMA --- */
+.skema-page {
+  background-color: #f8fafc;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.skema-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 15px 20px;
+  display: flex;
+  justify-content: center;
+}
+
+/* Banner Judul */
+.skema-hero {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: white;
+  padding: 40px 20px 60px;
+  border-bottom: 4px solid #3b82f6;
+}
+.skema-hero-icon {
+  font-size: 3rem;
+  color: #60a5fa;
+  margin-bottom: 15px;
+}
+.skema-hero-title {
+  font-size: 2.2rem;
+  margin-bottom: 10px;
+  font-weight: 800;
+}
+.skema-hero-desc {
+  color: #cbd5e1;
+  font-size: 1rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Kartu Skema */
+.skema-content {
+  padding: 50px 20px 80px;
+  flex: 1;
+  margin-top: -30px;
+}
+.skema-card {
+  padding: 30px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.04);
+}
+.skema-card-head {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 15px;
+  margin-bottom: 15px;
+}
+.skema-card-icon {
+  background: #eff6ff;
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.5rem;
+  color: #3b82f6;
+}
+.skema-card-title {
+  font-size: 1.15rem;
+  color: #0f172a;
+  margin: 0;
+}
+
+.skema-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: #475569;
+  padding: 10px 5px;
+  font-size: 0.95rem;
+}
+.skema-item i {
+  color: #10b981;
+  margin-top: 3px;
+  font-size: 1rem;
+}
+.skema-item span {
+  font-weight: 500;
+}
+
+/* Tombol Kembali versi Gelap untuk Banner */
+.btn-back-dark {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.2);
+  margin-bottom: 30px;
+}
+.btn-back-dark:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+}

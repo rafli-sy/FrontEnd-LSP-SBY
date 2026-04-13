@@ -1,0 +1,403 @@
+/* =========================================
+   KUNCI UTAMA: MEMAKSA 1 BARIS KE SAMPING
+========================================== */
+.table-responsive-wrapper {
+  width: 100%;
+  overflow-x: auto; /* Memunculkan scroll samping jika layar sempit */
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.my-grid-table {
+  /* INI KUNCINYA: Lebar minimal agar tidak pernah menumpuk ke bawah */
+  min-width: 1350px;
+}
+
+.my-grid-header,
+.my-grid-row {
+  display: grid;
+  /* Format 5 Kolom: NO | INFO | DEPLOY | AKSI | DOC */
+  grid-template-columns: 50px 320px 380px 120px 280px;
+  gap: 20px;
+}
+
+.my-grid-header {
+  background: #f8fafc;
+  padding: 15px 20px;
+  font-weight: 700;
+  font-size: 0.75rem;
+  color: #64748b;
+  border-bottom: 1px solid #e2e8f0;
+  text-transform: uppercase;
+}
+
+.my-grid-row {
+  padding: 25px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  align-items: flex-start;
+}
+.my-grid-row.editing {
+  background-color: #fffbeb;
+  border-left: 4px solid #f59e0b;
+}
+
+/* =========================================
+   STYLING KOLOM
+========================================== */
+/* NO */
+.circle-number {
+  width: 32px;
+  height: 32px;
+  background-color: #eff6ff;
+  color: #3b82f6;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+}
+
+/* INFO & VALIDASI EXCEL */
+.col-info {
+  display: flex;
+  flex-direction: column;
+}
+.sm-instansi {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.05rem;
+  color: #0f172a;
+  margin-bottom: 5px;
+}
+.sm-badge-blue {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+  padding: 4px 8px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: bold;
+}
+.sm-skema-title {
+  font-weight: 700;
+  color: #334155;
+  font-size: 0.95rem;
+  margin-bottom: 3px;
+}
+.sm-skema-meta {
+  color: #64748b;
+  font-size: 0.8rem;
+  margin-bottom: 10px;
+}
+
+.file-verify-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 0.8rem;
+}
+.file-item {
+  color: #334155;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.validation-badge {
+  margin-top: 5px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 0.75rem;
+  display: inline-block;
+}
+.validation-badge.valid {
+  background: #d1fae5;
+  color: #065f46;
+}
+.validation-badge.invalid {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* DEPLOYMENT & FORM MAPPING */
+.col-deploy {
+  display: flex;
+  flex-direction: column;
+}
+.deploy-info {
+  background: #f8fafc;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  font-size: 0.85rem;
+  color: #334155;
+}
+.deploy-item {
+  margin-bottom: 5px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.edit-deploy-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.edit-label {
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #b45309;
+}
+.edit-input {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  outline: none;
+}
+.btn-select-modal {
+  width: 100%;
+  padding: 8px 10px;
+  background: white;
+  border: 1px dashed #3b82f6;
+  color: #3b82f6;
+  border-radius: 4px;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+/* AKSI */
+.col-action {
+  display: flex;
+  flex-direction: column;
+}
+.w-full {
+  width: 100%;
+}
+.mt-5 {
+  margin-top: 8px;
+}
+.btn-save-sm {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 0.85rem;
+  transition: 0.2s;
+}
+.btn-save-sm:hover {
+  background: #059669;
+}
+.btn-cancel-sm {
+  background: #e2e8f0;
+  color: #475569;
+  border: none;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 0.85rem;
+}
+.btn-edit-outline {
+  background: white;
+  color: #3b82f6;
+  border: 1px solid #3b82f6;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 0.85rem;
+}
+.btn-tolak-outline {
+  background: white;
+  color: #ef4444;
+  border: 1px solid #ef4444;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 0.85rem;
+}
+
+/* STATUS DOKUMEN */
+.col-doc {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.status-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+.status-pill.done {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+.status-pill.pending {
+  background-color: #f8fafc;
+  color: #94a3b8;
+  border-color: #e2e8f0;
+}
+
+/* =========================================
+   MODAL & ASESOR FILTER CERDAS
+========================================== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+}
+.modal-large {
+  width: 850px;
+  max-width: 95vw;
+  background: #f8fafc;
+}
+.modal-header {
+  padding: 20px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+}
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #64748b;
+}
+.modal-body {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.asesor-filter-bar {
+  display: flex;
+  gap: 15px;
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 15px;
+}
+.filter-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.asesor-list-info {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-bottom: 15px;
+}
+
+.asesor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+}
+.asesor-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  position: relative;
+}
+.asesor-card.prioritas {
+  border: 2px solid #10b981;
+  background: #f0fdf4;
+}
+.badge-prioritas {
+  position: absolute;
+  top: -10px;
+  right: 15px;
+  background: #10b981;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+.ac-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+  border-bottom: 1px dashed #e2e8f0;
+  padding-bottom: 10px;
+}
+.ac-title h4 {
+  margin: 0 0 4px 0;
+  font-size: 1.1rem;
+  color: #0f172a;
+}
+.ac-title p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: bold;
+}
+.status-badge {
+  font-size: 0.7rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+.status-badge.hijau {
+  background: #d1fae5;
+  color: #065f46;
+}
+.status-badge.merah {
+  background: #fee2e2;
+  color: #991b1b;
+}
+.ac-body {
+  margin-bottom: 15px;
+}
+.ac-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.ac-stats {
+  background: #f8fafc;
+  color: #475569;
+  font-size: 0.85rem;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}

@@ -1,0 +1,219 @@
+/* ==========================================================
+   LAYOUT UTAMA BUKU INDUK
+============================================================= */
+.dashboard-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.dashboard-card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+/* --- TAMPILAN SAAT DI-EMBED KE DASHBOARD LAIN --- */
+.embedded-buku-induk {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 100%;
+}
+
+.embedded-header-title {
+  margin: 0 0 4px 0;
+  color: #0f172a;
+  font-size: 1.25rem;
+  border-left: 4px solid #3b82f6;
+  padding-left: 10px;
+}
+
+/* ==========================================================
+   TABEL PEMANTAUAN (BUKU INDUK) 
+============================================================= */
+.buku-induk-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  /* Gunakan 60vh agar tidak melebihi layar saat di-embed bersama statistik */
+  max-height: 60vh;
+  overflow-y: auto;
+  border-radius: inherit;
+  background: #ffffff;
+}
+
+/* Kustomisasi Scrollbar agar Elegan */
+.buku-induk-table-wrapper::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.buku-induk-table-wrapper::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 0 0 16px 16px;
+}
+.buku-induk-table-wrapper::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+.buku-induk-table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.buku-induk-table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: separate; /* Wajib untuk sticky */
+  border-spacing: 0;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+/* --- STICKY HEADER FIX --- */
+.buku-induk-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: #1e293b;
+  color: #ffffff;
+  text-align: center;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 12px 15px;
+  border-bottom: 1px solid #334155;
+  border-right: 1px solid #334155;
+}
+
+/* Mengunci tinggi baris pertama agar baris kedua presisi */
+.buku-induk-table thead tr:first-child th {
+  height: 48px;
+}
+
+/* Baris ke-2 Header */
+.buku-induk-table thead tr:nth-child(2) th {
+  top: 48px; /* Sama dengan height baris pertama */
+  background-color: #334155;
+  font-size: 0.8rem;
+  z-index: 9;
+}
+
+/* --- ISI TABEL --- */
+.buku-induk-table td {
+  border-bottom: 1px solid #e2e8f0;
+  border-right: 1px solid #e2e8f0;
+  padding: 12px 15px;
+  vertical-align: middle;
+}
+.buku-induk-table th:first-child,
+.buku-induk-table td:first-child {
+  border-left: 1px solid #e2e8f0;
+}
+
+.buku-induk-table tbody tr:nth-child(even) {
+  background-color: #f8fafc;
+}
+.buku-induk-table tbody tr:hover {
+  background-color: #f1f5f9;
+}
+
+/* --- LEBAR KOLOM --- */
+.col-skema {
+  min-width: 260px;
+  white-space: normal;
+  line-height: 1.4;
+}
+.col-asesor {
+  min-width: 170px;
+  white-space: normal;
+  line-height: 1.4;
+}
+.col-date {
+  min-width: 140px;
+}
+
+/* ==========================================================
+   TOMBOL & INTERAKSI (KHUSUS ADMIN LSP & STAFF)
+============================================================= */
+.btn-asesor-pilih {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 700;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+.btn-asesor-pilih:hover {
+  background-color: #ef4444;
+  color: #ffffff;
+}
+
+.btn-asesor-terpilih {
+  background-color: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+.btn-asesor-terpilih:hover {
+  background-color: #10b981;
+  color: #ffffff;
+}
+
+/* --- UTILITAS TEKS & WARNA --- */
+.text-center {
+  text-align: center;
+}
+.font-bold {
+  font-weight: 700;
+}
+.text-green-600 {
+  color: #16a34a;
+  font-size: 1rem;
+}
+.text-red-600 {
+  color: #dc2626;
+  font-size: 1rem;
+}
+
+.icon-status-check {
+  color: #10b981;
+  font-size: 1.3rem;
+}
+.icon-status-cross {
+  color: #ef4444;
+  font-size: 1.3rem;
+}
+
+.badge {
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: inline-block;
+}
+.badge.info {
+  background-color: #e0f2fe;
+  color: #0284c7;
+}
+.badge.success {
+  background-color: #d1fae5;
+  color: #059669;
+}

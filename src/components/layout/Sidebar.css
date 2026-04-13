@@ -1,0 +1,533 @@
+/* --- ANIMASI SIDEBAR --- */
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-40px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulseStatus {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+/* --- KOTAK SIDEBAR UTAMA --- */
+.sidebar {
+  width: 280px;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-right: 1px solid rgba(0, 0, 0, 0.03);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.02);
+  animation: slideInLeft 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  z-index: 10;
+}
+
+.sidebar-top {
+  padding: 25px 0;
+  overflow-y: auto;
+}
+.sidebar-bottom {
+  padding: 25px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, #ffffff 100%);
+}
+
+/* --- LOGO --- */
+.sidebar-logo {
+  padding: 0 25px 25px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+.sidebar-logo img {
+  width: 44px;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.sidebar-logo:hover img {
+  transform: scale(1.1) rotate(-5deg);
+}
+.brand {
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: #0f172a;
+  letter-spacing: -0.3px;
+}
+
+/* --- MENU NAVIGASI --- */
+.menu-label {
+  padding: 15px 30px 5px;
+  font-size: 0.7rem;
+  color: #94a3b8;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.sidebar-nav a {
+  display: flex;
+  align-items: center;
+  padding: 14px 30px;
+  margin: 4px 0;
+  color: #64748b;
+  text-decoration: none;
+  font-weight: 500;
+  gap: 14px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-left: 4px solid transparent;
+}
+.sidebar-nav a i {
+  font-size: 1.15rem;
+  width: 22px;
+  text-align: center;
+  transition: transform 0.3s ease;
+}
+.sidebar-nav a:hover:not(.active-link) {
+  background-color: #f8fafc;
+  color: #2563eb;
+  padding-left: 36px;
+}
+
+.active-link {
+  background: linear-gradient(
+    90deg,
+    #eff6ff 0%,
+    rgba(255, 255, 255, 0) 100%
+  ) !important;
+  color: #2563eb !important;
+  font-weight: 600;
+  border-left: 4px solid #3b82f6 !important;
+}
+.active-link i {
+  color: #2563eb;
+  transform: scale(1.15);
+}
+
+/* --- PROFIL KOTAK BAWAH --- */
+.profile-switch-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 15px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+  transition: all 0.3s ease;
+}
+
+.user-profile-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 10px 15px;
+  border-bottom: 1px dashed #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.user-profile-info:hover {
+  background-color: #e0f2fe;
+}
+
+.user-avatar-wrapper {
+  position: relative;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  overflow: hidden;
+  background-color: #f1f5f9;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+}
+.user-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.user-avatar-icon {
+  font-size: 30px;
+  color: #cbd5e1;
+}
+
+.status-indicator {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 12px;
+  height: 12px;
+  background-color: #10b981;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  animation: pulseStatus 2.5s infinite;
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.user-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+.user-role-text {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+/* --- DROPDOWN GANTI AKSES ROLE --- */
+.switch-role-container {
+  position: relative;
+  width: 100%;
+}
+
+.switch-role-ui {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #475569;
+  background-color: #f8fafc;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.switch-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.switch-left i {
+  color: #64748b;
+  font-size: 0.9rem;
+  transition: 0.3s;
+}
+.arrow-icon {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.switch-role-ui:hover,
+.switch-role-ui.active {
+  background-color: #eff6ff;
+  color: #2563eb;
+  border-color: #bfdbfe;
+}
+.switch-role-ui:hover .switch-left i,
+.switch-role-ui.active .switch-left i,
+.switch-role-ui:hover .arrow-icon,
+.switch-role-ui.active .arrow-icon {
+  color: #2563eb;
+}
+.switch-role-ui.active .switch-left i {
+  transform: rotate(180deg);
+}
+
+.custom-role-dropdown {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 0;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow:
+    0 -4px 24px rgba(0, 0, 0, 0.08),
+    0 0 1px rgba(0, 0, 0, 0.1);
+  padding: 6px;
+  z-index: 100;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px) scale(0.98);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: bottom center;
+}
+.custom-role-dropdown.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+.dropdown-header {
+  font-size: 0.65rem;
+  color: #94a3b8;
+  padding: 8px 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.dropdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.role-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+.role-option:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+.role-option.active-role {
+  background-color: #eff6ff;
+  color: #2563eb;
+  font-weight: 700;
+}
+.check-icon {
+  color: #2563eb;
+  font-size: 0.85rem;
+  animation: fadeInScale 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* --- TOMBOL KELUAR --- */
+.logout-btn-premium {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background-color: #ffffff;
+  color: #ef4444;
+  padding: 14px;
+  border-radius: 14px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+  border: 1px solid #fecaca;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.logout-btn-premium:hover {
+  background-color: #ef4444;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+}
+
+/* --- MODAL EDIT PROFIL --- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeInScale 0.2s ease-out forwards;
+}
+
+.modal-content {
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 16px;
+  width: 400px;
+  max-width: 90%;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+.modal-content h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #0f172a;
+  text-align: center;
+}
+
+.avatar-upload-section {
+  text-align: center;
+  margin: 20px 0 30px;
+}
+.avatar-upload-wrapper {
+  cursor: pointer;
+  position: relative;
+  display: inline-block;
+}
+.avatar-preview-container {
+  width: 85px;
+  height: 85px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid #3b82f6;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f1f5f9;
+}
+.avatar-preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+.avatar-placeholder-icon {
+  font-size: 85px;
+  color: #cbd5e1;
+}
+
+.avatar-camera-icon {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: #3b82f6;
+  color: #ffffff;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 14px;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.avatar-upload-text {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 8px;
+  font-weight: 500;
+}
+
+.form-group {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+.form-group label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 6px;
+}
+.form-input {
+  padding: 10px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  color: #1f2937;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+  font-family: inherit;
+}
+.form-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+.form-input:disabled {
+  background-color: #f1f5f9;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 25px;
+}
+.btn-action {
+  flex: 1;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.btn-action:hover {
+  background-color: #2563eb;
+}
+.btn-cancel {
+  flex: 1;
+  background-color: #f1f5f9;
+  color: #ef4444;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.btn-cancel:hover {
+  background-color: #fee2e2;
+}
+
+/* --- TOMBOL TUTUP SIDEBAR (Khusus Mobile) --- */
+.sidebar-close-btn {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #94a3b8;
+  cursor: pointer;
+  margin-left: auto;
+  transition: color 0.2s;
+}
+
+.sidebar-close-btn:hover {
+  color: #ef4444;
+}
+
+/* ==========================================================
+   RESPONSIVE DESIGN (TABLET & MOBILE)
+============================================================= */
+@media (max-width: 992px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: -100%; /* Sembunyikan di luar layar */
+    height: 100vh;
+    width: 280px;
+    z-index: 999; /* Pastikan di atas overlay, di bawah alert */
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 10px 0 25px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Muncul saat state isSidebarOpen bernilai true */
+  .sidebar.open {
+    left: 0;
+  }
+
+  .sidebar-close-btn {
+    display: block;
+  }
+}
