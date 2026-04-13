@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Button from '../../../components/ui/Button';
-import Modal from '../../../components/ui/AlertPopup';
+import Modal from '../../../components/ui/Modal'; // <-- BUG FIX IMPORT SEBELUMNYA
+import AlertPopup from '../../../components/ui/AlertPopup'; // <-- IMPORT BARU
 import './DataTUK.css';
 
 const DataTUK = () => {
@@ -14,6 +15,26 @@ const DataTUK = () => {
   const [modalMode, setModalMode] = useState('create');
   const [searchQuery, setSearchQuery] = useState('');
   const [formData, setFormData] = useState({ id: null, kode: '', nama: '', jenis: 'Sewaktu', lokasi: '', kapasitas: '', status: 'Aktif' });
+
+  // --- LOGIKA ALERT POPUP ---
+  const [alertConfig, setAlertConfig] = useState({ type: null, title: '', text: '', action: null });
+
+  const showAlert = (type, title, text, action = null) => {
+    setAlertConfig({ type, title, text, action });
+    if (type === 'success' || type === 'warning' || type === 'info') {
+      setTimeout(() => setAlertConfig({ type: null, title: '', text: '', action: null }), 2000);
+    }
+  };
+
+  const handleConfirmAlert = () => {
+    if (alertConfig.action) alertConfig.action();
+    setAlertConfig({ type: null, title: '', text: '', action: null });
+  };
+
+  const handleCancelAlert = () => {
+    setAlertConfig({ type: null, title: '', text: '', action: null });
+  };
+  // -------------------------
 
   const handleInputChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -30,29 +51,34 @@ const DataTUK = () => {
   };
 
   const handleDelete = (id) => {
-    if (window.confirm('Yakin ingin menghapus data TUK ini?')) {
+    showAlert('delete', 'Hapus TUK', 'Yakin ingin menghapus data TUK ini?', () => {
       setTukList(tukList.filter(item => item.id !== id));
-    }
+      showAlert('success', 'Berhasil', 'Data TUK telah dihapus.');
+    });
   };
 
-  // POP-UP KONFIRMASI SIMPAN
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (window.confirm('Apakah Anda yakin ingin menyimpan perubahan data TUK ini?')) {
+    showAlert('save', 'Simpan TUK', 'Apakah Anda yakin ingin menyimpan perubahan data TUK ini?', () => {
       if (modalMode === 'create') {
         setTukList([...tukList, { ...formData, id: Date.now() }]);
       } else {
         setTukList(tukList.map(item => item.id === formData.id ? formData : item));
       }
       setIsModalOpen(false);
-      alert('Data TUK berhasil disimpan!');
-    }
+      showAlert('success', 'Berhasil!', 'Data TUK berhasil disimpan!');
+    });
   };
 
   const filteredTUK = tukList.filter(tuk => tuk.nama.toLowerCase().includes(searchQuery.toLowerCase()) || tuk.kode.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
     <div className="dashboard-content fade-in-content">
+      
+      {alertConfig.type && (
+        <AlertPopup type={alertConfig.type} title={alertConfig.title} text={alertConfig.text} onConfirm={handleConfirmAlert} onCancel={handleCancelAlert} />
+      )}
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '20px' }}>
         <div>
           <h2>Data Tempat Uji Kompetensi (TUK)</h2>
@@ -135,7 +161,7 @@ const DataTUK = () => {
           </div>
           
           <div style={{ display: 'flex', gap: '10px' }}>
-            <Button variant="outline" onClick={() => setIsModalOpen(false)} style={{ flex: 1 }}>Batal</Button>
+            <Button variant="outline" onClick={() => setIsModalOpen(false)} style={{ flex: 1 }} type="button">Batal</Button>
             <Button type="submit" variant="success" icon="save" style={{ flex: 1 }}>Simpan Data</Button>
           </div>
         </form>

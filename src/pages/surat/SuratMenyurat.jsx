@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import Button from '../../components/ui/Button';
 import Modal from '../../components/ui/Modal'; 
+import AlertPopup from '../../components/ui/AlertPopup'; // <-- IMPORT ALERT POPUP
 import SuratPermohonan from './SuratPermohonan'; 
 import SuratTugas from './SuratTugas'; 
+import SuratBalasan from './SuratBalasan'; // <-- IMPORT SURAT BALASAN BARU
 import TemplateAdministrasi from './TemplateAdministrasi';
 import './SuratMenyurat.css';
 
@@ -14,7 +16,8 @@ const SuratMenyurat = () => {
       asesor1: 'Wasini, SE, MM', noReg1: 'MET.000.001668.2012', asalDaerah1: 'Ponorogo',
       asesor2: 'Endang Lestari', noReg2: 'MET.000.011411 2019', asalDaerah2: 'Jombang',
       penyelia: 'Miftahul Huda',
-      statusSurat: { permohonan: false, tugas: false, administrasi: [] }
+      // DITAMBAHKAN: balasan: false
+      statusSurat: { balasan: false, permohonan: false, tugas: false, administrasi: [] }
     },
     {
       idUjk: 'UJK-002', pengusul: 'UPT BLK Wonojati', pendanaan: 'APBD', skema: 'Barista', bidang: 'Pariwisata', asesi: 16,
@@ -22,11 +25,10 @@ const SuratMenyurat = () => {
       asesor1: '', noReg1: '', asalDaerah1: '',
       asesor2: '', noReg2: '', asalDaerah2: '',
       penyelia: '',
-      statusSurat: { permohonan: false, tugas: false, administrasi: [] }
+      statusSurat: { balasan: false, permohonan: false, tugas: false, administrasi: [] }
     }
   ]);
 
-  // DAFTAR 12 DOKUMEN ADMINISTRASI BARU (Sesuai List)
   const dokumenAdministrasiList = [
     { code: 'DOC.01', name: 'Laporan Penyelia' },
     { code: 'DOC.02', name: 'BA Baru' },
@@ -47,13 +49,38 @@ const SuratMenyurat = () => {
   const [selectedUjk, setSelectedUjk] = useState(null);
   const [formData, setFormData] = useState({});
   const [previewDokumen, setPreviewDokumen] = useState(null);
-  
   const [viewAdminUjk, setViewAdminUjk] = useState(null);
+
+  // ========================================================
+  // SISTEM MANAJEMEN ALERT POPUP (ANTI-STUCK / ANTI-PUTIH)
+  // ========================================================
+  const [alertConfig, setAlertConfig] = useState({ type: null, title: '', text: '', action: null });
+
+  const showSuccess = (title, text) => {
+    setAlertConfig({ type: 'success', title, text, action: null });
+    setTimeout(() => {
+      setAlertConfig({ type: null, title: '', text: '', action: null });
+    }, 2000);
+  };
+
+  const confirmAction = (title, text, actionFn) => {
+    setAlertConfig({ type: 'save', title, text, action: actionFn });
+  };
+
+  const handleConfirmAlert = () => {
+    const actionToRun = alertConfig.action;
+    if (actionToRun) {
+      actionToRun();
+    } else {
+      setAlertConfig({ type: null, title: '', text: '', action: null });
+    }
+  };
+  // ========================================================
 
   const handleOpenForm = (item, jenis) => {
     setSelectedUjk(item);
     setFormType(jenis);
-    setFormData({ noSurat: `000.140${jenis === 'tugas' ? 'D' : 'A'}/LSP BLK-SBY/III/2026`, tanggalSurat: '11 Maret 2026' });
+    setFormData({ noSurat: `000.140${jenis === 'tugas' ? 'D' : 'A'}/LSP BLK-SBY/III/2026`, tanggalSurat: '11 Maret 2026', noSuratMasuk: '', tanggalSuratMasuk: '' });
     setIsFormOpen(true);
   };
 
@@ -66,9 +93,10 @@ const SuratMenyurat = () => {
       ...formData,
       tempat: selectedUjk.tuk,
       waktu: selectedUjk.waktu,
-      kepadaTujuan: `Kepala UPT BLK ${selectedUjk.asalDaerah2 || selectedUjk.asalDaerah1}`
+      kepadaTujuan: selectedUjk.pengusul.replace('UPT BLK', 'UPT Balai Latihan Kerja') // Lebih formal untuk balasan
     };
     setPreviewDokumen({ dataUjk: selectedUjk, jenis: formType, formData: completeFormData });
+    showSuccess('Template Siap', 'Silakan periksa pratinjau sebelum mencetak dokumen.');
   };
 
   const handleGenerateAdminDoc = (doc) => {
@@ -110,10 +138,22 @@ const SuratMenyurat = () => {
 
     window.print();
     setPreviewDokumen(null);
+    showSuccess('Berhasil!', 'Dokumen telah dicetak dan status progres tersimpan.');
   };
 
   return (
     <div className="dashboard-content fade-in-content">
+      
+      {alertConfig.type && (
+        <AlertPopup
+          type={alertConfig.type}
+          title={alertConfig.title}
+          text={alertConfig.text}
+          onConfirm={handleConfirmAlert}
+          onCancel={() => setAlertConfig({ type: null, title: '', text: '', action: null })}
+        />
+      )}
+
       {previewDokumen ? (
         <div className="print-preview-container">
           <div className="no-print print-header">
@@ -123,11 +163,18 @@ const SuratMenyurat = () => {
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
               <Button variant="outline" icon="arrow-left" onClick={() => setPreviewDokumen(null)}>Kembali</Button>
-              <Button variant="success" icon="print" onClick={handleTandaiSelesai}>Cetak Dokumen</Button>
+              <Button 
+                variant="success" 
+                icon="print" 
+                onClick={() => confirmAction('Konfirmasi Cetak', 'Apakah Anda yakin ingin mencetak dan menyimpan status dokumen ini?', handleTandaiSelesai)}
+              >
+                Cetak Dokumen
+              </Button>
             </div>
           </div>
 
           <div id="print-area">
+            {previewDokumen.jenis === 'balasan' && <SuratBalasan data={{ ujk: previewDokumen.dataUjk, form: previewDokumen.formData }} />}
             {previewDokumen.jenis === 'tugas' && <SuratTugas data={{ ujk: previewDokumen.dataUjk, form: previewDokumen.formData }} />}
             {previewDokumen.jenis === 'permohonan' && <SuratPermohonan data={{ ujk: previewDokumen.dataUjk, form: previewDokumen.formData }} />}
             {previewDokumen.jenis === 'administrasi' && <TemplateAdministrasi data={{ ujk: previewDokumen.dataUjk, docName: previewDokumen.docData.name, docCode: previewDokumen.docData.code }} />}
@@ -200,7 +247,6 @@ const SuratMenyurat = () => {
 
               {antreanSurat.map((item, index) => {
                 const isPlotted = item.asesor1 !== '' && item.penyelia !== '';
-                
                 const adminDocsCount = item.statusSurat.administrasi?.length || 0;
                 const isAdministrasiDone = adminDocsCount === dokumenAdministrasiList.length;
 
@@ -234,22 +280,32 @@ const SuratMenyurat = () => {
                     </div>
 
                     <div className="col-doc">
+                      {/* TOMBOL BARU: 1. SURAT BALASAN */}
+                      <button 
+                        className={`doc-pill ${!isPlotted ? 'disabled' : item.statusSurat.balasan ? 'done' : 'action'}`}
+                        onClick={() => isPlotted && handleOpenForm(item, 'balasan')}
+                        disabled={!isPlotted}
+                      >
+                        <i className={`fas ${!isPlotted ? 'fa-lock' : item.statusSurat.balasan ? 'fa-check-circle' : 'fa-reply'}`}></i> 
+                        1. Surat Balasan BLK
+                      </button>
+
                       <button 
                         className={`doc-pill ${!isPlotted ? 'disabled' : item.statusSurat.tugas ? 'done' : 'action'}`}
-                        onClick={() => isPlotted && !item.statusSurat.tugas && handleOpenForm(item, 'tugas')}
+                        onClick={() => isPlotted && handleOpenForm(item, 'tugas')}
                         disabled={!isPlotted}
                       >
                         <i className={`fas ${!isPlotted ? 'fa-lock' : item.statusSurat.tugas ? 'fa-check-circle' : 'fa-file-signature'}`}></i> 
-                        1. Surat Tugas (SPT) Asesor
+                        2. Surat Tugas (SPT)
                       </button>
 
                       <button 
                         className={`doc-pill ${!isPlotted ? 'disabled' : item.statusSurat.permohonan ? 'done' : 'action'}`}
-                        onClick={() => isPlotted && !item.statusSurat.permohonan && handleOpenForm(item, 'permohonan')}
+                        onClick={() => isPlotted && handleOpenForm(item, 'permohonan')}
                         disabled={!isPlotted}
                       >
                         <i className={`fas ${!isPlotted ? 'fa-lock' : item.statusSurat.permohonan ? 'fa-check-circle' : 'fa-envelope-open-text'}`}></i> 
-                        2. Surat Permohonan Asesor
+                        3. Surat Permohonan
                       </button>
                       
                       <button 
@@ -259,7 +315,7 @@ const SuratMenyurat = () => {
                         style={{ marginTop: '5px' }}
                       >
                         <i className={`fas ${!isPlotted ? 'fa-lock' : isAdministrasiDone ? 'fa-check-circle' : 'fa-folder-open'}`}></i> 
-                        3. Administrasi
+                        4. Administrasi Dokumen
                       </button>
                     </div>
                   </div>
@@ -271,7 +327,7 @@ const SuratMenyurat = () => {
       )}
 
       {/* --- POP-UP MODAL FORM ISIAN --- */}
-      <Modal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} title={`Formulir Redaksional: ${formType === 'tugas' ? 'Surat Tugas (SPT)' : 'Surat Permohonan'}`}>
+      <Modal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} title={`Formulir Redaksional: ${formType === 'balasan' ? 'Surat Balasan' : formType === 'tugas' ? 'Surat Tugas (SPT)' : 'Surat Permohonan'}`}>
         <div style={{ backgroundColor: '#eff6ff', padding: '15px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #bfdbfe' }}>
           <p style={{ margin: 0, fontSize: '0.9rem', color: '#1e3a8a' }}>
             <i className="fas fa-info-circle"></i> <strong>Sistem Otomatis:</strong> Data Tujuan, Tempat, dan Waktu telah ditarik secara otomatis dari pengajuan Admin BLK.
@@ -280,19 +336,33 @@ const SuratMenyurat = () => {
 
         <form onSubmit={handleGenerateSurat}>
           <div className="form-group" style={{ marginBottom: '15px' }}>
-            <label>Nomor Surat (Dapat Diedit)</label>
+            <label>Nomor Surat LSP</label>
             <input type="text" className="form-input" name="noSurat" value={formData.noSurat || ''} onChange={handleInputChange} required />
           </div>
-          <div className="form-group" style={{ marginBottom: '25px' }}>
-            <label>Tanggal Dikeluarkan Surat (Dapat Diedit)</label>
+          <div className="form-group" style={{ marginBottom: '20px' }}>
+            <label>Tanggal Dikeluarkan Surat</label>
             <input type="text" className="form-input" name="tanggalSurat" value={formData.tanggalSurat || ''} onChange={handleInputChange} required />
           </div>
 
+          {/* INPUT TAMBAHAN KHUSUS SURAT BALASAN */}
+          {formType === 'balasan' && (
+            <div style={{ padding: '15px', backgroundColor: '#fef2f2', border: '1px dashed #fca5a5', borderRadius: '8px', marginBottom: '20px' }}>
+              <div className="form-group" style={{ marginBottom: '15px' }}>
+                <label style={{ color: '#991b1b', fontWeight: 'bold' }}>Nomor Surat Masuk (Dari BLK)</label>
+                <input type="text" className="form-input" name="noSuratMasuk" value={formData.noSuratMasuk || ''} onChange={handleInputChange} placeholder="Contoh: 500.15/2026" required />
+              </div>
+              <div className="form-group">
+                <label style={{ color: '#991b1b', fontWeight: 'bold' }}>Tanggal Surat Masuk</label>
+                <input type="text" className="form-input" name="tanggalSuratMasuk" value={formData.tanggalSuratMasuk || ''} onChange={handleInputChange} placeholder="Contoh: 12 Maret 2026" required />
+              </div>
+            </div>
+          )}
+
           <div style={{ padding: '15px', backgroundColor: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: '8px', marginBottom: '25px' }}>
-            {formType === 'permohonan' && (
+            {(formType === 'permohonan' || formType === 'balasan') && (
               <div className="form-group" style={{ marginBottom: '15px' }}>
                 <label>Tujuan Surat (Kepada Yth:)</label>
-                <input type="text" className="form-input" value={`Kepala UPT BLK ${selectedUjk?.asalDaerah2 || selectedUjk?.asalDaerah1 || '...'}`} readOnly style={{backgroundColor: '#e2e8f0', cursor: 'not-allowed'}} />
+                <input type="text" className="form-input" value={`Kepala ${selectedUjk?.pengusul || '...'}`} readOnly style={{backgroundColor: '#e2e8f0', cursor: 'not-allowed'}} />
               </div>
             )}
 
