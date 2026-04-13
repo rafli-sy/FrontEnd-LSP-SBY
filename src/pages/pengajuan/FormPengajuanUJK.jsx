@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react'; // <-- Penambahan useRef
 import TablePeserta from '../TablePeserta/TablePeserta'; 
 import Button from '../../components/ui/Button'; 
-import AlertPopup from '../../components/ui/AlertPopup'; // <-- Tambahan
+import AlertPopup from '../../components/ui/AlertPopup';
 
 const FormPengajuanUJK = () => {
   const [showForm, setShowForm] = useState(false);
   const [selectedPeserta, setSelectedPeserta] = useState(null); 
-  const [alert, setAlert] = useState(null); // <-- State Pop-up
+  const [alert, setAlert] = useState(null);
+  
+  // <-- TAMBAHAN: Menyimpan referensi timer agar bisa digagalkan kapan saja
+  const alertTimer = useRef(null); 
   
   const [usulan, setUsulan] = useState([
     { 
@@ -18,7 +21,6 @@ const FormPengajuanUJK = () => {
     }
   ]);
 
-  // Data Skema Master (Ditambah properti 'jenis')
   const masterSkema = [
     { judul: 'Barista', kejuruan: 'Pariwisata', jenis: 'Klaster' },
     { judul: 'Pembuatan Roti Dan Kue', kejuruan: 'Pariwisata', jenis: 'Klaster' },
@@ -30,42 +32,50 @@ const FormPengajuanUJK = () => {
   const [formData, setFormData] = useState({ tuk: '', nomorSurat: '', pendanaan: '' });
   const [skemaUsulan, setSkemaUsulan] = useState([{ id: Date.now(), skema: '', tglMulai: '', tglSelesai: '', jumlahAsesi: '' }]);
 
-  const closeAlert = () => setAlert(null);
+  // <-- PERBAIKAN: Fungsi Close Alert aman (hapus timer agar tidak tumpang tindih)
+  const closeAlert = () => {
+    setAlert(null);
+    if (alertTimer.current) clearTimeout(alertTimer.current);
+  };
 
   const handleInputGlobalChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
   const handleAddSkema = () => setSkemaUsulan([...skemaUsulan, { id: Date.now(), skema: '', tglMulai: '', tglSelesai: '', jumlahAsesi: '' }]);
   const handleRemoveSkema = (id) => setSkemaUsulan(skemaUsulan.filter(s => s.id !== id));
   const handleSkemaChange = (id, field, value) => setSkemaUsulan(skemaUsulan.map(s => s.id === id ? { ...s, [field]: value } : s));
 
-  // Fungsi Simulasi Membaca File Excel
+  // <-- PERBAIKAN: Reset File Upload & Timeout Aman
   const handleExcelUpload = (id, e) => {
     const file = e.target.files[0];
     if (file) {
-      // Simulasi sistem menghitung jumlah baris di Excel (misal antara 15 - 25 peserta)
       const simulatedCount = Math.floor(Math.random() * 11) + 15; 
       handleSkemaChange(id, 'jumlahAsesi', simulatedCount);
       
       setAlert({ 
         type: 'success', 
         title: 'File Terbaca!', 
-        text: `Sistem menemukan ${simulatedCount} data calon asesi dari file Excel.` 
+        text: `Sistem menemukan ${simulatedCount} data calon asesi dari file Excel.`,
+        onCancel: closeAlert // <-- Prop onCancel ditambahkan
       });
-      setTimeout(() => setAlert(null), 2500);
+      
+      if (alertTimer.current) clearTimeout(alertTimer.current);
+      alertTimer.current = setTimeout(() => closeAlert(), 2500);
     }
+    e.target.value = null; // <-- Reset input value agar file yang sama bisa di-upload ulang
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (skemaUsulan.some(s => !s.skema || !s.tglMulai || !s.tglSelesai || !s.jumlahAsesi)) {
-       // Peringatan jika belum lengkap
+       // <-- PERBAIKAN: Menggunakan tipe 'warning' agar tidak memunculkan dua tombol konfirmasi
        setAlert({
-         type: 'cancel', title: 'Data Belum Lengkap', text: 'Mohon isi seluruh bidang form, termasuk upload file Excel.',
-         onConfirm: closeAlert, onCancel: closeAlert
+         type: 'warning', 
+         title: 'Data Belum Lengkap', 
+         text: 'Mohon isi seluruh bidang form, termasuk upload file Excel.',
+         onCancel: closeAlert 
        });
        return;
     }
     
-    // Pop-up Konfirmasi Simpan
     setAlert({
       type: 'save',
       title: 'Kirim Pengajuan?',
@@ -88,9 +98,14 @@ const FormPengajuanUJK = () => {
         setFormData({ tuk: '', nomorSurat: '', pendanaan: '' });
         setSkemaUsulan([{ id: Date.now(), skema: '', tglMulai: '', tglSelesai: '', jumlahAsesi: '' }]);
         
-        // Notifikasi Sukses
-        setAlert({ type: 'success', title: 'Terkirim!', text: 'Pengajuan UJK berhasil dikirim ke LSP.' });
-        setTimeout(() => setAlert(null), 2000);
+        setAlert({ 
+          type: 'success', 
+          title: 'Terkirim!', 
+          text: 'Pengajuan UJK berhasil dikirim ke LSP.',
+          onCancel: closeAlert // <-- Prop onCancel
+        });
+        if (alertTimer.current) clearTimeout(alertTimer.current);
+        alertTimer.current = setTimeout(() => closeAlert(), 2000);
       },
       onCancel: closeAlert
     });
@@ -101,8 +116,14 @@ const FormPengajuanUJK = () => {
       type: 'delete', title: 'Batalkan Pengajuan?', text: 'Pengajuan yang belum diproses akan ditarik kembali.',
       onConfirm: () => {
         setUsulan(usulan.filter(u => u.id !== id));
-        setAlert({ type: 'success', title: 'Dibatalkan!', text: 'Pengajuan berhasil ditarik.' });
-        setTimeout(() => setAlert(null), 2000);
+        setAlert({ 
+          type: 'success', 
+          title: 'Dibatalkan!', 
+          text: 'Pengajuan berhasil ditarik.',
+          onCancel: closeAlert // <-- Prop onCancel
+        });
+        if (alertTimer.current) clearTimeout(alertTimer.current);
+        alertTimer.current = setTimeout(() => closeAlert(), 2000);
       },
       onCancel: closeAlert
     });
@@ -142,10 +163,9 @@ const FormPengajuanUJK = () => {
             <div className="form-container-main fade-in-content">
               <form className="admin-form" onSubmit={handleSubmit}>
                 
-                {/* --- LANGKAH 1: DATA GLOBAL --- */}
                 <div className="form-section">
                   <div className="section-header">
-                    <div className="step-badge">1</div>
+                    <div className="step-badge"></div>
                     <div>
                       <h3 className="section-title">Data Surat & Administrasi Global</h3>
                       <p className="section-subtitle">Lengkapi informasi dasar surat tugas dan skema pendanaan.</p>
@@ -174,10 +194,9 @@ const FormPengajuanUJK = () => {
                   </div>
                 </div>
 
-                {/* --- LANGKAH 2: DATA SKEMA (DINAMIS) --- */}
                 <div className="form-section">
                   <div className="section-header">
-                    <div className="step-badge">2</div>
+                    <div className="step-badge"></div>
                     <div>
                       <h3 className="section-title">Data Pelaksanaan & Peserta</h3>
                       <p className="section-subtitle">Tambahkan skema, upload file Excel nominatif, dan sistem akan menghitung peserta otomatis.</p>
@@ -186,7 +205,6 @@ const FormPengajuanUJK = () => {
                   
                   <div className="skema-dynamic-container">
                     {skemaUsulan.map((skema, index) => {
-                      // Mencari data detail skema berdasarkan pilihan
                       const selectedMaster = masterSkema.find(m => m.judul === skema.skema) || { kejuruan: '', jenis: '' };
                       
                       return (
@@ -198,7 +216,6 @@ const FormPengajuanUJK = () => {
                              )}
                            </div>
                            
-                           {/* BARIS 1: PEMILIHAN SKEMA DAN AUTO-FILL */}
                            <div className="form-grid-3 mb-20">
                              <div className="form-group">
                                <label>Pilihan Skema Kompetensi <span style={{color: '#ef4444'}}>*</span></label>
@@ -217,13 +234,11 @@ const FormPengajuanUJK = () => {
                              </div>
                            </div>
                            
-                           {/* BARIS 2: TANGGAL PELAKSANAAN */}
                            <div className="form-grid-2 mb-20">
                              <div className="form-group"><label>Tanggal Mulai <span style={{color: '#ef4444'}}>*</span></label><input type="date" className="form-input" value={skema.tglMulai} onChange={(e) => handleSkemaChange(skema.id, 'tglMulai', e.target.value)} required/></div>
                              <div className="form-group"><label>Tanggal Selesai <span style={{color: '#ef4444'}}>*</span></label><input type="date" className="form-input" value={skema.tglSelesai} onChange={(e) => handleSkemaChange(skema.id, 'tglSelesai', e.target.value)} required/></div>
                            </div>
                            
-                           {/* BARIS 3: DOKUMEN & AUTO COUNT */}
                            <div className="form-grid-3">
                              <div className="form-group">
                                <label>File Nominatif Calon Asesi <span style={{color: '#ef4444'}}>*</span></label>
@@ -232,7 +247,6 @@ const FormPengajuanUJK = () => {
                              </div>
                              <div className="form-group">
                                <label>Jumlah Peserta (Otomatis)</label>
-                               {/* Input dikunci (Read-Only) */}
                                <input type="number" className="form-input" value={skema.jumlahAsesi} readOnly placeholder="0" style={{backgroundColor: '#e2e8f0', cursor: 'not-allowed', fontWeight: 'bold'}} required/>
                                <small className="text-muted"><i className="fas fa-magic" style={{color: '#3b82f6'}}></i> Terbaca otomatis dari file Excel</small>
                              </div>
@@ -252,7 +266,6 @@ const FormPengajuanUJK = () => {
                   </div>
                 </div>
 
-                {/* --- TOMBOL SUBMIT --- */}
                 <div style={{ marginTop: '40px' }}>
                   <Button type="submit" variant="success" size="lg" isFullWidth icon="paper-plane" style={{ padding: '18px', fontSize: '1.15rem' }}>
                     Kirim Seluruh Pengajuan UJK ke LSP
@@ -262,7 +275,6 @@ const FormPengajuanUJK = () => {
             </div>
           )}
 
-          {/* Tabel Riwayat */}
           <div className="dashboard-card">
             <h3 style={{ margin: '0 0 20px 0', color: '#0f172a' }}>Riwayat Pengajuan Ujian Saya</h3>
             <div className="table-responsive">

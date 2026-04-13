@@ -5,7 +5,7 @@ import Button from '../ui/Button';
 import logoLSP from '../../assets/logo.png'; 
 import './Sidebar.css'; 
 
-const Sidebar = ({ isOpen, closeSidebar }) => {
+const Sidebar = ({ isOpen, isDesktopOpen = true, closeSidebar, toggleSidebar }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath = location.pathname;
@@ -13,6 +13,10 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
   const [primaryRole, setPrimaryRole] = useState('');
   const [showEditModal, setShowEditModal] = useState(false);
   const [alert, setAlert] = useState(null);
+  
+  // <-- TAMBAHAN: Timer Reference untuk alert di Sidebar
+  const alertTimer = useRef(null);
+
   const [profileData, setProfileData] = useState({
     namaLengkap: 'Moch. Nur Rafli Hikmal Putra', noTelp: '081234567890', alamat: 'Kediri, Jawa Timur', instansi: 'Universitas Negeri Surabaya', foto: null 
   });
@@ -47,23 +51,48 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
   const getActiveClass = (path) => currentPath === path ? 'active-link' : '';
   const handleMenuClick = () => { if (window.innerWidth <= 992) closeSidebar(); };
   
+  // <-- PERBAIKAN: Reset File Upload Foto Profil
   const handlePhotoChange = (e) => {
     const file = e.target.files[0];
-    if (file) { const reader = new FileReader(); reader.onloadend = () => { setProfileData({ ...profileData, foto: reader.result }); }; reader.readAsDataURL(file); }
+    if (file) { 
+      const reader = new FileReader(); 
+      reader.onloadend = () => { setProfileData({ ...profileData, foto: reader.result }); }; 
+      reader.readAsDataURL(file); 
+    }
+    e.target.value = null; // <-- Reset value input
   };
 
-  const closeAlert = () => setAlert(null);
-  const handleModalClose = () => {
-    setAlert({ type: 'cancel', title: 'Apakah anda yakin ingin batal?', text: 'Semua perubahan akan hilang.', onConfirm: () => { setShowEditModal(false); closeAlert(); }, onCancel: closeAlert });
+  // <-- PERBAIKAN: Fungsi Close aman
+  const closeAlert = () => {
+    setAlert(null);
+    if (alertTimer.current) clearTimeout(alertTimer.current);
   };
+
+  const handleModalClose = () => {
+    setAlert({ 
+      type: 'cancel', 
+      title: 'Apakah anda yakin ingin batal?', 
+      text: 'Semua perubahan akan hilang.', 
+      onConfirm: () => { setShowEditModal(false); closeAlert(); }, 
+      onCancel: closeAlert 
+    });
+  };
+
   const handleUpdateProfile = (e) => {
     e.preventDefault();
     setAlert({
       type: 'save', title: 'Apakah anda yakin?', text: 'Periksa data yang terisi dengan benar.',
       onConfirm: () => {
         setShowEditModal(false);
-        setAlert({ type: 'success', title: 'Sukses!', text: 'Data berhasil disimpan.' });
-        setTimeout(() => setAlert(null), 2000);
+        setAlert({ 
+          type: 'success', 
+          title: 'Sukses!', 
+          text: 'Data berhasil disimpan.',
+          onCancel: closeAlert // <-- Prop onCancel
+        });
+        
+        if (alertTimer.current) clearTimeout(alertTimer.current);
+        alertTimer.current = setTimeout(() => closeAlert(), 2000);
       },
       onCancel: closeAlert
     });
@@ -73,13 +102,16 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
 
   return (
     <>
-      <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
+      <aside className={`sidebar ${isOpen ? 'open' : ''} ${!isDesktopOpen ? 'desktop-closed' : ''}`}>
         <div className="sidebar-top">
+          
           <div className="sidebar-logo">
-            <Link to={getHomeRoute()} onClick={handleMenuClick}><img src={logoLSP} alt="Logo LSP" /></Link>
-            <div className="logo-text"><span className="brand">LSP BLK SURABAYA</span></div>
-            <button className="sidebar-close-btn" onClick={closeSidebar}><i className="fas fa-times"></i></button>
+            <img src={logoLSP} alt="Logo LSP" className="sidebar-logo-img" onClick={toggleSidebar} title="Tutup Menu" />
+            <Link to={getHomeRoute()} onClick={handleMenuClick} style={{ textDecoration: 'none' }}>
+              <div className="logo-text"><span className="brand">LSP BLK SURABAYA</span></div>
+            </Link>
           </div>
+
           <nav className="sidebar-nav" style={{ overflowY: 'auto' }}>
             {currentPath.startsWith('/super-admin') && (
               <>
@@ -158,6 +190,7 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
         </div>
       </aside>
 
+      {/* --- MODAL EDIT PROFIL --- */}
       {showEditModal && (
         <div className="modal-overlay">
           <div className="modal-content" style={{ width: '450px' }}>

@@ -1,7 +1,8 @@
 import { useLocation } from 'react-router-dom';
+import logoLSP from '../../assets/logo.png'; // IMPOR LOGO
 import './Navbar.css';
 
-const Navbar = ({ toggleSidebar }) => {
+const Navbar = ({ toggleSidebar, isDesktopOpen }) => {
   const location = useLocation();
   const currentPath = location.pathname;
 
@@ -14,15 +15,19 @@ const Navbar = ({ toggleSidebar }) => {
     return 'LSP BLK Surabaya'; 
   };
 
-  // Membuat dua versi format tanggal
   const longDate = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   const shortDate = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
 
   return (
     <header className="top-navbar">
       <div className="nav-left">
-        <button className="mobile-menu-btn" onClick={toggleSidebar}>
-          <i className="fas fa-bars"></i>
+        {/* LOGO SEBAGAI PENGGANTI HAMBURGER */}
+        <button 
+          className={`mobile-menu-btn ${isDesktopOpen ? 'hide-on-desktop' : ''}`} 
+          onClick={toggleSidebar} 
+          title="Buka Menu"
+        >
+          <img src={logoLSP} alt="Logo Toggle" className="navbar-logo-btn" />
         </button>
         <h2 className="page-title">{getRoleName()}</h2>
       </div>
@@ -30,7 +35,6 @@ const Navbar = ({ toggleSidebar }) => {
       <div className="nav-right">
         <div className="nav-date-badge">
           <i className="far fa-calendar-alt"></i>
-          {/* Teks panjang untuk Laptop, teks pendek untuk HP */}
           <span className="date-text-long">{longDate}</span>
           <span className="date-text-short">{shortDate}</span>
         </div>

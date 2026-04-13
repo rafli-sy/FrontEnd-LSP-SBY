@@ -331,12 +331,13 @@
     visibility: visible;
   }
   #print-area {
-    position: absolute;
-    left: 0;
-    top: 0;
+    display: flex;
+    flex-direction: column; /* KUNCI: Memaksa halaman berjejer ke bawah */
+    align-items: center; /* KUNCI: Memposisikan kertas tetap di tengah layar */
+    gap: 30px; /* Jarak/Spasi antara halaman 1 dan halaman 2 */
+    padding: 20px 0;
+    overflow-x: auto;
     width: 100%;
-    padding: 0;
-    margin: 0;
   }
   .no-print,
   .sidebar,
@@ -349,5 +350,156 @@
     margin: 0;
     padding: 0;
     border: none;
+  }
+}
+
+/* =======================================================
+   RESPONSIVE DOCUMENT PREVIEW (A4 PAPER UNTUK SEMUA DEVICE)
+======================================================== */
+
+/* Container Utama Preview */
+.print-preview-container {
+  background-color: #f8fafc;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  margin-top: 10px;
+}
+
+/* Header Action (Tombol Kembali & Cetak) */
+.print-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+  background-color: #ffffff;
+  padding: 15px 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+}
+.print-header h3 {
+  margin: 0 0 5px 0;
+  color: #0f172a;
+  font-size: 1.2rem;
+}
+.print-header p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+/* Area Kertas Putih */
+#print-area {
+  display: flex;
+  justify-content: center;
+  padding: 10px 0;
+  overflow-x: auto; /* Kunci agar layar kecil bisa geser ke samping */
+  width: 100%;
+}
+
+/* KERTAS A4 - Tampilan di Layar (Monitor/Laptop/Tablet/HP) */
+.cetak-pdf-container {
+  background-color: #fff;
+  box-shadow:
+    0 15px 35px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+  margin: 0 auto;
+  max-width: 100% !important; /* Cegah kertas meluber dari batas layar */
+  overflow-x: auto; /* Jika tabel terlalu lebar, user HP tinggal geser area kertasnya */
+  border-radius: 4px;
+}
+
+/* --- PENYESUAIAN KHUSUS UNTUK HP & TABLET --- */
+@media screen and (max-width: 768px) {
+  .print-preview-container {
+    padding: 10px;
+  }
+  .print-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .print-header div:last-child {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .cetak-pdf-container {
+    padding: 15px !important; /* Perkecil margin kertas di HP agar isi lebih luas */
+    font-size: 0.85rem !important; /* Teks sedikit dikecilkan */
+    min-height: auto !important; /* Tinggi menyesuaikan isinya */
+  }
+
+  /* Perkecil Logo dan Kop Surat agar proporsional di HP */
+  .cetak-pdf-container img {
+    max-width: 60px !important;
+    height: auto;
+  }
+  .cetak-pdf-container h1 {
+    font-size: 1.2rem !important;
+  }
+  .cetak-pdf-container h2,
+  .cetak-pdf-container h3 {
+    font-size: 1rem !important;
+  }
+
+  /* Agar tabel surat tidak hancur terlipat, paksa lebarnya dan biarkan user HP scroll ke kanan */
+  .cetak-pdf-container table {
+    width: 100% !important;
+    min-width: 550px;
+  }
+}
+
+/* =======================================================
+   MODE CETAK PRINTER (MENGEMBALIKAN KE UKURAN ASLI A4)
+======================================================== */
+@media print {
+  /* Sembunyikan semua elemen UI Dashboard */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Tampilkan HANYA area dokumen */
+  .print-preview-container,
+  .print-preview-container * {
+    visibility: visible;
+  }
+
+  /* Posisikan dokumen pas di sudut kiri atas kertas printer */
+  .print-preview-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+  }
+
+  /* Sembunyikan tombol-tombol saat dicetak */
+  .no-print {
+    display: none !important;
+  }
+
+  /* KEMBALIKAN UKURAN KERTAS KE FISIK ASLINYA (A4 / 100%) */
+  .cetak-pdf-container {
+    max-width: none !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 20mm !important; /* Margin cetak asli */
+    overflow: visible !important;
+    font-size: 1rem !important; /* Kembalikan ukuran font normal */
+    border-radius: 0 !important;
+  }
+
+  /* Hilangkan scroll tabel saat di-print */
+  .cetak-pdf-container table {
+    min-width: auto !important;
+    width: 100% !important;
   }
 }

@@ -3,39 +3,30 @@ import './Button.css';
 
 const Button = ({ 
   children, 
-  variant = 'primary', // Pilihan: primary, secondary, danger, success, outline, dashed, ghost
-  size = 'md',         // Pilihan: sm (kecil), md (sedang), lg (besar)
+  variant = 'primary', 
+  size = 'md', 
   icon, 
+  isFullWidth = false, 
   onClick, 
   type = 'button', 
-  className = '',
   disabled = false,
-  isFullWidth = false, // Jika true, tombol akan melebar 100%
-  isLoading = false,   // Jika true, akan memunculkan ikon muter (spinner)
-  style, 
-  title
+  className = '' 
 }) => {
-  
-  // Menggabungkan semua class dinamis
-  const btnClass = `ui-btn ui-btn-${variant} ui-btn-${size} ${isFullWidth ? 'ui-btn-full' : ''} ${className}`;
+  const baseClass = 'custom-btn';
+  const variantClass = `btn-${variant}`;
+  const sizeClass = `btn-${size}`;
+  const widthClass = isFullWidth ? 'btn-full' : '';
+  const disabledClass = disabled ? 'btn-disabled' : '';
 
   return (
-    <button
-      type={type}
-      className={btnClass}
+    <button 
+      type={type} 
+      className={`${baseClass} ${variantClass} ${sizeClass} ${widthClass} ${disabledClass} ${className}`} 
       onClick={onClick}
-      disabled={disabled || isLoading} // Disable otomatis jika sedang loading
-      style={style}
-      title={title}
+      disabled={disabled}
     >
-      {/* Jika loading, paksa render ikon spinner */}
-      {isLoading ? (
-        <i className="fas fa-spinner fa-spin ui-btn-icon"></i>
-      ) : icon ? (
-        <i className={`fas fa-${icon} ui-btn-icon`}></i>
-      ) : null}
-      
-      {children}
+      {icon && <i className={`fas fa-${icon} btn-icon`}></i>}
+      <span>{children}</span>
     </button>
   );
 };

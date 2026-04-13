@@ -19,17 +19,34 @@ const AlertPopup = ({ type, title, text, onConfirm, onCancel }) => {
               <i className="fas fa-check"></i>
             </div>
           )}
-          {type === 'cancel' || type === 'delete' ? (
+          {/* Tambahan ikon peringatan (Warning) */}
+          {type === 'warning' && (
+            <div className="icon-cancel-group" style={{ background: '#fffbeb', boxShadow: '0 0 0 6px rgba(251, 191, 36, 0.2)', color: '#f59e0b' }}>
+              <i className="fas fa-exclamation-triangle"></i>
+            </div>
+          )}
+          {(type === 'cancel' || type === 'delete') && (
             <div className="icon-cancel-group">
               <i className="fas fa-times"></i>
             </div>
-          ) : null}
+          )}
         </div>
         
         <h3 className="alert-title">{title}</h3>
         <p className="alert-text">{text}</p>
         
-        {type !== 'success' && (
+        {/* LOGIKA TOMBOL BARU YANG SUDAH DIPERBAIKI */}
+        {type === 'success' || type === 'warning' ? (
+          <div className="alert-actions">
+            <button 
+              className={`alert-btn ${type === 'warning' ? 'btn-yellow' : 'btn-green'}`} 
+              style={{ width: '100%' }} 
+              onClick={onCancel} // <-- Prop onCancel sekarang berfungsi di sini
+            >
+              {type === 'warning' ? 'Mengerti' : 'Tutup'}
+            </button>
+          </div>
+        ) : (
           <div className="alert-actions">
             <button className="alert-btn btn-red" onClick={onCancel}>Batal</button>
             <button className="alert-btn btn-green" onClick={onConfirm}>
@@ -37,6 +54,7 @@ const AlertPopup = ({ type, title, text, onConfirm, onCancel }) => {
             </button>
           </div>
         )}
+        
       </div>
     </div>
   );
