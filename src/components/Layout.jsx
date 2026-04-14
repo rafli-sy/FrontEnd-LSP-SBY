@@ -101,15 +101,6 @@ const Layout = () => {
                 <div className="menu-label">SISTEM KONTROL</div>
                 <Link to="/super-admin" className={getActiveClass('/super-admin')}><i className="fas fa-home"></i> Dashboard </Link>
                 <Link to="/super-admin/manajemen-akun" className={getActiveClass('/super-admin/manajemen-akun')}><i className="fas fa-users-cog"></i> Manajemen Akun</Link>
-                
-                <div className="menu-label">PEMANTAUAN LSP (View All)</div>
-                <Link to="/admin-lsp/skema" className={getActiveClass('/admin-lsp/skema')}><i className="fas fa-database"></i> Master Skema</Link>
-                <Link to="/admin-lsp/asesor" className={getActiveClass('/admin-lsp/asesor')}><i className="fas fa-user-tie"></i> Master Asesor</Link>
-                <Link to="/admin-lsp/buku-induk" className={getActiveClass('/admin-lsp/buku-induk')}><i className="fas fa-book"></i> Buku Induk UJK</Link>
-                <Link to="/admin-lsp/tuk" className={getActiveClass('/admin-lsp/tuk')}><i className="fas fa-building"></i> Data TUK</Link>
-
-                <div className="menu-label">PEMANTAUAN BLK (View All)</div>
-                <Link to="/admin-blk/pengajuan" className={getActiveClass('/admin-blk/pengajuan')}><i className="fas fa-envelope-open-text"></i> Data Pengajuan BLK</Link>
               </>
             )}
             {/* 2. ROLE: ADMIN LSP */}

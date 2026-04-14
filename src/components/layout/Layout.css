@@ -1,7 +1,13 @@
 /* --- ANIMASI GLOBAL HALAMAN --- */
 @keyframes fadeInScale {
-  from { opacity: 0; transform: scale(0.98) translateY(10px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
+  from {
+    opacity: 0;
+    transform: scale(0.98) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .fade-in-content {
@@ -14,15 +20,16 @@
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background-color: #f4f7fa; 
-  font-family: 'Inter', system-ui, sans-serif;
+  background-color: #f4f7fa;
+  font-family: "Inter", system-ui, sans-serif;
 }
 
 .main-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  width: 100%; /* Memastikan konten tidak melebar */
+  width: 100%;
+  min-width: 0; /* KUNCI ANTI HANCUR: Mencegah flex item membesar berlebihan */
   overflow: hidden;
 }
 
@@ -44,8 +51,12 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* RESPONSIVE PADDING */

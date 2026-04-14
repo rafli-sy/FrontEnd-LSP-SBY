@@ -7,9 +7,8 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 10000;
+  z-index: 10050; /* <-- DIPERBAIKI: Z-Index dinaikkan agar selalu paling depan */
   padding: 20px;
-  /* Animasi fade in yang sangat ringan */
   animation: smoothFade 0.2s ease-out forwards;
 }
 
@@ -23,7 +22,6 @@
   text-align: center;
   box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.15);
   border: 1px solid rgba(226, 232, 240, 0.8);
-  /* Animasi membesar (scale) yang smooth dan tidak memantul berlebihan */
   animation: smoothScaleUp 0.3s ease-out forwards;
 }
 
@@ -36,7 +34,6 @@
   height: 90px;
 }
 
-/* 1. Ikon Konfirmasi (Tanda Tanya) */
 .icon-save-group {
   position: relative;
   font-size: 4.5rem;
@@ -57,7 +54,6 @@
   padding: 2px;
 }
 
-/* 2. Ikon Sukses (Centang Hijau) */
 .icon-success-group {
   width: 85px;
   height: 85px;
@@ -74,7 +70,6 @@
   font-size: 2.8rem;
 }
 
-/* 3. Ikon Batal/Hapus (Silang Merah) */
 .icon-cancel-group {
   width: 85px;
   height: 85px;
@@ -130,7 +125,7 @@
 }
 .btn-red:hover {
   background-color: #dc2626;
-  transform: translateY(-2px); /* Sedikit naik saat di-hover */
+  transform: translateY(-2px);
 }
 
 .btn-green {
@@ -141,10 +136,18 @@
   transform: translateY(-2px);
 }
 
-/* =========================================
-   DAFTAR KEYFRAMES (ANIMASI RINGAN & SMOOTH)
-========================================= */
+/* <-- TAMBAHAN: Tombol Kuning untuk Peringatan --> */
+.btn-yellow {
+  background-color: #f59e0b;
+}
+.btn-yellow:hover {
+  background-color: #d97706;
+  transform: translateY(-2px);
+}
 
+/* =========================================
+   DAFTAR KEYFRAMES (ANIMASI)
+========================================= */
 @keyframes smoothFade {
   from {
     opacity: 0;
@@ -153,7 +156,6 @@
     opacity: 1;
   }
 }
-
 @keyframes smoothScaleUp {
   from {
     opacity: 0;
@@ -164,7 +166,6 @@
     transform: scale(1) translateY(0);
   }
 }
-
 @keyframes smoothPopIcon {
   from {
     opacity: 0;

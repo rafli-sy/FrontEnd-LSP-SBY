@@ -14,29 +14,52 @@
 
 .table-responsive {
   overflow-x: auto;
+  width: 100%; /* Memastikan container tabel penuh */
 }
 
+/* --- PERBAIKAN LEBAR TABEL --- */
 .admin-table {
   width: 100%;
   border-collapse: collapse;
-  white-space: nowrap;
   font-size: 0.95rem;
+  table-layout: auto; /* Membiarkan browser mengatur lebar kolom secara proporsional */
 }
 
+/* --- PERBAIKAN PADDING & WARNA BORDER TABEL --- */
 .admin-table th,
 .admin-table td {
-  padding: 14px 16px;
+  padding: 16px 20px;
   text-align: left;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.admin-table td {
+  color: #334155;
+  /* Hapus white-space: nowrap jika data panjang boleh turun ke baris baru, 
+     atau biarkan jika ingin memaksanya dalam satu baris */
+  white-space: normal; 
 }
 
 .admin-table th {
   background-color: #f8fafc;
-  color: #475569;
+  color: #64748b;
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+/* Opsi: Memberikan porsi lebar spesifik agar tombol Aksi tidak memakan ruang terlalu banyak */
+.admin-table th:last-child,
+.admin-table td:last-child {
+  width: 150px; /* Atur sesuai kebutuhan lebar tombol Aksi */
+  text-align: center; /* Menengahkan tombol Aksi */
+}
+
+.admin-table td:last-child > div {
+    justify-content: center; /* Menengahkan isi dalam div aksi */
 }
 
 .admin-table tbody tr {
@@ -44,8 +67,61 @@
 }
 
 .admin-table tbody tr:hover {
-  background-color: #f1f5f9;
+  background-color: #f8fafc;
 }
+
+/* --- CUSTOM TAMPILAN TOMBOL AKSI DI TABEL --- */
+.admin-table td > div {
+  display: flex;
+  gap: 12px !important;
+  align-items: center;
+}
+
+.admin-table td > div > button {
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px !important;
+  font-size: 0 !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0 !important;
+}
+
+/* Memunculkan ukuran icon kembali setelah font-size tombol dinolkan */
+.admin-table td > div > button i,
+.admin-table td > div > button svg {
+  font-size: 1.1rem !important; 
+}
+
+/* Tombol Edit (Kiri) - Outline Biru */
+.admin-table td > div > button:nth-child(1) {
+  width: 60px !important;
+  background-color: #ffffff !important;
+  border: 2px solid #1d4ed8 !important;
+  color: #1d4ed8 !important;
+  box-shadow: none !important;
+}
+
+.admin-table td > div > button:nth-child(1):hover {
+  background-color: #eff6ff !important;
+}
+
+/* Tombol Hapus (Kanan) - Solid Merah */
+.admin-table td > div > button:nth-child(2) {
+  width: 45px !important;
+  background-color: #ef4444 !important;
+  border: 1px solid #ef4444 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.3) !important;
+}
+
+.admin-table td > div > button:nth-child(2):hover {
+  background-color: #dc2626 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 10px -1px rgba(239, 68, 68, 0.4) !important;
+}
+/* ------------------------------------------- */
 
 .text-muted {
   color: #64748b;

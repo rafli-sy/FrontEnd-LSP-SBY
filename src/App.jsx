@@ -12,12 +12,14 @@ import DashboardAsesor from './pages/dashboard/DashboardAsesor';
 import MasterDataSkema from './pages/master/skema/MasterDataSkema';
 import MasterDataAsesor from './pages/master/asesor/MasterDataAsesor';
 import ManajemenAkun from './pages/manajemen-akun/ManajemenAkun';
+import ManajemenAkunAsesor from './pages/dashboard/asesor/ManajemenAkunAsesor';
 import DataTUK from './pages/master/tuk/DataTUK';
 import PenugasanPage from './pages/penugasan/PenugasanPage';
 import BukuIndukPage from './pages/buku-induk/BukuIndukPage';
 import FormPengajuanUJK from './pages/pengajuan/FormPengajuanUJK';
 import SuratMenyurat from './pages/surat/SuratMenyurat';
 import UjianAktifAsesor from './pages/penilaian/UjianAktifAsesor';
+import TablePeserta from './pages/TablePeserta/TablePeserta'; 
 
 function App() {
   return (
@@ -47,7 +49,10 @@ function App() {
 
           <Route path="/asesor" element={<DashboardAsesor />} />
           <Route path="/asesor/tugas" element={<UjianAktifAsesor />} />
-          <Route path="/asesor/manajemen-akun" element={<ManajemenAkun />} /> {/* <-- Rute Asesor sekarang mengarah ke ManajemenAkun */}
+          <Route path="/asesor/manajemen-akun" element={<ManajemenAkunAsesor />} />
+          
+          {/* RUTE TABLE PESERTA HARUS DI SINI */}
+          <Route path="/table-peserta" element={<TablePeserta />} />
         </Route>
       </Routes>
     </Router>

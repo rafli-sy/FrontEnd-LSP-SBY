@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Button from '../../../components/ui/Button';
-import Modal from '../../../components/ui/AlertPopup';
+import Modal from '../../../components/ui/Modal'; // <-- BUG FIX IMPORT SEBELUMNYA
+import AlertPopup from '../../../components/ui/AlertPopup'; // <-- IMPORT BARU
 import './MasterDataSkema.css';
 
 const MasterDataSkema = () => {
@@ -14,6 +15,26 @@ const MasterDataSkema = () => {
   const [modalMode, setModalMode] = useState('create');
   const [searchQuery, setSearchQuery] = useState('');
   const [formData, setFormData] = useState({ id: null, kode: '', nama: '', jenis: 'Klaster', bidang: '' });
+
+  // --- LOGIKA ALERT POPUP ---
+  const [alertConfig, setAlertConfig] = useState({ type: null, title: '', text: '', action: null });
+
+  const showAlert = (type, title, text, action = null) => {
+    setAlertConfig({ type, title, text, action });
+    if (type === 'success' || type === 'warning' || type === 'info') {
+      setTimeout(() => setAlertConfig({ type: null, title: '', text: '', action: null }), 2000);
+    }
+  };
+
+  const handleConfirmAlert = () => {
+    if (alertConfig.action) alertConfig.action();
+    setAlertConfig({ type: null, title: '', text: '', action: null });
+  };
+
+  const handleCancelAlert = () => {
+    setAlertConfig({ type: null, title: '', text: '', action: null });
+  };
+  // -------------------------
 
   const handleInputChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -30,15 +51,15 @@ const MasterDataSkema = () => {
   };
 
   const handleDelete = (id) => {
-    if (window.confirm('Hapus Skema ini? Pastikan skema tidak sedang digunakan dalam ujian berjalan.')) {
+    showAlert('delete', 'Hapus Skema', 'Hapus Skema ini? Pastikan skema tidak sedang digunakan dalam ujian berjalan.', () => {
       setSkemaList(skemaList.filter(item => item.id !== id));
-    }
+      showAlert('success', 'Berhasil', 'Data Skema telah dihapus.');
+    });
   };
 
-  // POP-UP KONFIRMASI SIMPAN
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (window.confirm('Apakah Anda yakin ingin menyimpan perubahan data skema ini?')) {
+    showAlert('save', 'Simpan Skema', 'Apakah Anda yakin ingin menyimpan perubahan data skema ini?', () => {
       if (modalMode === 'create') {
         const newId = skemaList.length > 0 ? Math.max(...skemaList.map(s => s.id)) + 1 : 1;
         setSkemaList([...skemaList, { ...formData, id: newId }]);
@@ -46,14 +67,19 @@ const MasterDataSkema = () => {
         setSkemaList(skemaList.map(item => item.id === formData.id ? formData : item));
       }
       setIsModalOpen(false);
-      alert('Data skema berhasil disimpan!');
-    }
+      showAlert('success', 'Berhasil!', 'Data skema berhasil disimpan!');
+    });
   };
 
   const filteredSkema = skemaList.filter(skema => skema.nama.toLowerCase().includes(searchQuery.toLowerCase()) || skema.kode.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
     <div className="dashboard-content fade-in-content">
+      
+      {alertConfig.type && (
+        <AlertPopup type={alertConfig.type} title={alertConfig.title} text={alertConfig.text} onConfirm={handleConfirmAlert} onCancel={handleCancelAlert} />
+      )}
+
       <div className="dashboard-header" style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <div>
           <h2>Master Data Skema</h2>
@@ -132,7 +158,7 @@ const MasterDataSkema = () => {
              </div>
           </div>
           <div style={{ display: 'flex', gap: '10px' }}>
-            <Button variant="outline" onClick={() => setIsModalOpen(false)} style={{ flex: 1 }}>Batal</Button>
+            <Button variant="outline" onClick={() => setIsModalOpen(false)} style={{ flex: 1 }} type="button">Batal</Button>
             <Button type="submit" variant="success" icon="save" style={{ flex: 1 }}>Simpan Data</Button>
           </div>
         </form>

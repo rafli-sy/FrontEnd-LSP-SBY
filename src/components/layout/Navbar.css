@@ -1,12 +1,12 @@
 .top-navbar {
   height: 75px;
   background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(12px); 
+  backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
-  justify-content: space-between; 
+  justify-content: space-between;
   padding: 0 35px;
-  border-bottom: 1px solid rgba(0,0,0,0.06);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   z-index: 5;
 }
 
@@ -16,35 +16,46 @@
   gap: 15px;
 }
 
+/* STYLE BARU UNTUK LOGO DI NAVBAR */
 .mobile-menu-btn {
-  display: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: none;
   border: none;
-  font-size: 1.5rem;
-  color: #0f172a;
+  padding: 0;
   cursor: pointer;
-  padding: 5px;
-  transition: color 0.2s;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-
 .mobile-menu-btn:hover {
-  color: #3b82f6;
+  transform: scale(1.1) rotate(-5deg); /* Efek goyang saat disentuh mouse */
+}
+.navbar-logo-btn {
+  width: 40px;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
-.page-title { 
-  font-size: 1.3rem; 
-  font-weight: 800; 
-  color: #0f172a; 
+/* Sembunyikan Logo Navbar jika Laci Sidebar ditarik keluar */
+@media (min-width: 993px) {
+  .hide-on-desktop {
+    display: none !important;
+  }
+}
+
+.page-title {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #0f172a;
   margin: 0;
   line-height: 1.2;
 }
-
 .nav-right {
   display: flex;
   align-items: center;
   gap: 20px;
 }
-
 .nav-date-badge {
   font-size: 0.85rem;
   font-weight: 600;
@@ -56,33 +67,23 @@
   align-items: center;
   gap: 8px;
 }
-
 .nav-date-badge i {
   color: #3b82f6;
   font-size: 1rem;
 }
-
-/* Secara default, sembunyikan tanggal versi pendek */
 .date-text-short {
   display: none;
 }
 
-/* ==========================================================
-   RESPONSIVE DESIGN
-============================================================= */
 @media (max-width: 992px) {
   .top-navbar {
     padding: 0 20px;
-  }
-  .mobile-menu-btn {
-    display: block;
   }
   .page-title {
     font-size: 1.15rem;
   }
 }
 
-/* Khusus Layar HP / Sempit */
 @media (max-width: 576px) {
   .top-navbar {
     padding: 0 15px;
@@ -94,8 +95,6 @@
     padding: 6px 12px;
     font-size: 0.8rem;
   }
-  
-  /* Sembunyikan tanggal panjang, dan Tampilkan tanggal pendek */
   .date-text-long {
     display: none;
   }
