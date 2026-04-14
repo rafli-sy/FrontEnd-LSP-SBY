@@ -7,15 +7,18 @@ const ManajemenAkun = () => {
   const [alert, setAlert] = useState(null);
   const alertTimer = useRef(null);
   const [showModal, setShowModal] = useState(false);
+  const [isEdit, setIsEdit] = useState(false);
+  const [editId, setEditId] = useState(null);
   
   // Dummy State
   const [users, setUsers] = useState([
-    { id: 1, nama: 'Moch. Nur Rafli Hikmal Putra', username: 'admin_rafli', role: 'Super Admin', status: 'Aktif' },
-    { id: 2, nama: 'Hadid Yulian', username: 'hadid_lsp', role: 'Admin LSP', status: 'Aktif' },
-    { id: 3, nama: 'Ade Ninda', username: 'ninda_staff', role: 'Staff LSP', status: 'Aktif' },
-    { id: 4, nama: 'Ali Ridho', username: 'ali_blk', role: 'Admin BLK', status: 'Nonaktif' }
+    { id: 1, username: 'admin_rafli', role: 'Super Admin', status: 'Aktif' },
+    { id: 2, username: 'hadiid_lsp', role: 'Admin LSP', status: 'Aktif' },
+    { id: 3, username: 'ade_staff', role: 'Staff LSP', status: 'Aktif' },
+    { id: 4, username: 'ridho_blk', role: 'Admin BLK', status: 'Nonaktif' }
   ]);
-  const [formData, setFormData] = useState({ nama: '', username: '', role: 'Staff LSP', status: 'Aktif' });
+  
+  const [formData, setFormData] = useState({ username: '', password: '', role: 'Staff LSP', status: 'Aktif' });
 
   const closeAlert = () => {
     setAlert(null);
@@ -30,24 +33,71 @@ const ManajemenAkun = () => {
 
   const handleInputChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
-  const handleSimpanUser = (e) => {
+  // Fungsi untuk membuka modal Edit Pengguna
+  const handleEditClick = (user) => {
+    setFormData({ username: user.username, password: '', role: user.role, status: user.status });
+    setEditId(user.id);
+    setIsEdit(true);
+    setShowModal(true);
+  };
+
+  // Fungsi untuk membuka modal Tambah Pengguna Baru
+  const handleTambahClick = () => {
+    setFormData({ username: '', password: '', role: 'Staff LSP', status: 'Aktif' });
+    setIsEdit(false);
+    setEditId(null);
+    setShowModal(true);
+  };
+
+  // Fungsi untuk tombol Reset Password
+  const handleResetPassword = (e) => {
     e.preventDefault();
-    if (!formData.nama || !formData.username) {
-      setAlert({ type: 'warning', title: 'Data Tidak Lengkap', text: 'Nama dan Username wajib diisi.', onCancel: closeAlert });
-      return;
-    }
-    
     setAlert({
-      type: 'save', title: 'Simpan Pengguna?', text: 'Akun baru akan dibuat dan diberikan akses sistem.',
+      type: 'confirm', // Diubah menjadi confirm agar muncul tombol konfirmasi (atau gunakan 'save' jika confirm tidak dikenali)
+      title: 'Reset Password', 
+      text: 'Yakin ingin mereset password pengguna ini ke bawaan sistem?',
       onConfirm: () => {
-        const newUser = { ...formData, id: Date.now() };
-        setUsers([...users, newUser]);
-        setShowModal(false);
-        setFormData({ nama: '', username: '', role: 'Staff LSP', status: 'Aktif' });
-        showSuccess('Tersimpan!', 'Akun pengguna berhasil ditambahkan.');
+        setShowModal(false); // Menutup modal edit setelah konfirmasi
+        showSuccess('Berhasil!', 'Password pengguna telah direset.');
       },
       onCancel: closeAlert
     });
+  };
+
+  const handleSimpanUser = (e) => {
+    e.preventDefault();
+    
+    // Validasi input (Password hanya wajib saat tambah akun baru)
+    if (!formData.username || (!isEdit && !formData.password)) {
+      setAlert({ type: 'warning', title: 'Data Tidak Lengkap', text: 'Semua field wajib diisi.', onCancel: closeAlert });
+      return;
+    }
+    
+    if (isEdit) {
+      // Logika Edit User
+      setAlert({
+        type: 'save', title: 'Simpan Perubahan?', text: 'Data pengguna ini akan diperbarui.',
+        onConfirm: () => {
+          setUsers(users.map(u => u.id === editId ? { ...u, username: formData.username, role: formData.role } : u));
+          setShowModal(false);
+          showSuccess('Tersimpan!', 'Data pengguna berhasil diperbarui.');
+        },
+        onCancel: closeAlert
+      });
+    } else {
+      // Logika Tambah User Baru
+      setAlert({
+        type: 'save', title: 'Simpan Pengguna?', text: 'Akun baru akan dibuat dan diberikan akses sistem.',
+        onConfirm: () => {
+          const newUser = { ...formData, id: Date.now() };
+          setUsers([...users, newUser]);
+          setShowModal(false);
+          setFormData({ username: '', password: '', role: 'Staff LSP', status: 'Aktif' });
+          showSuccess('Tersimpan!', 'Akun pengguna berhasil ditambahkan.');
+        },
+        onCancel: closeAlert
+      });
+    }
   };
 
   const handleHapus = (id) => {
@@ -68,14 +118,13 @@ const ManajemenAkun = () => {
           <h2 style={{ margin: 0, color: '#0f172a' }}>Manajemen Hak Akses & Akun</h2>
           <p className="text-muted">Kelola akun pengguna dan role untuk masuk ke sistem LSP.</p>
         </div>
-        <Button variant="primary" icon="user-plus" onClick={() => setShowModal(true)}>Tambah Pengguna Baru</Button>
+        <Button variant="primary" icon="user-plus" onClick={handleTambahClick}>Tambah Pengguna Baru</Button>
       </div>
 
       <div className="dashboard-card">
         <table className="admin-table">
           <thead>
             <tr>
-              <th>Nama Lengkap</th>
               <th>Username</th>
               <th>Role Akses</th>
               <th>Status</th>
@@ -85,13 +134,12 @@ const ManajemenAkun = () => {
           <tbody>
             {users.map((user) => (
               <tr key={user.id}>
-                <td><strong>{user.nama}</strong></td>
                 <td>{user.username}</td>
                 <td><span className="badge info">{user.role}</span></td>
                 <td><span className={`badge ${user.status === 'Aktif' ? 'success' : 'danger'}`}>{user.status}</span></td>
                 <td>
                   <div style={{ display: 'flex', gap: '8px' }}>
-                    <Button variant="warning" size="sm" icon="edit" onClick={() => setAlert({ type: 'warning', title: 'Info', text: 'Fitur edit sedang dikembangkan', onCancel: closeAlert })}>Edit</Button>
+                    <Button variant="warning" size="sm" icon="edit" onClick={() => handleEditClick(user)}>Edit</Button>
                     <Button variant="danger" size="sm" icon="trash-alt" onClick={() => handleHapus(user.id)}>Hapus</Button>
                   </div>
                 </td>
@@ -104,18 +152,49 @@ const ManajemenAkun = () => {
       {showModal && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3><i className="fas fa-user-shield text-blue"></i> Tambah Pengguna</h3>
+            {/* Judul dinamis menyesuaikan mode Add / Edit */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                <h3 style={{ margin: 0 }}><i className={`fas ${isEdit ? 'fa-user-edit' : 'fa-user-shield'} text-blue`}></i> {isEdit ? 'Edit Pengguna' : 'Tambah Pengguna'}</h3>
+                <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem' }} onClick={() => setShowModal(false)}><i className="fas fa-times"></i></button>
+            </div>
+            
             <form onSubmit={handleSimpanUser}>
-              <div className="form-group"><label>Nama Lengkap</label><input type="text" className="form-input" name="nama" value={formData.nama} onChange={handleInputChange} /></div>
-              <div className="form-group"><label>Username Default</label><input type="text" className="form-input" name="username" value={formData.username} onChange={handleInputChange} /></div>
-              <div className="form-group"><label>Role Akses Sistem</label>
+              <div className="form-group">
+                <label>Username</label>
+                <input type="text" className="form-input" name="username" value={formData.username} onChange={handleInputChange} />
+              </div>
+              
+              {/* Sembunyikan field password saat mode edit */}
+              {!isEdit && (
+                <div className="form-group">
+                  <label>Password</label>
+                  <input type="password" className="form-input" name="password" value={formData.password} onChange={handleInputChange} />
+                </div>
+              )}
+
+              <div className="form-group">
+                <label>Role</label>
                 <select className="form-input" name="role" value={formData.role} onChange={handleInputChange}>
-                  <option value="Admin LSP">Admin LSP</option><option value="Staff LSP">Staff LSP</option><option value="Admin BLK">Admin BLK</option><option value="Asesor">Asesor</option>
+                  <option value="Admin LSP">Admin LSP</option>
+                  <option value="Staff LSP">Staff LSP</option>
+                  <option value="Admin BLK">Admin BLK</option>
+                  <option value="Asesor">Asesor</option>
                 </select>
               </div>
-              <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-                <Button variant="secondary" isFullWidth onClick={() => setShowModal(false)}>Batal</Button>
-                <Button type="submit" variant="primary" isFullWidth icon="save">Simpan Akun</Button>
+
+              {/* Action Buttons dinamis menyesuaikan mode Add / Edit */}
+              <div style={{ display: 'flex', gap: '10px', marginTop: '20px', justifyContent: isEdit ? 'flex-end' : 'space-between' }}>
+                {isEdit ? (
+                  <>
+                    <Button variant="secondary" icon="edit" onClick={handleResetPassword}>Reset Password</Button>
+                    <Button type="submit" variant="primary" icon="lock">Simpan Data</Button>
+                  </>
+                ) : (
+                  <>
+                    <Button variant="secondary" isFullWidth onClick={() => setShowModal(false)}>Batal</Button>
+                    <Button type="submit" variant="primary" isFullWidth icon="save">Simpan Akun</Button>
+                  </>
+                )}
               </div>
             </form>
           </div>
