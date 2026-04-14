@@ -6,7 +6,7 @@ import SuratPermohonan from '../surat/SuratPermohonan';
 import SuratTugas from '../surat/SuratTugas'; 
 import SuratBalasan from '../surat/SuratBalasan';
 import TemplateAdministrasi from '../surat/TemplateAdministrasi';
-import TablePeserta from '../TablePeserta/TablePeserta'; // <-- PERBAIKAN: Import komponen tabel
+import TablePeserta from '../TablePeserta/TablePeserta'; 
 import './PenugasanPage.css';
 
 const masterAsesor = [
@@ -18,7 +18,7 @@ const masterAsesor = [
 ];
 
 const daftarPenyelia = ['Miftahul Huda', 'Mohamad Andrian A', 'Budi Santoso'];
-const dokumenAdministrasiList = [ { code: 'DOC.01', name: 'Laporan Penyelia' }, { code: 'DOC.02', name: 'BA Baru' }, { code: 'DOC.03', name: 'Penerapan TUK' }, { code: 'DOC.04', name: 'SK Penyelenggara' }, { code: 'DOC.05', name: 'Lampiran SK' }, { code: 'DOC.06', name: 'DH Pra' }, { code: 'DOC.07', name: 'DH 1' }, { code: 'DOC.08', name: 'DH 2' }, { code: 'DOC.09', name: 'Tanda Terima Dokumen' }, { code: 'DOC.10', name: 'Pernyataan Asesor 1' }, { code: 'DOC.11', name: 'Pernyataan Asesor 2' }, { code: 'DOC.12', name: 'Pengembalian Dokumen Asesmen' } ];
+const dokumenAdministrasiList = [ { code: 'DOC.01', name: 'Laporan Penyelia' }, { code: 'DOC.02', name: 'BA Baru' }, { code: 'DOC.03', name: 'Penerapan TUK' }, { code: 'DOC.04', name: 'SK Penyelenggara' }, { code: 'DOC.05', name: 'Lampiran SK' }, { code: 'DOC.06', name: 'DH Pra' }, { code: 'DOC.07', name: 'DH 1' }, { code: 'DOC.08', name: 'DH 2' }, { code: 'DOC.09', name: 'Tanda Terima Dokumen' }, { code: 'DOC.10', name: 'Pernyataan Asesor 1' }, { code: 'DOC.11', name: 'Pernyataan Asesor 2' }, { code: 'DOC.12', name: 'Pengembalian Dokumen Asesmen' }, { code: 'DOC.13', name: 'Rencana Verifikasi TUK' } ];
 
 const PenugasanPage = () => {
   const navigate = useNavigate();
@@ -26,7 +26,7 @@ const PenugasanPage = () => {
   const [antreanSurat, setAntreanSurat] = useState([
     {
       idUjk: 'UJK-001', pengusul: 'UPT BLK Surabaya', pendanaan: 'APBD', skema: 'Pembuatan Roti Dan Kue', bidang: 'Pariwisata', asesi: 16,
-      hari1: '18 Feb 2026', hari2: '19 Feb 2026', waktu: '08.00 WIB s/d selesai', tuk: 'UPT BLK Surabaya',
+      hari1: '2026-02-18', hari2: '2026-02-19', waktu: '08.00 WIB s/d selesai', tuk: 'UPT BLK Surabaya',
       asesor1: 'No Na Esther', noReg1: 'MET.005313 2018',
       asesor2: '', noReg2: '',
       penyelia: 'Miftahul Huda',
@@ -52,8 +52,6 @@ const PenugasanPage = () => {
   const [formData, setFormData] = useState({ noSurat: '', tanggalSurat: '', noSuratMasuk: '', tanggalSuratMasuk: '' });
   const [previewDokumen, setPreviewDokumen] = useState(null);
   const [viewAdminUjk, setViewAdminUjk] = useState(null);
-  
-  // <-- PERBAIKAN: State untuk menampilkan tabel peserta di halaman ini
   const [viewPesertaUjk, setViewPesertaUjk] = useState(null); 
 
   const [isAsesorModalOpen, setIsAsesorModalOpen] = useState(false);
@@ -93,8 +91,6 @@ const PenugasanPage = () => {
   };
 
   const handleEditChange = (e) => setEditData({ ...editData, [e.target.name]: e.target.value });
-  
-  // <-- PERBAIKAN: Fungsi penangkap input modal surat (agar tidak crash/layar putih)
   const handleInputChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const filteredAsesors = useMemo(() => {
@@ -105,9 +101,7 @@ const PenugasanPage = () => {
     } catch (error) { return []; }
   }, [filterBidang, filterSkema]);
 
-  // <-- PERBAIKAN: Menampilkan tabel peserta langsung tanpa pindah router
   const handleGoToPeserta = (item) => {
-    // Membuat dummy data berdasarkan jumlah asesi yang terdaftar
     const dummyPeserta = Array.from({ length: item.asesi || 10 }).map((_, i) => ({
       id: i + 1, nama: `Peserta Asesi ke-${i + 1}`, nik: `35780000000000${i}`, jk: 'L', tempatLahir: 'Surabaya', tanggalLahir: '01 Januari 2000', alamat: 'Jl. Pahlawan', rt: '01', rw: '02', kelurahan: 'Sidoarjo', kecamatan: 'Sidoarjo Kota', hp: '0800000000', email: `peserta${i+1}@gmail.com`, pendidikan: 'SMK'
     }));
@@ -161,29 +155,16 @@ const PenugasanPage = () => {
   const handleGenerateSurat = (e) => {
     e.preventDefault(); 
     setIsFormOpen(false);
-    
     const safeTuk = selectedUjk?.tuk ? String(selectedUjk.tuk) : 'TUK Belum Ditentukan';
     const safeWaktu = selectedUjk?.waktu ? String(selectedUjk.waktu) : 'Waktu Belum Ditentukan';
     const safePengusul = selectedUjk?.pengusul ? String(selectedUjk.pengusul) : 'Instansi Pemohon';
-    
-    const safeDataUjk = {
-      ...selectedUjk,
-      tuk: safeTuk,
-      waktu: safeWaktu,
-      pengusul: safePengusul
-    };
+    const safeDataUjk = { ...selectedUjk, tuk: safeTuk, waktu: safeWaktu, pengusul: safePengusul };
 
     setPreviewDokumen({ 
       dataUjk: safeDataUjk, 
       jenis: formType, 
-      formData: { 
-        ...formData, 
-        tempat: safeTuk, 
-        waktu: safeWaktu, 
-        kepadaTujuan: safePengusul.replace('UPT BLK', 'UPT Balai Latihan Kerja') 
-      } 
+      formData: { ...formData, tempat: safeTuk, waktu: safeWaktu, kepadaTujuan: safePengusul.replace('UPT BLK', 'UPT Balai Latihan Kerja') } 
     });
-    
     showAlert('success', 'Berhasil Digenerate', 'Pratinjau template surat telah siap untuk dicetak.');
   };
   
@@ -214,7 +195,6 @@ const PenugasanPage = () => {
         <AlertPopup type={alertConfig.type} title={alertConfig.title} text={alertConfig.text} onConfirm={handleConfirmAlert} onCancel={handleCancelAlert} />
       )}
 
-      {/* RENDER TABEL PESERTA INLINE */}
       {viewPesertaUjk ? (
         <div className="fade-in-content" style={{ background: 'white', padding: '30px', borderRadius: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '20px' }}>
@@ -226,7 +206,6 @@ const PenugasanPage = () => {
           </div>
           <TablePeserta dataPeserta={viewPesertaUjk.peserta} skemaName={viewPesertaUjk.skema} />
         </div>
-
       ) : previewDokumen ? (
         <div className="print-preview-container">
           <div className="no-print print-header">
@@ -240,30 +219,28 @@ const PenugasanPage = () => {
              {previewDokumen.jenis === 'administrasi' && <TemplateAdministrasi data={{ ujk: previewDokumen.dataUjk, docName: previewDokumen.docData?.name, docCode: previewDokumen.docData?.code }} />}
           </div>
         </div>
-
       ) : viewAdminUjk ? (
         <div className="fade-in-content" style={{ background: 'white', padding: '30px', borderRadius: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '25px' }}>
             <button className="btn-cancel-sm" onClick={() => setViewAdminUjk(null)}>Kembali</button>
             <h2>Dokumen Administrasi - {viewAdminUjk?.skema}</h2>
           </div>
-          <div className="admin-docs-grid">
+          <div className="admin-docs-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
             {dokumenAdministrasiList.map((doc, index) => {
               const isPrinted = viewAdminUjk?.statusSurat?.administrasi?.includes(doc.code);
               return (
-                <div key={index} className={`admin-doc-card ${isPrinted ? 'is-done' : ''}`}>
-                  <h3 className="admin-doc-title">{doc.code} - {doc.name}</h3>
-                  <button className={`btn-save-sm`} style={{ width: '100%', marginTop: '10px' }} onClick={() => setPreviewDokumen({ dataUjk: viewAdminUjk, jenis: 'administrasi', docData: doc })}>{isPrinted ? 'Cetak Ulang' : 'Generate'}</button>
+                <div key={index} className={`admin-doc-card ${isPrinted ? 'is-done' : ''}`} style={{ padding: '20px', borderRadius: '10px', border: `1px solid ${isPrinted ? '#10b981' : '#cbd5e1'}`, backgroundColor: isPrinted ? '#ecfdf5' : '#fff' }}>
+                  <h3 style={{ margin: '0 0 15px 0', fontSize: '1rem', color: isPrinted ? '#047857' : '#1e293b' }}>{doc.code} - {doc.name}</h3>
+                  <Button variant={isPrinted ? 'outline' : 'primary'} size="sm" isFullWidth onClick={() => setPreviewDokumen({ dataUjk: viewAdminUjk, jenis: 'administrasi', docData: doc })}>{isPrinted ? 'Cetak Ulang' : 'Generate File'}</Button>
                 </div>
               );
             })}
           </div>
         </div>
-
       ) : (
         <>
           <div className="dashboard-header" style={{ marginBottom: '25px' }}>
-            <h2 style={{ fontSize: '1.8rem', color: '#1e293b', marginBottom: '8px' }}>Penugasan & Plotting Jadwal</h2>
+            <h2 style={{ fontSize: '1.8rem', color: '#1e293b', marginBottom: '8px' }}>Penugasan</h2>
             <p className="text-muted">Atur jadwal pelaksanaan, distribusikan Asesor, dan terbitkan dokumen surat persetujuan LSP.</p>
           </div>
           
@@ -279,7 +256,8 @@ const PenugasanPage = () => {
                   <div className="col-action">AKSI</div>
                 </div>
 
-                {antreanSurat.map((item, index) => {
+                {/* --- MENGURUTKAN TANGGAL PENGAJUAN DARI YANG TERBARU --- */}
+                {[...antreanSurat].sort((a,b) => new Date(b.hari1 || '2099-01-01') - new Date(a.hari1 || '2099-01-01')).map((item, index) => {
                   const isEditing = editingId === item.idUjk || (!item.isPlotted && editingId === item.idUjk);
 
                   return (
@@ -292,23 +270,23 @@ const PenugasanPage = () => {
                         <div className="sm-skema-title">{item.skema}</div>
                         <div className="sm-skema-meta">Bidang: {item.bidang}</div>
                         
-                        {/* TOMBOL LIHAT PESERTA */}
                         <button className="btn-link-asesi" onClick={() => handleGoToPeserta(item)}>
                           <i className="fas fa-users"></i> <span>Data Peserta: <strong>{item.asesi} Asesi</strong></span>
                         </button>
                         
                         {isEditing ? (
                           <div className="edit-date-panel">
-                            <div className="edit-date-title"><i className="fas fa-calendar-day"></i> Ubah Tanggal Pelaksanaan</div>
-                            <div className="cool-input-group">
-                              <input type="text" className="cool-input" name="hari1" value={editData.hari1} onChange={handleEditChange} placeholder="Mulai (ex: 18 Feb 2026)" />
-                              <div className="cool-input-addon">-</div>
-                              <input type="text" className="cool-input" name="hari2" value={editData.hari2} onChange={handleEditChange} placeholder="Selesai (ex: 19 Feb 2026)" />
+                            <div className="edit-date-title"><i className="fas fa-calendar-day"></i> Pilih Tanggal Pelaksanaan</div>
+                            <div className="cool-input-group" style={{ display: 'flex', gap: '10px' }}>
+                              {/* PERBAIKAN: Input Type Date */}
+                              <input type="date" className="cool-input" name="hari1" value={editData.hari1} onChange={handleEditChange} style={{ flex: 1, padding: '8px' }} />
+                              <div style={{ alignSelf: 'center', fontWeight: 'bold' }}>-</div>
+                              <input type="date" className="cool-input" name="hari2" value={editData.hari2} onChange={handleEditChange} style={{ flex: 1, padding: '8px' }} />
                             </div>
                             
                             <div className="fixed-info-box mt-2">
-                               <div className="fixed-item"><i className="fas fa-lock"></i> <strong>Jam:</strong> {item.waktu || '-'} <span className="text-muted">(Sesuai Permintaan BLK)</span></div>
-                               <div className="fixed-item mt-1"><i className="fas fa-lock"></i> <strong>TUK:</strong> {item.tuk || '-'} <span className="text-muted">(Sesuai Permintaan BLK)</span></div>
+                               <div className="fixed-item"><i className="fas fa-lock"></i> <strong>Jam:</strong> {item.waktu || '-'}</div>
+                               <div className="fixed-item mt-1"><i className="fas fa-lock"></i> <strong>TUK:</strong> {item.tuk || '-'}</div>
                             </div>
                           </div>
                         ) : (
@@ -324,19 +302,20 @@ const PenugasanPage = () => {
                         {isEditing ? (
                           <div className="edit-deploy-panel">
                             <label className="edit-label">Asesor 1</label>
-                            <button className="btn-select-modal" onClick={() => handleOpenAsesorModal('asesor1', editData.bidang, editData.skema)}>
-                              <i className="fas fa-user-tie"></i> {editData.asesor1 || 'Pilih Asesor 1 dari List...'}
-                            </button>
+                            {/* PERBAIKAN: Visual Pemilihan Asesor Disamakan */}
+                            <Button variant="outline" icon="user-tie" isFullWidth onClick={() => handleOpenAsesorModal('asesor1', editData.bidang, editData.skema)} style={{ justifyContent: 'flex-start' }}>
+                              {editData.asesor1 || 'Pilih Asesor 1...'}
+                            </Button>
 
                             <label className="edit-label mt-2">Asesor 2 (Opsional)</label>
-                            <button className="btn-select-modal" onClick={() => handleOpenAsesorModal('asesor2', editData.bidang, editData.skema)}>
-                              <i className="fas fa-user-tie"></i> {editData.asesor2 || 'Pilih Asesor 2 dari List...'}
-                            </button>
+                            <Button variant="outline" icon="user-tie" isFullWidth onClick={() => handleOpenAsesorModal('asesor2', editData.bidang, editData.skema)} style={{ justifyContent: 'flex-start' }}>
+                              {editData.asesor2 || 'Pilih Asesor 2...'}
+                            </Button>
 
                             <label className="edit-label mt-2">Penyelia LSP</label>
-                            <div className="cool-input-group" style={{marginBottom: 0}}>
-                              <div className="cool-input-addon"><i className="fas fa-user-shield"></i></div>
-                              <select className="cool-input" name="penyelia" value={editData.penyelia} onChange={handleEditChange}>
+                            <div className="cool-input-group" style={{marginBottom: 0, display: 'flex'}}>
+                              <div style={{ padding: '8px 12px', backgroundColor: '#e2e8f0', borderRadius: '6px 0 0 6px' }}><i className="fas fa-user-shield"></i></div>
+                              <select className="cool-input" name="penyelia" value={editData.penyelia} onChange={handleEditChange} style={{ flex: 1, borderRadius: '0 6px 6px 0' }}>
                                 <option value="">-- Pilih Penyelia --</option>
                                 {daftarPenyelia.map(p => <option key={p} value={p}>{p}</option>)}
                               </select>
@@ -387,8 +366,8 @@ const PenugasanPage = () => {
                           <span>3. Surat Permohonan</span>
                         </button>
 
-                        <button className={`doc-pill mt-2 ${!item.isPlotted ? 'disabled' : item.statusSurat.administrasi?.length === 12 ? 'done' : 'action'}`} onClick={() => handleDocClick(item, 'administrasi')}>
-                          <div className={`pill-icon ${item.statusSurat.administrasi?.length === 12 ? 'bg-green' : 'bg-gray'}`}><i className={`fas ${!item.isPlotted ? 'fa-lock' : item.statusSurat.administrasi?.length === 12 ? 'fa-check' : 'fa-folder-open'}`}></i></div>
+                        <button className={`doc-pill mt-2 ${!item.isPlotted ? 'disabled' : item.statusSurat.administrasi?.length === 13 ? 'done' : 'action'}`} onClick={() => handleDocClick(item, 'administrasi')}>
+                          <div className={`pill-icon ${item.statusSurat.administrasi?.length === 13 ? 'bg-green' : 'bg-gray'}`}><i className={`fas ${!item.isPlotted ? 'fa-lock' : item.statusSurat.administrasi?.length === 13 ? 'fa-check' : 'fa-folder-open'}`}></i></div>
                           <span>4. Administrasi Dokumen</span>
                         </button>
                       </div>
@@ -488,11 +467,11 @@ const PenugasanPage = () => {
                       <label style={{display:'block', fontSize:'0.85rem', fontWeight:'bold', color:'#991b1b', marginBottom:'6px'}}>Nomor Surat Masuk BLK</label>
                       <input type="text" className="cool-input" style={{width:'100%', border:'1px solid #fca5a5', borderRadius:'6px'}} name="noSuratMasuk" value={formData.noSuratMasuk || ''} onChange={handleInputChange} placeholder="Contoh: 500.15/2026" required />
                       <label style={{display:'block', fontSize:'0.85rem', fontWeight:'bold', color:'#991b1b', margin:'10px 0 6px 0'}}>Tanggal Surat Masuk</label>
-                      <input type="text" className="cool-input" style={{width:'100%', border:'1px solid #fca5a5', borderRadius:'6px'}} name="tanggalSuratMasuk" value={formData.tanggalSuratMasuk || ''} onChange={handleInputChange} placeholder="Contoh: 10 Maret 2026" required />
+                      <input type="date" className="cool-input" style={{width:'100%', border:'1px solid #fca5a5', borderRadius:'6px'}} name="tanggalSuratMasuk" value={formData.tanggalSuratMasuk || ''} onChange={handleInputChange} required />
                     </div>
                   )}
                   <div className="form-group" style={{ marginBottom: '15px' }}><label className="edit-label">Nomor Surat LSP</label><input type="text" className="cool-input" style={{width:'100%', border:'1px solid #cbd5e1', borderRadius:'6px'}} name="noSurat" value={formData.noSurat || ''} onChange={handleInputChange} required /></div>
-                  <div className="form-group" style={{ marginBottom: '25px' }}><label className="edit-label">Tanggal Penetapan</label><input type="text" className="cool-input" style={{width:'100%', border:'1px solid #cbd5e1', borderRadius:'6px'}} name="tanggalSurat" value={formData.tanggalSurat || ''} onChange={handleInputChange} required /></div>
+                  <div className="form-group" style={{ marginBottom: '25px' }}><label className="edit-label">Tanggal Penetapan</label><input type="date" className="cool-input" style={{width:'100%', border:'1px solid #cbd5e1', borderRadius:'6px'}} name="tanggalSurat" value={formData.tanggalSurat || ''} onChange={handleInputChange} required /></div>
                   <div style={{ display: 'flex', gap: '12px' }}>
                     <button type="button" className="btn-cancel-sm w-full" onClick={() => setIsFormOpen(false)}>Batal</button>
                     <button type="submit" className="btn-save-sm w-full"><i className="fas fa-magic"></i> Generate</button>
