@@ -123,13 +123,27 @@ const Sidebar = ({ isOpen, isDesktopOpen = true, closeSidebar, toggleSidebar }) 
             {currentPath.startsWith('/admin-lsp') && primaryRole !== 'super-admin' && (
               <>
                 <p className="menu-label">The Controller</p>
-                <Link to="/admin-lsp" className={getActiveClass('/admin-lsp')} onClick={handleMenuClick}><i className="fas fa-home"></i> Dashboard </Link>
+                <Link to="/admin-lsp" className={getActiveClass('/admin-lsp')} onClick={handleMenuClick}>
+                  <i className="fas fa-home"></i> Dashboard 
+                </Link>
+                
                 <p className="menu-label">Master Data</p>
-                <Link to="/admin-lsp/skema" className={getActiveClass('/admin-lsp/skema')} onClick={handleMenuClick}><i className="fas fa-file-code"></i> Data Skema</Link>
-                <Link to="/admin-lsp/asesor" className={getActiveClass('/admin-lsp/asesor')} onClick={handleMenuClick}><i className="fas fa-user-tie"></i> Data Asesor</Link>
-                <Link to="/admin-lsp/tuk" className={getActiveClass('/admin-lsp/tuk')} onClick={handleMenuClick}><i className="fas fa-map-marker-alt"></i> Data TUK</Link>
+                <Link to="/admin-lsp/skema" className={getActiveClass('/admin-lsp/skema')} onClick={handleMenuClick}>
+                  <i className="fas fa-file-code"></i> Data Skema
+                </Link>
+                <Link to="/admin-lsp/asesor" className={getActiveClass('/admin-lsp/asesor')} onClick={handleMenuClick}>
+                  <i className="fas fa-user-tie"></i> Data Asesor
+                </Link>
+                <Link to="/admin-lsp/penyelia" className={getActiveClass('/admin-lsp/penyelia')} onClick={handleMenuClick}>
+                  <i className="fas fa-user-shield"></i> Data Penyelia
+                </Link>
+                <Link to="/admin-lsp/tuk" className={getActiveClass('/admin-lsp/tuk')} onClick={handleMenuClick}>
+                  <i className="fas fa-map-marker-alt"></i> Data TUK
+                </Link>
                 <p className="menu-label">Manajemen UJK</p>
-                <Link to="/admin-lsp/penugasan" className={getActiveClass('/admin-lsp/penugasan')} onClick={handleMenuClick}><i className="fas fa-tasks"></i> Penugasan & Plotting</Link>
+                <Link to="/admin-lsp/penugasan" className={getActiveClass('/admin-lsp/penugasan')} onClick={handleMenuClick}>
+                  <i className="fas fa-tasks"></i> Penugasan & Plotting
+                </Link>
               </>
             )}
             {currentPath.startsWith('/staff-lsp') && primaryRole !== 'super-admin' && (
