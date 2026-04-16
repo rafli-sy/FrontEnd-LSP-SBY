@@ -11,6 +11,7 @@ import DashboardAdminBLK from './pages/dashboard/DashboardAdminBLK';
 import DashboardAsesor from './pages/dashboard/DashboardAsesor';
 import MasterDataSkema from './pages/master/skema/MasterDataSkema';
 import MasterDataAsesor from './pages/master/asesor/MasterDataAsesor';
+import MasterDataPenyelia from './pages/master/penyelia/MasterDataPenyelia'; // TAMBAHAN IMPORT
 import ManajemenAkun from './pages/manajemen-akun/ManajemenAkun';
 import ManajemenAkunAsesor from './pages/dashboard/asesor/ManajemenAkunAsesor';
 import DataTUK from './pages/master/tuk/DataTUK';
@@ -37,6 +38,7 @@ function App() {
           <Route path="/admin-lsp" element={<DashboardAdminLSP />} />
           <Route path="/admin-lsp/skema" element={<MasterDataSkema />} />
           <Route path="/admin-lsp/asesor" element={<MasterDataAsesor />} />
+          <Route path="/admin-lsp/penyelia" element={<MasterDataPenyelia />} /> {/* TAMBAHAN ROUTE */}
           <Route path="/admin-lsp/tuk" element={<DataTUK />} />
           <Route path="/admin-lsp/penugasan" element={<PenugasanPage />} />
           <Route path="/admin-lsp/buku-induk" element={<BukuIndukPage />} />

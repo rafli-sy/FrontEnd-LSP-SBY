@@ -103,24 +103,23 @@ const Layout = () => {
                 <Link to="/super-admin/manajemen-akun" className={getActiveClass('/super-admin/manajemen-akun')}><i className="fas fa-users-cog"></i> Manajemen Akun</Link>
               </>
             )}
-            {/* 2. ROLE: ADMIN LSP */}
-            {currentPath.startsWith('/admin-lsp') && primaryRole !== 'super-admin' && (
-              <>
-                <p className="menu-label">The Controller</p>
-                <Link to="/admin-lsp" className={getActiveClass('/admin-lsp')}><i className="fas fa-home"></i> Dashboard</Link>
-                <p className="menu-label">Master Data</p>
-                <Link to="/admin-lsp/skema" className={getActiveClass('/admin-lsp/skema')}><i className="fas fa-file-code"></i> Data Skema</Link>
-                <Link to="/admin-lsp/asesor" className={getActiveClass('/admin-lsp/asesor')}><i className="fas fa-user-tie"></i> Data Asesor</Link>
-                <Link to="/admin-lsp/tuk" className={getActiveClass('/admin-lsp/tuk')}><i className="fas fa-map-marker-alt"></i> Penyelia & TUK</Link>
-                <p className="menu-label">Manajemen UJK</p>
-                {/* Teks disesuaikan menjadi Penugasan Asesor */}
-                <Link to="/admin-lsp/penugasan" className={getActiveClass('/admin-lsp/penugasan')}><i className="fas fa-tasks"></i> Penugasan Asesor</Link>
-                <Link to="/admin-lsp/buku-induk" className={getActiveClass('/admin-lsp/buku-induk')}><i className="fas fa-book"></i> Buku Induk</Link>
-                {/* FITUR BARU: Verifikasi Sertifikat */}
-                <Link to="/admin-lsp/verifikasi-sertifikat" className={getActiveClass('/admin-lsp/verifikasi-sertifikat')}><i className="fas fa-certificate"></i> Verifikasi Sertifikat</Link>
-                <Link to="/admin-lsp/profil" className={getActiveClass('/admin-lsp/profil')}><i className="fas fa-user-edit"></i> Profil</Link>
-              </>
-            )}
+              {/* 2. ROLE: ADMIN LSP */}
+              {currentPath.startsWith('/admin-lsp') && primaryRole !== 'super-admin' && (
+                <>
+                  <p className="menu-label">The Controller</p>
+                  <Link to="/admin-lsp" className={getActiveClass('/admin-lsp')}><i className="fas fa-home"></i> Dashboard</Link>
+                  <p className="menu-label">Master Data</p>
+                  <Link to="/admin-lsp/skema" className={getActiveClass('/admin-lsp/skema')}><i className="fas fa-file-code"></i> Data Skema</Link>
+                  <Link to="/admin-lsp/asesor" className={getActiveClass('/admin-lsp/asesor')}><i className="fas fa-user-tie"></i> Data Asesor</Link>
+                  <Link to="/admin-lsp/penyelia" className={getActiveClass('/admin-lsp/penyelia')}><i className="fas fa-user-shield"></i> Data Penyelia</Link>
+                  <Link to="/admin-lsp/tuk" className={getActiveClass('/admin-lsp/tuk')}><i className="fas fa-map-marker-alt"></i> Data TUK</Link>
+                  <p className="menu-label">Manajemen UJK</p>
+                  <Link to="/admin-lsp/penugasan" className={getActiveClass('/admin-lsp/penugasan')}><i className="fas fa-tasks"></i> Penugasan Asesor</Link>
+                  <Link to="/admin-lsp/buku-induk" className={getActiveClass('/admin-lsp/buku-induk')}><i className="fas fa-book"></i> Buku Induk</Link>
+                  <Link to="/admin-lsp/verifikasi-sertifikat" className={getActiveClass('/admin-lsp/verifikasi-sertifikat')}><i className="fas fa-certificate"></i> Verifikasi Sertifikat</Link>
+                  <Link to="/admin-lsp/profil" className={getActiveClass('/admin-lsp/profil')}><i className="fas fa-user-edit"></i> Profil</Link>
+                </>
+              )}
 
             {/* 3. ROLE: STAFF LSP */}
             {currentPath.startsWith('/staff-lsp') && primaryRole !== 'super-admin' && (
