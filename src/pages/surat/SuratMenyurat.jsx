@@ -371,10 +371,6 @@ const SuratMenyurat = () => {
                 <label>Tempat (TUK)</label>
                 <input type="text" className="form-input" value={selectedUjk?.tuk || ''} readOnly style={{backgroundColor: '#e2e8f0', cursor: 'not-allowed'}} />
               </div>
-              <div className="form-group">
-                <label>Pukul / Waktu Ujian</label>
-                <input type="text" className="form-input" value={selectedUjk?.waktu || ''} readOnly style={{backgroundColor: '#e2e8f0', cursor: 'not-allowed'}} />
-              </div>
             </div>
           </div>
 

@@ -14,18 +14,16 @@
 
 .table-responsive {
   overflow-x: auto;
-  width: 100%; /* Memastikan container tabel penuh */
+  width: 100%;
 }
 
-/* --- PERBAIKAN LEBAR TABEL --- */
 .admin-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.95rem;
-  table-layout: auto; /* Membiarkan browser mengatur lebar kolom secara proporsional */
+  table-layout: auto;
 }
 
-/* --- PERBAIKAN PADDING & WARNA BORDER TABEL --- */
 .admin-table th,
 .admin-table td {
   padding: 16px 20px;
@@ -36,8 +34,6 @@
 
 .admin-table td {
   color: #334155;
-  /* Hapus white-space: nowrap jika data panjang boleh turun ke baris baru, 
-     atau biarkan jika ingin memaksanya dalam satu baris */
   white-space: normal; 
 }
 
@@ -51,15 +47,14 @@
   border-bottom: 2px solid #e2e8f0;
 }
 
-/* Opsi: Memberikan porsi lebar spesifik agar tombol Aksi tidak memakan ruang terlalu banyak */
 .admin-table th:last-child,
 .admin-table td:last-child {
-  width: 150px; /* Atur sesuai kebutuhan lebar tombol Aksi */
-  text-align: center; /* Menengahkan tombol Aksi */
+  width: 120px;
+  text-align: center; 
 }
 
 .admin-table td:last-child > div {
-    justify-content: center; /* Menengahkan isi dalam div aksi */
+    justify-content: center; 
 }
 
 .admin-table tbody tr {
@@ -70,10 +65,9 @@
   background-color: #f8fafc;
 }
 
-/* --- CUSTOM TAMPILAN TOMBOL AKSI DI TABEL --- */
+/* --- CUSTOM TAMPILAN TOMBOL AKSI (HANYA EDIT) DI TABEL --- */
 .admin-table td > div {
   display: flex;
-  gap: 12px !important;
   align-items: center;
 }
 
@@ -86,16 +80,6 @@
   font-size: 0 !important;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   padding: 0 !important;
-}
-
-/* Memunculkan ukuran icon kembali setelah font-size tombol dinolkan */
-.admin-table td > div > button i,
-.admin-table td > div > button svg {
-  font-size: 1.1rem !important; 
-}
-
-/* Tombol Edit (Kiri) - Outline Biru */
-.admin-table td > div > button:nth-child(1) {
   width: 60px !important;
   background-color: #ffffff !important;
   border: 2px solid #1d4ed8 !important;
@@ -103,23 +87,13 @@
   box-shadow: none !important;
 }
 
-.admin-table td > div > button:nth-child(1):hover {
+.admin-table td > div > button:hover {
   background-color: #eff6ff !important;
 }
 
-/* Tombol Hapus (Kanan) - Solid Merah */
-.admin-table td > div > button:nth-child(2) {
-  width: 45px !important;
-  background-color: #ef4444 !important;
-  border: 1px solid #ef4444 !important;
-  color: #ffffff !important;
-  box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.3) !important;
-}
-
-.admin-table td > div > button:nth-child(2):hover {
-  background-color: #dc2626 !important;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 10px -1px rgba(239, 68, 68, 0.4) !important;
+.admin-table td > div > button i,
+.admin-table td > div > button svg {
+  font-size: 1.1rem !important; 
 }
 /* ------------------------------------------- */
 
@@ -139,26 +113,11 @@
   letter-spacing: 0.3px;
 }
 
-.badge.danger {
-  background-color: #fee2e2;
-  color: #dc2626;
-}
-.badge.success {
-  background-color: #d1fae5;
-  color: #059669;
-}
-.badge.warning {
-  background-color: #fef3c7;
-  color: #d97706;
-}
-.badge.primary {
-  background-color: #dbeafe;
-  color: #2563eb;
-}
-.badge.info {
-  background-color: #e0f2fe;
-  color: #0284c7;
-}
+.badge.danger { background-color: #fee2e2; color: #dc2626; }
+.badge.success { background-color: #d1fae5; color: #059669; }
+.badge.warning { background-color: #fef3c7; color: #d97706; }
+.badge.primary { background-color: #dbeafe; color: #2563eb; }
+.badge.info { background-color: #e0f2fe; color: #0284c7; }
 
 .status-badge {
   padding: 6px 14px;
@@ -268,9 +227,7 @@
   transition: 0.2s;
 }
 
-.maa-btn-lihat:hover {
-  background-color: #475569;
-}
+.maa-btn-lihat:hover { background-color: #475569; }
 
 /* --- CUSTOM CHECKBOX DESIGN UNTUK SKEMA --- */
 .maa-checkbox-grid {
@@ -307,9 +264,7 @@
   color: #1e3a8a;
 }
 
-.maa-checkbox-hidden {
-  display: none;
-}
+.maa-checkbox-hidden { display: none; }
 
 .maa-checkbox-custom {
   width: 22px;
@@ -334,9 +289,7 @@
   font-size: 12px;
 }
 
-.maa-checkbox-custom .hidden {
-  display: none;
-}
+.maa-checkbox-custom .hidden { display: none; }
 .maa-checkbox-custom .visible {
   display: block;
   animation: zoomIn 0.2s ease-out;
@@ -389,24 +342,14 @@
 }
 
 @keyframes zoomIn {
-  from {
-    transform: scale(0);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 
 @media (max-width: 768px) {
   .maa-form-row,
-  .maa-checkbox-grid {
-    grid-template-columns: 1fr;
-  }
-  .maa-file-wrapper {
-    flex-direction: column;
-  }
+  .maa-checkbox-grid { grid-template-columns: 1fr; }
+  .maa-file-wrapper { flex-direction: column; }
   .maa-btn-lihat {
     width: 100%;
     justify-content: center;

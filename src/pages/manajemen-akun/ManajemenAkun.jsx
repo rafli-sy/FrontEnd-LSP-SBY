@@ -10,15 +10,16 @@ const ManajemenAkun = () => {
   const [isEdit, setIsEdit] = useState(false);
   const [editId, setEditId] = useState(null);
   
-  // Dummy State
+  // Dummy State (Status dihapus)
   const [users, setUsers] = useState([
-    { id: 1, username: 'admin_rafli', role: 'Super Admin', status: 'Aktif' },
-    { id: 2, username: 'hadiid_lsp', role: 'Admin LSP', status: 'Aktif' },
-    { id: 3, username: 'ade_staff', role: 'Staff LSP', status: 'Aktif' },
-    { id: 4, username: 'ridho_blk', role: 'Admin BLK', status: 'Nonaktif' }
+    { id: 1, username: 'admin_rafli', role: 'Super Admin' },
+    { id: 2, username: 'hadiid_lsp', role: 'Admin LSP' },
+    { id: 3, username: 'ade_staff', role: 'Staff LSP' },
+    { id: 4, username: 'ridho_blk', role: 'Admin BLK' }
   ]);
   
-  const [formData, setFormData] = useState({ username: '', password: '', role: 'Staff LSP', status: 'Aktif' });
+  // FormData (Status dihapus)
+  const [formData, setFormData] = useState({ username: '', password: '', role: 'Staff LSP' });
 
   const closeAlert = () => {
     setAlert(null);
@@ -35,7 +36,7 @@ const ManajemenAkun = () => {
 
   // Fungsi untuk membuka modal Edit Pengguna
   const handleEditClick = (user) => {
-    setFormData({ username: user.username, password: '', role: user.role, status: user.status });
+    setFormData({ username: user.username, password: '', role: user.role });
     setEditId(user.id);
     setIsEdit(true);
     setShowModal(true);
@@ -43,7 +44,7 @@ const ManajemenAkun = () => {
 
   // Fungsi untuk membuka modal Tambah Pengguna Baru
   const handleTambahClick = () => {
-    setFormData({ username: '', password: '', role: 'Staff LSP', status: 'Aktif' });
+    setFormData({ username: '', password: '', role: 'Staff LSP' });
     setIsEdit(false);
     setEditId(null);
     setShowModal(true);
@@ -53,11 +54,11 @@ const ManajemenAkun = () => {
   const handleResetPassword = (e) => {
     e.preventDefault();
     setAlert({
-      type: 'confirm', // Diubah menjadi confirm agar muncul tombol konfirmasi (atau gunakan 'save' jika confirm tidak dikenali)
+      type: 'confirm',
       title: 'Reset Password', 
       text: 'Yakin ingin mereset password pengguna ini ke bawaan sistem?',
       onConfirm: () => {
-        setShowModal(false); // Menutup modal edit setelah konfirmasi
+        setShowModal(false); 
         showSuccess('Berhasil!', 'Password pengguna telah direset.');
       },
       onCancel: closeAlert
@@ -67,7 +68,7 @@ const ManajemenAkun = () => {
   const handleSimpanUser = (e) => {
     e.preventDefault();
     
-    // Validasi input (Password hanya wajib saat tambah akun baru)
+    // Validasi input
     if (!formData.username || (!isEdit && !formData.password)) {
       setAlert({ type: 'warning', title: 'Data Tidak Lengkap', text: 'Semua field wajib diisi.', onCancel: closeAlert });
       return;
@@ -92,23 +93,12 @@ const ManajemenAkun = () => {
           const newUser = { ...formData, id: Date.now() };
           setUsers([...users, newUser]);
           setShowModal(false);
-          setFormData({ username: '', password: '', role: 'Staff LSP', status: 'Aktif' });
+          setFormData({ username: '', password: '', role: 'Staff LSP' });
           showSuccess('Tersimpan!', 'Akun pengguna berhasil ditambahkan.');
         },
         onCancel: closeAlert
       });
     }
-  };
-
-  const handleHapus = (id) => {
-    setAlert({
-      type: 'delete', title: 'Hapus Akun?', text: 'Pengguna tidak akan bisa lagi mengakses sistem ini.',
-      onConfirm: () => {
-        setUsers(users.filter(u => u.id !== id));
-        showSuccess('Terhapus!', 'Akun pengguna berhasil dihapus dari sistem.');
-      },
-      onCancel: closeAlert
-    });
   };
 
   return (
@@ -127,7 +117,6 @@ const ManajemenAkun = () => {
             <tr>
               <th>Username</th>
               <th>Role Akses</th>
-              <th>Status</th>
               <th>Aksi</th>
             </tr>
           </thead>
@@ -136,11 +125,9 @@ const ManajemenAkun = () => {
               <tr key={user.id}>
                 <td>{user.username}</td>
                 <td><span className="badge info">{user.role}</span></td>
-                <td><span className={`badge ${user.status === 'Aktif' ? 'success' : 'danger'}`}>{user.status}</span></td>
                 <td>
-                  <div style={{ display: 'flex', gap: '8px' }}>
+                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                     <Button variant="warning" size="sm" icon="edit" onClick={() => handleEditClick(user)}>Edit</Button>
-                    <Button variant="danger" size="sm" icon="trash-alt" onClick={() => handleHapus(user.id)}>Hapus</Button>
                   </div>
                 </td>
               </tr>
@@ -152,7 +139,6 @@ const ManajemenAkun = () => {
       {showModal && (
         <div className="modal-overlay">
           <div className="modal-content">
-            {/* Judul dinamis menyesuaikan mode Add / Edit */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
                 <h3 style={{ margin: 0 }}><i className={`fas ${isEdit ? 'fa-user-edit' : 'fa-user-shield'} text-blue`}></i> {isEdit ? 'Edit Pengguna' : 'Tambah Pengguna'}</h3>
                 <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem' }} onClick={() => setShowModal(false)}><i className="fas fa-times"></i></button>
@@ -164,7 +150,6 @@ const ManajemenAkun = () => {
                 <input type="text" className="form-input" name="username" value={formData.username} onChange={handleInputChange} />
               </div>
               
-              {/* Sembunyikan field password saat mode edit */}
               {!isEdit && (
                 <div className="form-group">
                   <label>Password</label>
@@ -175,6 +160,7 @@ const ManajemenAkun = () => {
               <div className="form-group">
                 <label>Role</label>
                 <select className="form-input" name="role" value={formData.role} onChange={handleInputChange}>
+                  <option value="Super Admin">Super Admin</option>
                   <option value="Admin LSP">Admin LSP</option>
                   <option value="Staff LSP">Staff LSP</option>
                   <option value="Admin BLK">Admin BLK</option>
@@ -182,7 +168,6 @@ const ManajemenAkun = () => {
                 </select>
               </div>
 
-              {/* Action Buttons dinamis menyesuaikan mode Add / Edit */}
               <div style={{ display: 'flex', gap: '10px', marginTop: '20px', justifyContent: isEdit ? 'flex-end' : 'space-between' }}>
                 {isEdit ? (
                   <>
