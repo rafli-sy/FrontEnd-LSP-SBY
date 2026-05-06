@@ -1,83 +1,177 @@
-/* =========================================
-   1. GLOBAL VARIABLES (Tema Warna LSP BLK)
-   ========================================= */
-:root {
-  /* Primary Colors */
-  --primary: #3b82f6;
-  --primary-hover: #2563eb;
-  --primary-light: #eff6ff;
-  
-  /* Status Colors */
-  --success: #10b981;
-  --danger: #ef4444;
-  --warning: #f59e0b;
-  
-  /* Neutral / Text Colors */
-  --bg-body: #f4f7fa;
-  --text-main: #0f172a;
-  --text-muted: #64748b;
-  --border-color: #e2e8f0;
-  
-  /* Font Family */
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-}
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 
-/* =========================================
-   2. MODERN CSS RESET
-   ========================================= */
-*, *::before, *::after {
+* {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-html {
-  font-size: 16px;
-  -webkit-text-size-adjust: 100%;
+  font-family: "Inter", sans-serif;
 }
 
 body {
-  font-family: var(--font-sans);
-  background-color: var(--bg-body);
-  color: var(--text-main);
-  line-height: 1.5;
+  margin: 0;
+  padding: 0;
+  background-color: #f8fafc; /* Latar belakang aplikasi abu-abu sangat muda */
+  color: #334155;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
 }
 
-/* Menghilangkan gaya bawaan list dan link */
-ul, ol { list-style: none; }
-a { text-decoration: none; color: inherit; }
+/* ==========================================================================
+   GLOBAL DASHBOARD UI SYSTEM (KONSISTEN UNTUK SEMUA ROLE)
+   ========================================================================== */
 
-/* Mengatur agar gambar tidak melebihi container */
-img, picture, video, canvas, svg {
-  display: block;
-  max-width: 100%;
+/* 1. KARTU & LAYOUT DASAR */
+.dashboard-content {
+  padding: 24px;
+  animation: fadeIn 0.4s ease-in-out;
+  min-height: calc(100vh - 70px);
 }
 
-/* Inherit font untuk form element */
-input, button, textarea, select {
-  font: inherit;
+.dashboard-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.05),
+    0 10px 15px -5px rgba(0, 0, 0, 0.02);
+  margin-bottom: 24px;
+  border: 1px solid #e2e8f0;
 }
 
-/* =========================================
-   3. CUSTOM SCROLLBAR (Opsional agar cantik)
-   ========================================= */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+/* 2. STATISTIK WIDGET (Atas Dashboard) */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
+  margin-bottom: 24px;
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
+.stat-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
 }
 
-::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 10px;
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  border-color: #cbd5e1;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+.stat-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 14px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.6rem;
+}
+
+.stat-info h3 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.stat-info p {
+  margin: 4px 0 0 0;
+  color: #64748b;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* 3. TABEL ADMIN UNTUK SEMUA ROLE */
+.table-responsive {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background-color: #fff;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  white-space: nowrap;
+}
+
+.admin-table th {
+  background-color: #f8fafc;
+  color: #475569;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+  padding: 16px 24px;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.admin-table td {
+  padding: 16px 24px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  font-size: 0.9rem;
+  vertical-align: middle;
+}
+
+.admin-table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.admin-table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+/* 4. BADGE STATUS (KONSISTEN WARNANYA) */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 14px;
+  border-radius: 9999px; /* Bentuk pil elegan */
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.badge.success {
+  background-color: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+.badge.warning {
+  background-color: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+.badge.danger {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+.badge.primary {
+  background-color: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+.badge.info {
+  background-color: #e0e7ff;
+  color: #3730a3;
+  border: 1px solid #c7d2fe;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

@@ -3,130 +3,65 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  font-family: inherit;
+  font-family: 'Inter', sans-serif;
   font-weight: 600;
-  border: none;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  outline: none;
+  border: none;
+  transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
-.custom-btn:active {
-  transform: scale(0.97);
+.custom-btn i {
+  font-size: 0.9rem;
 }
 
-.btn-icon {
-  font-size: 1.1em;
-}
+/* UKURAN TOMBOL */
+.btn-md { padding: 10px 18px; font-size: 0.9rem; }
+.btn-sm { padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; }
+.btn-lg { padding: 14px 24px; font-size: 1rem; border-radius: 10px; }
+.btn-full { width: 100%; }
 
-.btn-full {
-  width: 100%;
-}
-
-.btn-disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  pointer-events: none;
-}
-
-/* --- SIZES --- */
-.btn-sm {
-  padding: 6px 12px;
-  font-size: 0.85rem;
-  border-radius: 6px;
-}
-.btn-md {
-  padding: 10px 18px;
-  font-size: 0.95rem;
-}
-.btn-lg {
-  padding: 14px 24px;
-  font-size: 1.05rem;
-  border-radius: 10px;
-}
-
-/* --- VARIANTS --- */
-/* Primary (Biru) - Untuk aksi utama seperti Tambah Data */
+/* VARIAN WARNA */
 .btn-primary {
-  background-color: #3b82f6;
-  color: white;
-  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2);
+  background-color: #2563eb;
+  color: #ffffff;
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
 }
 .btn-primary:hover {
-  background-color: #2563eb;
+  background-color: #1d4ed8;
+  box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);
+  transform: translateY(-1px);
 }
 
-/* Secondary (Abu-abu) - Untuk aksi netral seperti Batal / Kembali */
 .btn-secondary {
-  background-color: #e2e8f0;
+  background-color: #f1f5f9;
   color: #475569;
 }
 .btn-secondary:hover {
-  background-color: #cbd5e1;
+  background-color: #e2e8f0;
   color: #1e293b;
 }
 
-/* Success (Hijau) - Untuk aksi Simpan / Sukses */
-.btn-success {
-  background-color: #10b981;
-  color: white;
-  box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
+.btn-outline {
+  background-color: transparent;
+  color: #2563eb;
+  border: 1.5px solid #bfdbfe;
 }
-.btn-success:hover {
-  background-color: #059669;
+.btn-outline:hover {
+  background-color: #eff6ff;
+  border-color: #2563eb;
 }
 
-/* Danger (Merah) - Untuk aksi Hapus / Tolak */
 .btn-danger {
   background-color: #ef4444;
   color: white;
-  box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.2);
 }
-.btn-danger:hover {
-  background-color: #dc2626;
-}
+.btn-danger:hover { background-color: #dc2626; }
 
-/* Warning (Kuning/Orange) - Untuk aksi Edit / Peringatan */
-.btn-warning {
-  background-color: #f59e0b;
-  color: white;
-  box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.2);
-}
-.btn-warning:hover {
-  background-color: #d97706;
-}
-
-/* Info (Cyan/Biru Muda) - Untuk aksi Detail / Generate */
-.btn-info {
-  background-color: #0ea5e9;
-  color: white;
-  box-shadow: 0 4px 6px -1px rgba(14, 165, 233, 0.2);
-}
-.btn-info:hover {
-  background-color: #0284c7;
-}
-
-/* Outline (Garis Luar) */
-.btn-outline {
-  background-color: transparent;
-  border: 1.5px solid #cbd5e1;
-  color: #475569;
-}
-.btn-outline:hover {
-  background-color: #f8fafc;
-  border-color: #94a3b8;
-  color: #0f172a;
-}
-
-/* Dashed (Garis Putus) - Untuk area Drop atau Tambah Form */
-.btn-dashed {
-  background-color: #f8fafc;
-  border: 2px dashed #cbd5e1;
-  color: #64748b;
-}
-.btn-dashed:hover {
-  border-color: #3b82f6;
-  color: #3b82f6;
-  background-color: #eff6ff;
+.custom-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }

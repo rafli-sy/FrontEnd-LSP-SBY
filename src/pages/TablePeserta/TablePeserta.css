@@ -1,0 +1,76 @@
+/* Wrapper Utama */
+.table-peserta-wrapper {
+  width: 100%;
+  background-color: #ffffff;
+}
+
+/* Kustomisasi Scrollbar Horizontal agar enak ditarik */
+.table-responsive-excel {
+  max-height: 60vh;
+  overflow-x: auto;
+  overflow-y: auto;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+}
+
+.table-responsive-excel::-webkit-scrollbar {
+  height: 10px;
+  width: 10px;
+}
+
+.table-responsive-excel::-webkit-scrollbar-track {
+  background: #f8fafc;
+  border-radius: 0 0 8px 8px;
+}
+
+.table-responsive-excel::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+  border: 2px solid #f8fafc;
+}
+
+.table-responsive-excel::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Tabel Gaya Excel */
+.excel-table {
+  width: 100%;
+  min-width: 1500px;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+/* Garis Tabel (Grid) */
+.excel-table th, 
+.excel-table td {
+  border: 1px solid #cbd5e1;
+  padding: 12px 15px;
+}
+
+/* Header Tabel */
+.excel-table th {
+  background-color: #f1f5f9; /* Warna abu-abu seperti di gambar */
+  color: #0f172a;
+  font-weight: 600;
+  text-align: center;
+  vertical-align: middle;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+}
+
+/* Isi Tabel */
+.excel-table td {
+  color: #334155;
+  vertical-align: middle;
+}
+
+.excel-table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.excel-table tbody tr:hover {
+  background-color: #f8fafc;
+}

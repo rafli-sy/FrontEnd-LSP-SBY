@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../../components/ui/Button';
 import BukuIndukPage from '../buku-induk/BukuIndukPage'; // <-- Panggil komponen Buku Induk
+import './DashboardStaffLSP.css';
 
 const DashboardStaffLSP = () => {
   const navigate = useNavigate();

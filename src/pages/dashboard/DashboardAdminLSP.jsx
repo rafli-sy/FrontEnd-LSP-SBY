@@ -1,6 +1,6 @@
 import React from 'react';
 import BukuIndukPage from '../buku-induk/BukuIndukPage';
-import './dashboard.css'; // Sesuaikan huruf kecil/besar dengan nama file CSS kamu
+import './DashboardAdminLSP.css';
 
 const DashboardAdminLSP = () => {
   return (

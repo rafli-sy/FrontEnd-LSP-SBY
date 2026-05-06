@@ -3,7 +3,6 @@
   flex-direction: column;
   gap: 20px;
 }
-
 .dashboard-card {
   background-color: #ffffff;
   border-radius: 12px;
@@ -11,32 +10,26 @@
   border: 1px solid #e2e8f0;
   padding: 20px;
 }
-
 .table-responsive {
   overflow-x: auto;
   width: 100%;
 }
-
 .admin-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.95rem;
-  table-layout: auto;
+  table-layout: auto; 
 }
-
-.admin-table th,
-.admin-table td {
+.admin-table th, .admin-table td {
   padding: 16px 20px;
   text-align: left;
   border-bottom: 1px solid #f1f5f9;
   vertical-align: middle;
 }
-
 .admin-table td {
   color: #334155;
   white-space: normal; 
 }
-
 .admin-table th {
   background-color: #f8fafc;
   color: #64748b;
@@ -46,63 +39,17 @@
   letter-spacing: 0.5px;
   border-bottom: 2px solid #e2e8f0;
 }
-
-.admin-table th:last-child,
-.admin-table td:last-child {
-  width: 120px;
-  text-align: center; 
-}
-
-.admin-table td:last-child > div {
-    justify-content: center; 
-}
-
 .admin-table tbody tr {
   transition: background-color 0.2s ease;
 }
-
 .admin-table tbody tr:hover {
   background-color: #f8fafc;
 }
-
-/* --- CUSTOM TAMPILAN TOMBOL AKSI (HANYA EDIT) DI TABEL --- */
-.admin-table td > div {
-  display: flex;
-  align-items: center;
-}
-
-.admin-table td > div > button {
-  height: 38px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px !important;
-  font-size: 0 !important;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  padding: 0 !important;
-  width: 60px !important;
-  background-color: #ffffff !important;
-  border: 2px solid #1d4ed8 !important;
-  color: #1d4ed8 !important;
-  box-shadow: none !important;
-}
-
-.admin-table td > div > button:hover {
-  background-color: #eff6ff !important;
-}
-
-.admin-table td > div > button i,
-.admin-table td > div > button svg {
-  font-size: 1.1rem !important; 
-}
-/* ------------------------------------------- */
-
 .text-muted {
   color: #64748b;
   font-size: 0.85rem;
   margin-top: 4px;
 }
-
 .badge {
   padding: 5px 10px;
   border-radius: 6px;
@@ -112,33 +59,26 @@
   text-align: center;
   letter-spacing: 0.3px;
 }
-
-.badge.danger { background-color: #fee2e2; color: #dc2626; }
-.badge.success { background-color: #d1fae5; color: #059669; }
-.badge.warning { background-color: #fef3c7; color: #d97706; }
-.badge.primary { background-color: #dbeafe; color: #2563eb; }
-.badge.info { background-color: #e0f2fe; color: #0284c7; }
-
-.status-badge {
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  display: inline-block;
+.badge.danger {
+  background-color: #fee2e2;
+  color: #dc2626;
 }
-
-.status-badge.disetujui {
-  background-color: #ecfdf5;
-  color: #10b981;
-  border: 1px solid #a7f3d0;
+.badge.success {
+  background-color: #d1fae5;
+  color: #059669;
 }
-
-.status-badge.ditolak {
-  background-color: #fef2f2;
-  color: #ef4444;
-  border: 1px solid #fecaca;
+.badge.warning {
+  background-color: #fef3c7;
+  color: #d97706;
 }
-
+.badge.primary {
+  background-color: #dbeafe;
+  color: #2563eb;
+}
+.badge.info {
+  background-color: #e0f2fe;
+  color: #0284c7;
+}
 .form-group label {
   display: block;
   font-size: 0.85rem;
@@ -146,9 +86,7 @@
   color: #475569;
   margin-bottom: 8px;
 }
-
-.form-input,
-.form-select {
+.form-input, .form-select {
   width: 100%;
   padding: 10px 14px;
   border: 1px solid #cbd5e1;
@@ -161,13 +99,10 @@
   font-family: inherit;
   background-color: #ffffff;
 }
-
-.form-input:focus,
-.form-select:focus {
+.form-input:focus, .form-select:focus {
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
-
 .form-select {
   cursor: pointer;
   appearance: none;
@@ -176,182 +111,4 @@
   background-position: right 14px center;
   background-size: 16px;
   padding-right: 40px;
-}
-
-.maa-card {
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 30px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
-}
-
-.maa-card-title {
-  font-size: 1.15rem;
-  color: #0f172a;
-  margin: 0 0 25px 0;
-  font-weight: 700;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.maa-form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-}
-
-.maa-file-wrapper {
-  display: flex;
-  gap: 15px;
-  align-items: center;
-}
-
-.maa-file-input {
-  flex: 1;
-  padding: 9px 15px;
-  background-color: #f8fafc;
-}
-
-.maa-btn-lihat {
-  background-color: #64748b;
-  color: white;
-  border: none;
-  padding: 12px 20px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: 0.2s;
-}
-
-.maa-btn-lihat:hover { background-color: #475569; }
-
-/* --- CUSTOM CHECKBOX DESIGN UNTUK SKEMA --- */
-.maa-checkbox-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
-  animation: fadeInScale 0.4s ease-out;
-}
-
-.maa-checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 18px;
-  border: 2px solid #e2e8f0;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  background-color: #ffffff;
-  font-size: 0.95rem;
-  color: #475569;
-  font-weight: 600;
-}
-
-.maa-checkbox-label:hover {
-  border-color: #cbd5e1;
-  background-color: #f8fafc;
-  transform: translateY(-2px);
-}
-
-.maa-checkbox-label.checked {
-  border-color: #3b82f6;
-  background-color: #eff6ff;
-  color: #1e3a8a;
-}
-
-.maa-checkbox-hidden { display: none; }
-
-.maa-checkbox-custom {
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  border: 2px solid #cbd5e1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: white;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-}
-
-.maa-checkbox-label.checked .maa-checkbox-custom {
-  background-color: #3b82f6;
-  border-color: #3b82f6;
-}
-
-.maa-checkbox-custom i {
-  color: white;
-  font-size: 12px;
-}
-
-.maa-checkbox-custom .hidden { display: none; }
-.maa-checkbox-custom .visible {
-  display: block;
-  animation: zoomIn 0.2s ease-out;
-}
-
-/* --- EMPTY STATE JIKA KEJURUAN KOSONG --- */
-.maa-empty-skema {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 30px;
-  background-color: #f8fafc;
-  border: 2px dashed #cbd5e1;
-  border-radius: 12px;
-  color: #64748b;
-}
-
-.maa-empty-icon {
-  font-size: 2.5rem;
-  color: #cbd5e1;
-  margin-bottom: 12px;
-}
-
-.maa-empty-skema p {
-  margin: 0;
-  font-size: 0.95rem;
-}
-
-.maa-btn-submit {
-  width: 100%;
-  background-color: #1d4ed8;
-  color: white;
-  border: none;
-  padding: 16px;
-  border-radius: 8px;
-  font-weight: 700;
-  font-size: 1.05rem;
-  cursor: pointer;
-  margin-top: 15px;
-  transition: 0.2s;
-  box-shadow: 0 4px 6px rgba(29, 78, 216, 0.2);
-}
-
-.maa-btn-submit:hover {
-  background-color: #1e3a8a;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(29, 78, 216, 0.3);
-}
-
-@keyframes zoomIn {
-  from { transform: scale(0); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
-
-@media (max-width: 768px) {
-  .maa-form-row,
-  .maa-checkbox-grid { grid-template-columns: 1fr; }
-  .maa-file-wrapper { flex-direction: column; }
-  .maa-btn-lihat {
-    width: 100%;
-    justify-content: center;
-  }
 }

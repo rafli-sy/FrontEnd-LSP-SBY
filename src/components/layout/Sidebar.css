@@ -206,6 +206,39 @@
   color: #6b7280;
 }
 
+/* --- LINK PENGATURAN --- */
+.settings-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 8px;
+  background-color: #f8fafc;
+  color: #475569;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+  border: 1px solid #e2e8f0;
+  width: 100%;
+  box-sizing: border-box;
+}
+.settings-link:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+/* Override gaya active-link khusus untuk tombol pengaturan */
+.settings-link.active-link {
+  background: #eff6ff !important;
+  color: #2563eb !important;
+  border: 1px solid #bfdbfe !important;
+}
+.settings-link i {
+  font-size: 1rem;
+}
+
 /* --- DROPDOWN GANTI AKSES ROLE --- */
 .switch-role-container {
   position: relative;
