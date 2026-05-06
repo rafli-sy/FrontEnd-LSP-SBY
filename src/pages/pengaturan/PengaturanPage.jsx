@@ -35,15 +35,18 @@ const PengaturanPage = () => {
   return (
     <div className="dashboard-content fade-in-content">
       <div className="dashboard-header" style={{ marginBottom: '25px' }}>
-        <h2 style={{ margin: 0, color: '#0f172a' }}>Pengaturan Sistem</h2>
-        <p className="text-muted">Sesuaikan preferensi keamanan dan aplikasi Anda.</p>
+        <h2 style={{ margin: 0, color: '#0f172a' }}>Pengaturan Akun</h2>
+        <p className="text-muted">Sesuaikan preferensi keamanan akun Anda.</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '25px' }}>
+      {/* Dibuat maxWidth agar kotak form tidak melebar secara berlebihan */}
+      <div style={{ maxWidth: '600px' }}>
         
         {/* KARTU PENGATURAN KEAMANAN */}
         <div className="dashboard-card" style={{ padding: '25px' }}>
-          <h3 style={{ marginTop: 0, borderBottom: '1px solid #e2e8f0', paddingBottom: '10px' }}><i className="fas fa-lock text-blue"></i> Keamanan Akun</h3>
+          <h3 style={{ marginTop: 0, borderBottom: '1px solid #e2e8f0', paddingBottom: '10px' }}>
+            <i className="fas fa-lock text-blue" style={{ marginRight: '8px' }}></i> Keamanan Akun
+          </h3>
           <form onSubmit={handlePasswordChange} style={{ marginTop: '20px' }}>
             <div className="form-group" style={{ marginBottom: '20px' }}>
               <label>Kata Sandi Lama</label>
@@ -57,28 +60,17 @@ const PengaturanPage = () => {
               <label>Konfirmasi Sandi Baru</label>
               <input type="password" className="form-input" value={passwordData.konfirmasi} onChange={(e) => setPasswordData({...passwordData, konfirmasi: e.target.value})} required />
             </div>
-            <Button type="submit" variant="warning" icon="key" isFullWidth>Perbarui Kata Sandi</Button>
-          </form>
-        </div>
-
-        {/* KARTU PREFERENSI */}
-        <div className="dashboard-card" style={{ padding: '25px' }}>
-          <h3 style={{ marginTop: 0, borderBottom: '1px solid #e2e8f0', paddingBottom: '10px' }}><i className="fas fa-bell text-orange"></i> Preferensi Notifikasi</h3>
-          <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px', backgroundColor: '#f8fafc', borderRadius: '10px' }}>
-              <div>
-                <strong style={{ display: 'block', color: '#1e293b' }}>Notifikasi Email</strong>
-                <span style={{ fontSize: '0.85rem', color: '#64748b' }}>Terima update via email.</span>
-              </div>
-              <input type="checkbox" defaultChecked style={{ width: '20px', height: '20px', cursor: 'pointer' }} />
+            <div style={{ marginTop: '30px' }}>
+              <Button type="submit" variant="warning" icon="key" isFullWidth style={{ backgroundColor: '#f59e0b', color: '#fff', border: 'none', padding: '12px' }}>
+                Perbarui Kata Sandi
+              </Button>
             </div>
-            <Button variant="outline" icon="save" onClick={() => setAlert({ type: 'success', title: 'Tersimpan', text: 'Preferensi notifikasi diperbarui.', onCancel: closeAlert })}>Simpan Preferensi</Button>
-          </div>
+          </form>
         </div>
 
       </div>
 
-      <AlertPopup {...alert} />
+      {alert && <AlertPopup {...alert} />}
     </div>
   );
 };

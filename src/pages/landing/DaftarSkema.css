@@ -5,6 +5,7 @@
   display: flex;
   flex-direction: column;
 }
+
 .skema-header {
   position: sticky;
   top: 0;
@@ -46,55 +47,82 @@
   flex: 1;
   margin-top: -30px;
 }
+
 .skema-card {
   padding: 30px;
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
 }
+
+.skema-card:hover {
+  transform: translateY(-8px) scale(1.02) !important;
+  box-shadow: 0 20px 35px rgba(0, 86, 179, 0.12) !important;
+  border-color: #cce3ff !important;
+  z-index: 2;
+  position: relative;
+}
+
 .skema-card-head {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 15px;
+  text-align: center;
+  gap: 12px;
   border-bottom: 1px solid #e2e8f0;
-  padding-bottom: 15px;
-  margin-bottom: 15px;
+  padding-bottom: 20px;
+  margin-bottom: 20px;
 }
+
 .skema-card-icon {
   background: #eff6ff;
-  width: 50px;
-  height: 50px;
-  border-radius: 10px;
+  width: 65px; 
+  height: 65px;
+  border-radius: 12px;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 1.5rem;
+  font-size: 2rem; 
   color: #3b82f6;
 }
+
 .skema-card-title {
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   color: #0f172a;
   margin: 0;
+  font-weight: 700;
+}
+
+.skema-kategori-badge {
+  background-color: #e7f1ff;
+  color: #0056b3;
+  padding: 6px 16px;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  display: inline-block;
 }
 
 .skema-item {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: center;
   gap: 10px;
   color: #475569;
-  padding: 10px 5px;
+  padding: 12px 5px;
   font-size: 0.95rem;
+  text-align: center;
 }
 .skema-item i {
   color: #10b981;
-  margin-top: 3px;
   font-size: 1rem;
 }
 .skema-item span {
   font-weight: 500;
 }
 
-/* Tombol Kembali versi Gelap untuk Banner */
 .btn-back-dark {
   background-color: rgba(255, 255, 255, 0.1);
   color: white;
@@ -104,4 +132,133 @@
 .btn-back-dark:hover {
   background-color: rgba(255, 255, 255, 0.2);
   color: white;
+}
+
+/* --- TOMBOL LIHAT DETAIL --- */
+.btn-see-more {
+  background-color: transparent;
+  color: #0056b3;
+  border: 2px solid #0056b3;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.btn-see-more:hover {
+  background-color: #0056b3;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 86, 179, 0.2);
+}
+
+/* --- MODAL / POP-UP OVERLAY --- */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  padding: 20px;
+  animation: fadeInOverlay 0.3s ease;
+}
+
+@keyframes fadeInOverlay {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-box {
+  background: white;
+  width: 100%;
+  max-width: 500px;
+  border-radius: 16px;
+  padding: 35px 30px;
+  position: relative;
+  box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+  animation: popUp 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+@keyframes popUp {
+  from { opacity: 0; transform: scale(0.9) translateY(20px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal-close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: #f1f5f9;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: #64748b;
+  font-size: 1.2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+  background: #ef4444;
+  color: white;
+  transform: rotate(90deg);
+}
+
+.modal-header {
+  text-align: center;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 25px;
+  margin-bottom: 20px;
+}
+
+/* List Skema (Fix Hover Stuck) */
+.skema-list-popup {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  transform: translateZ(0); /* Trik Hardware Acceleration browser */
+}
+
+.skema-list-popup li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 10px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #475569;
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out; /* Transisi KHUSUS transform aja biar warna ganti instan */
+}
+
+.skema-list-popup li:last-child {
+  border-bottom: none;
+}
+
+.skema-list-popup li i {
+  color: #10b981;
+  font-size: 1.1rem;
+  margin-top: 3px;
+}
+
+.skema-list-popup li:hover {
+  background-color: #e2e8f0; /* Berubah instan */
+  transform: translateX(5px); /* Geser mulus */
 }

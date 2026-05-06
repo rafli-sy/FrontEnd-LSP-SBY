@@ -1,0 +1,38 @@
+.asesor-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* Membuat 2 kolom sejajar */
+  gap: 20px; /* Jarak antar kotak input */
+  margin-top: 10px;
+}
+
+/* Responsif untuk HP: Jadi 1 kolom kembali agar tidak sempit */
+@media (max-width: 768px) {
+  .asesor-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.form-input-modern.readonly {
+  background-color: #f1f5f9;
+  color: #64748b;
+  cursor: not-allowed;
+  border: 1px solid #e2e8f0;
+}
+
+.form-select-modern {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  font-size: 0.95rem;
+  background-color: white;
+  transition: all 0.2s;
+}
+
+.form-actions-footer {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+}

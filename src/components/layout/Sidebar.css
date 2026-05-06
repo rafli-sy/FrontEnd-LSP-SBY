@@ -206,6 +206,39 @@
   color: #6b7280;
 }
 
+/* --- LINK PENGATURAN --- */
+.settings-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 8px;
+  background-color: #f8fafc;
+  color: #475569;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+  border: 1px solid #e2e8f0;
+  width: 100%;
+  box-sizing: border-box;
+}
+.settings-link:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+/* Override gaya active-link khusus untuk tombol pengaturan */
+.settings-link.active-link {
+  background: #eff6ff !important;
+  color: #2563eb !important;
+  border: 1px solid #bfdbfe !important;
+}
+.settings-link i {
+  font-size: 1rem;
+}
+
 /* --- DROPDOWN GANTI AKSES ROLE --- */
 .switch-role-container {
   position: relative;
@@ -495,48 +528,6 @@
 }
 .btn-cancel:hover {
   background-color: #fee2e2;
-}
-
-/* --- TAMBAHAN MENU PENGATURAN DI BAWAH PROFIL --- */
-.bottom-extra-links {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 15px;
-  padding: 0 5px;
-}
-
-.extra-link {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 15px;
-  border-radius: 12px;
-  color: #64748b;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 0.95rem;
-  transition: all 0.2s ease;
-}
-
-.extra-link:hover {
-  background-color: #f1f5f9;
-  color: #0f172a;
-}
-
-.extra-link.active {
-  background-color: #eff6ff;
-  color: #3b82f6;
-}
-
-.extra-link i {
-  font-size: 1.15rem;
-  width: 22px;
-  text-align: center;
-}
-
-.desktop-closed .extra-link span {
-  display: none;
 }
 
 @media (max-width: 992px) {

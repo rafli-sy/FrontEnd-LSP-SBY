@@ -151,7 +151,6 @@ const ProfilPage = () => {
                 disabled={!isEditing} 
                 required 
                 rows="3" 
-                // PERBAIKAN: Style sudah digabungkan menjadi satu objek
                 style={{ 
                   backgroundColor: !isEditing ? '#f8fafc' : '#fff', 
                   resize: 'none' 
@@ -170,7 +169,7 @@ const ProfilPage = () => {
 
       </div>
 
-      <AlertPopup {...alert} />
+      {alert && <AlertPopup {...alert} />}
     </div>
   );
 };

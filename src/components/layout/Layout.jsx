@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Navbar from './Navbar';
+import GlobalBackButton from '../ui/GlobalBackButton'; // <-- Import tombolnya di sini
 import './Layout.css'; 
 
 const Layout = () => {
@@ -48,6 +49,11 @@ const Layout = () => {
         <Navbar toggleSidebar={toggleSidebar} isDesktopOpen={isDesktopOpen} />
         
         <main className="content-area">
+          
+          {/* Letakkan tombol di sini, LANGSUNG di bawah main. 
+              Ini akan mengikuti padding bawaan content-area tanpa merusak layout */}
+          <GlobalBackButton />
+
           <div className="fade-in-content">
             <Outlet />
           </div>
