@@ -118,6 +118,7 @@ const SuratMenyurat = () => {
   };
 
   const handleInputChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+  
   const handleGenerateSurat = (e) => {
     e.preventDefault();
     setIsFormOpen(false);
@@ -161,12 +162,16 @@ const SuratMenyurat = () => {
     return null;
   };
 
-  // RENDER UTAMA
+  // ==========================================
+  // SINGLE RETURN STRUCTURE
+  // ==========================================
   return (
     <div className="dashboard-content fade-in-content" style={{ position: 'relative', minHeight: '100vh' }}>
       
+      {/* 1. NOTIFIKASI */}
       {alertConfig && <AlertPopup type={alertConfig.type} title={alertConfig.title} text={alertConfig.text} onConfirm={() => setAlertConfig(null)} onCancel={() => setAlertConfig(null)} />}
 
+      {/* 2. RENDER HALAMAN BERDASARKAN STATE */}
       {previewDokumen ? (
         
         previewDokumen.jenis === 'Administrasi' && !selectedAdminDoc ? (
@@ -338,6 +343,7 @@ const SuratMenyurat = () => {
         </div>
       )}
 
+      {/* 3. MODAL POP-UP (KINI BERADA DI ROOT SEHINGGA BISA DIPANGGIL KAPAN SAJA) */}
       {isFormOpen && (
         <div className="modal-overlay" style={{ zIndex: 9999 }}>
           <div className="modal-content" style={{ width: '420px', backgroundColor: '#ffffff', borderRadius: '12px', padding: '0' }}>

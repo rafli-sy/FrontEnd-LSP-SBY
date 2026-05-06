@@ -9,10 +9,9 @@ const ManajemenAkun = () => {
   const [showModal, setShowModal] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [editId, setEditId] = useState(null);
-  
   const [showPassword, setShowPassword] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
-  
+
   // KUNCI: Role 'Super Admin' dihapus dari pilihan UI agar hanya bisa diatur via Database
   const availableRoles = ['Admin LSP', 'Staff LSP', 'Admin BLK', 'Asesor'];
 
@@ -23,7 +22,7 @@ const ManajemenAkun = () => {
     { id: 4, username: 'ridho_blk', roles: ['Admin BLK'], status: 'Non Aktif' },
     { id: 5, username: 'johan_multi', roles: ['Asesor', 'Admin BLK'], status: 'Aktif' }
   ]);
-  
+
   const [formData, setFormData] = useState({ username: '', password: '', roles: ['Staff LSP'], status: 'Aktif' });
 
   const closeAlert = () => {
@@ -39,7 +38,6 @@ const ManajemenAkun = () => {
 
   const handleInputChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
-  // Logika toggle role jadi lebih sederhana karena sudah tidak ada Super Admin
   const handleRoleToggle = (selectedRole) => {
     let currentRoles = [...(formData.roles || [])];
     if (currentRoles.includes(selectedRole)) {
@@ -189,9 +187,9 @@ const ManajemenAkun = () => {
                     <label style={{ margin: 0 }}>{isEdit ? 'Reset Sandi Baru' : 'Kata Sandi'}</label>
                     {isEdit && (
                       <button 
-                        type="button" 
-                        onClick={() => { setShowResetPassword(false); setFormData({ ...formData, password: '' }); }} 
-                        style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>
+                         type="button" 
+                         onClick={() => { setShowResetPassword(false); setFormData({ ...formData, password: '' }); }} 
+                         style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>
                         <i className="fas fa-times"></i> Batal Reset
                       </button>
                     )}
@@ -199,19 +197,19 @@ const ManajemenAkun = () => {
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                     <div style={{ position: 'relative', flex: 1 }}>
                       <input 
-                        type={showPassword ? "text" : "password"} 
-                        className="form-input" 
-                        name="password" 
-                        value={formData.password} 
-                        onChange={handleInputChange} 
-                        placeholder="Ketik sandi atau acak otomatis"
+                         type={showPassword ? "text" : "password"} 
+                         className="form-input" 
+                         name="password" 
+                         value={formData.password} 
+                         onChange={handleInputChange} 
+                         placeholder="Ketik sandi atau acak otomatis"
                         required={!isEdit || showResetPassword}
                       />
                       {formData.password && (
                         <button 
-                          type="button" 
-                          onClick={() => setShowPassword(!showPassword)} 
-                          style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}
+                           type="button" 
+                           onClick={() => setShowPassword(!showPassword)} 
+                           style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}
                         >
                           <i className={showPassword ? "fas fa-eye-slash" : "fas fa-eye"}></i>
                         </button>
@@ -229,12 +227,12 @@ const ManajemenAkun = () => {
                 <div className="form-group fade-in-content" style={{ marginBottom: '20px' }}>
                   <label>Keamanan Akun</label>
                   <Button 
-                    variant="outline" 
-                    type="button" 
-                    isFullWidth 
-                    icon="key" 
-                    onClick={() => setShowResetPassword(true)} 
-                    style={{ borderStyle: 'dashed', backgroundColor: '#f8fafc', color: '#475569', borderColor: '#cbd5e1' }}
+                     variant="outline" 
+                     type="button" 
+                     isFullWidth 
+                     icon="key" 
+                     onClick={() => setShowResetPassword(true)} 
+                     style={{ borderStyle: 'dashed', backgroundColor: '#f8fafc', color: '#475569', borderColor: '#cbd5e1' }}
                   >
                     Ubah / Reset Kata Sandi
                   </Button>
@@ -246,17 +244,17 @@ const ManajemenAkun = () => {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                   {availableRoles.map(r => (
                     <label key={r} style={{ 
-                      display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', 
-                      border: formData.roles?.includes(r) ? '2px solid #3b82f6' : '1px solid #cbd5e1', 
-                      backgroundColor: formData.roles?.includes(r) ? '#eff6ff' : '#fff', 
-                      borderRadius: '8px', cursor: 'pointer', transition: '0.2s' 
-                    }}>
+                       display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', 
+                       border: formData.roles?.includes(r) ? '2px solid #3b82f6' : '1px solid #cbd5e1', 
+                       backgroundColor: formData.roles?.includes(r) ? '#eff6ff' : '#fff', 
+                       borderRadius: '8px', cursor: 'pointer', transition: '0.2s' 
+                     }}>
                       <input 
-                        type="checkbox" 
-                        checked={formData.roles?.includes(r) || false} 
-                        onChange={() => handleRoleToggle(r)} 
-                        style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#2563eb' }} 
-                      />
+                         type="checkbox" 
+                         checked={formData.roles?.includes(r) || false} 
+                         onChange={() => handleRoleToggle(r)} 
+                         style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#2563eb' }} 
+                       />
                       <span style={{ fontSize: '0.85rem', fontWeight: '700', color: formData.roles?.includes(r) ? '#1e3a8a' : '#475569' }}>{r}</span>
                     </label>
                   ))}
