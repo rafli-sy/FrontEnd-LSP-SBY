@@ -1,9 +1,10 @@
 import React from 'react';
 import Button from '../../components/ui/Button';
+import './TablePeserta.css'; // <-- IMPORT CSS GAYA EXCEL DI SINI
 
 const TablePeserta = ({ dataPeserta, skemaName }) => {
   if (!dataPeserta || dataPeserta.length === 0) {
-    return <div style={{ textAlign: 'center', padding: '20px', color: '#64748b' }}>Data peserta tidak ditemukan.</div>;
+    return <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8', border: '1px dashed #cbd5e1', borderRadius: '8px' }}>Data peserta tidak ditemukan.</div>;
   }
 
   const handleDownloadExcel = () => {
@@ -21,61 +22,60 @@ const TablePeserta = ({ dataPeserta, skemaName }) => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `Data_Peserta_${skemaName.replace(/\s+/g, '_')}.csv`);
+    link.setAttribute("download", `Data_Peserta_${skemaName?.replace(/\s+/g, '_') || 'UJK'}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
   return (
-    <div className="table-peserta-wrapper" style={{ width: '100%' }}>
+    <div className="table-peserta-wrapper">
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '15px' }}>
-        {/* Menggunakan Button komponen yang baru */}
         <Button variant="success" icon="file-excel" onClick={handleDownloadExcel}>
           Download Excel
         </Button>
       </div>
 
-      <div className="table-responsive" style={{ maxHeight: '60vh', overflowX: 'auto', overflowY: 'auto' }}>
-        <table className="excel-table" style={{ minWidth: '1500px', width: '100%' }}>
+      <div className="table-responsive-excel">
+        <table className="excel-table">
           <thead>
             <tr>
               <th rowSpan="2" style={{ width: '50px' }}>No.</th>
               <th rowSpan="2" style={{ minWidth: '180px' }}>Nama</th>
               <th rowSpan="2" style={{ minWidth: '160px' }}>NIK</th>
-              <th rowSpan="2" style={{ width: '80px' }}>Jenis<br/>Kelamin<br/>(L/P)</th>
-              <th rowSpan="2" style={{ minWidth: '120px' }}>Tempat Lahir</th>
-              <th rowSpan="2" style={{ minWidth: '120px' }}>Tanggal Lahir</th>
+              <th rowSpan="2" style={{ width: '90px' }}>Jenis<br/>Kelamin<br/>(L/P)</th>
+              <th rowSpan="2" style={{ minWidth: '130px' }}>Tempat Lahir</th>
+              <th rowSpan="2" style={{ minWidth: '130px' }}>Tanggal Lahir</th>
               <th colSpan="5">Tempat Tinggal</th>
               <th rowSpan="2" style={{ minWidth: '130px' }}>No. HP</th>
-              <th rowSpan="2" style={{ minWidth: '180px' }}>Email</th>
-              <th rowSpan="2" style={{ minWidth: '120px' }}>Pendidikan<br/>Terakhir</th>
+              <th rowSpan="2" style={{ minWidth: '200px' }}>Email</th>
+              <th rowSpan="2" style={{ minWidth: '130px' }}>Pendidikan<br/>Terakhir</th>
             </tr>
             <tr>
-              <th style={{ minWidth: '220px' }}>Alamat</th>
-              <th style={{ width: '50px' }}>RT</th>
-              <th style={{ width: '50px' }}>RW</th>
-              <th style={{ minWidth: '120px' }}>Kelurahan</th>
-              <th style={{ minWidth: '120px' }}>Kecamatan</th>
+              <th style={{ minWidth: '250px' }}>Alamat</th>
+              <th style={{ width: '60px' }}>RT</th>
+              <th style={{ width: '60px' }}>RW</th>
+              <th style={{ minWidth: '140px' }}>Kelurahan</th>
+              <th style={{ minWidth: '140px' }}>Kecamatan</th>
             </tr>
           </thead>
           <tbody>
             {dataPeserta.map((item, index) => (
               <tr key={index}>
                 <td style={{ textAlign: 'center' }}>{index + 1}</td>
-                <td style={{ color: '#334155' }}>{item.nama}</td>
-                <td style={{ textAlign: 'center', color: '#334155' }}>{item.nik}</td>
-                <td style={{ textAlign: 'center', color: '#334155' }}>{item.jk}</td>
-                <td style={{ textAlign: 'center', color: '#334155' }}>{item.tempatLahir}</td>
-                <td style={{ textAlign: 'center', color: '#334155' }}>{item.tanggalLahir}</td>
-                <td style={{ color: '#334155' }}>{item.alamat}</td>
-                <td style={{ textAlign: 'center', color: '#334155' }}>{item.rt}</td>
-                <td style={{ textAlign: 'center', color: '#334155' }}>{item.rw}</td>
-                <td style={{ textAlign: 'center', color: '#334155' }}>{item.kelurahan}</td>
-                <td style={{ textAlign: 'center', color: '#334155' }}>{item.kecamatan}</td>
-                <td style={{ textAlign: 'center', color: '#334155' }}>{item.hp}</td>
-                <td style={{ textAlign: 'center' }}><a href={`mailto:${item.email}`} style={{ color: '#2563eb', textDecoration: 'none' }}>{item.email}</a></td>
-                <td style={{ textAlign: 'center', color: '#334155' }}>{item.pendidikan}</td>
+                <td><strong>{item.nama}</strong></td>
+                <td style={{ textAlign: 'center' }}>{item.nik}</td>
+                <td style={{ textAlign: 'center', fontWeight: '600' }}>{item.jk}</td>
+                <td style={{ textAlign: 'center' }}>{item.tempatLahir}</td>
+                <td style={{ textAlign: 'center' }}>{item.tanggalLahir}</td>
+                <td>{item.alamat}</td>
+                <td style={{ textAlign: 'center' }}>{item.rt}</td>
+                <td style={{ textAlign: 'center' }}>{item.rw}</td>
+                <td style={{ textAlign: 'center' }}>{item.kelurahan}</td>
+                <td style={{ textAlign: 'center' }}>{item.kecamatan}</td>
+                <td style={{ textAlign: 'center' }}>{item.hp}</td>
+                <td><a href={`mailto:${item.email}`} style={{ color: '#2563eb', textDecoration: 'none', fontWeight: '500' }}>{item.email}</a></td>
+                <td style={{ textAlign: 'center' }}>{item.pendidikan}</td>
               </tr>
             ))}
           </tbody>

@@ -8,20 +8,19 @@ const MasterDataPenyelia = () => {
   const [showModal, setShowModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const alertTimer = useRef(null);
-  
-  // State untuk menyimpan list penyelia
+
   const [penyeliaList, setPenyeliaList] = useState([
     { id: 1, nama: 'Budi Santoso', noReg: 'REG.LSP.001 2021', status: 'Aktif' },
-    { id: 2, nama: 'Siti Aminah', noReg: 'REG.LSP.045 2022', status: 'Non-Aktif' }
+    { id: 2, nama: 'Siti Aminah', noReg: 'REG.LSP.045 2022', status: 'Non-Aktif' },
+    { id: 3, nama: 'Miftahul Huda', noReg: 'REG.LSP.055 2023', status: 'Aktif' },
+    { id: 4, nama: 'Mohamad Andrian A', noReg: 'REG.LSP.066 2023', status: 'Aktif' },
+    { id: 5, nama: 'Ramadhan Budi Prasetyo', noReg: 'REG.LSP.077 2024', status: 'Aktif' },
+    { id: 6, nama: 'Dewi Ratnasari', noReg: 'REG.LSP.088 2024', status: 'Aktif' },
+    { id: 7, nama: 'Agus Setiawan', noReg: 'REG.LSP.099 2025', status: 'Aktif' },
+    { id: 8, nama: 'Sri Wahyuni', noReg: 'REG.LSP.100 2025', status: 'Aktif' }
   ]);
 
-  // State untuk form input (Tambah & Edit)
-  const [formData, setFormData] = useState({
-    id: null,
-    nama: '',
-    noReg: '',
-    status: 'Aktif'
-  });
+  const [formData, setFormData] = useState({ id: null, nama: '', noReg: '', status: 'Aktif' });
 
   const closeAlert = () => {
     setAlert(null);
@@ -34,60 +33,34 @@ const MasterDataPenyelia = () => {
     alertTimer.current = setTimeout(() => closeAlert(), 2500);
   };
 
-  // Fungsi menangani perubahan input pada form
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  // Buka modal untuk Tambah Data
   const handleBukaTambah = () => {
     setFormData({ id: null, nama: '', noReg: '', status: 'Aktif' });
     setIsEditing(false);
     setShowModal(true);
   };
 
-  // Buka modal untuk Edit Data
   const handleBukaEdit = (penyelia) => {
     setFormData(penyelia);
     setIsEditing(true);
     setShowModal(true);
   };
 
-  // Fungsi Hapus
-  const handleHapus = (id) => {
-    setAlert({
-      type: 'delete', 
-      title: 'Hapus Data Penyelia?', 
-      text: 'Data penyelia yang terhapus tidak dapat dipulihkan.',
-      onConfirm: () => {
-        setPenyeliaList(penyeliaList.filter(p => p.id !== id));
-        showSuccess('Dihapus!', 'Data Penyelia berhasil dihapus dari sistem.');
-      },
-      onCancel: closeAlert
-    });
-  };
-
-  // Fungsi Simpan (Menangani Tambah Baru & Simpan Edit)
   const handleSimpan = (e) => {
     e.preventDefault();
     const actionTitle = isEditing ? 'Simpan Perubahan?' : 'Simpan Penyelia Baru?';
     const actionText = isEditing ? 'Data penyelia akan diperbarui.' : 'Pastikan Nomor Registrasi LSP sudah sesuai.';
 
     setAlert({
-      type: 'save', 
-      title: actionTitle, 
-      text: actionText,
+      type: 'save', title: actionTitle, text: actionText,
       onConfirm: () => {
         if (isEditing) {
-          // Update data yang ada
           setPenyeliaList(penyeliaList.map(p => (p.id === formData.id ? formData : p)));
           showSuccess('Diperbarui!', 'Data Penyelia berhasil diperbarui.');
         } else {
-          // Tambah data baru
           const newId = penyeliaList.length > 0 ? Math.max(...penyeliaList.map(p => p.id)) + 1 : 1;
           setPenyeliaList([...penyeliaList, { ...formData, id: newId }]);
           showSuccess('Tersimpan!', 'Penyelia berhasil ditambahkan ke dalam Master Data.');
@@ -113,36 +86,36 @@ const MasterDataPenyelia = () => {
           <table className="admin-table">
             <thead>
               <tr>
-                <th>Nama Penyelia</th>
-                <th>No Registrasi (REG LSP)</th>
-                <th>Status</th>
-                <th>Aksi</th>
+                <th style={{ width: '5%', textAlign: 'center' }}>No</th>
+                <th style={{ width: '35%' }}>Nama Penyelia</th>
+                <th style={{ width: '25%' }}>No Registrasi (REG LSP)</th>
+                <th style={{ width: '20%', textAlign: 'center' }}>Status</th>
+                <th style={{ width: '15%', textAlign: 'center' }}>Aksi</th>
               </tr>
             </thead>
             <tbody>
-              {penyeliaList.map((penyelia) => (
+              {penyeliaList.map((penyelia, index) => (
                 <tr key={penyelia.id}>
+                  <td style={{ textAlign: 'center' }}>{index + 1}</td>
                   <td><strong>{penyelia.nama}</strong></td>
                   <td><span className="badge info">{penyelia.noReg}</span></td>
-                  <td>
+                  
+                  {/* STATUS MURNI HANYA MENAMPILKAN BADGE (TIDAK BISA DIKLIK) */}
+                  <td style={{ textAlign: 'center' }}>
                     <span className={`badge ${penyelia.status === 'Aktif' ? 'success' : 'danger'}`}>
                       {penyelia.status}
                     </span>
                   </td>
-                  <td>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <Button variant="warning" size="sm" icon="edit" onClick={() => handleBukaEdit(penyelia)}>Edit</Button>
-                      <Button variant="danger" size="sm" icon="trash-alt" onClick={() => handleHapus(penyelia.id)}>Hapus</Button>
+                  
+                  <td style={{ textAlign: 'center' }}>
+                    <div style={{ display: 'flex', gap: '5px', justifyContent: 'center' }}>
+                      <Button variant="outline" size="sm" icon="edit" onClick={() => handleBukaEdit(penyelia)} />
                     </div>
                   </td>
                 </tr>
               ))}
               {penyeliaList.length === 0 && (
-                <tr>
-                  <td colSpan="4" style={{ textAlign: 'center', padding: '20px', color: '#64748b' }}>
-                    Belum ada data penyelia.
-                  </td>
-                </tr>
+                <tr><td colSpan="5" style={{ textAlign: 'center', padding: '20px', color: '#64748b' }}>Belum ada data penyelia.</td></tr>
               )}
             </tbody>
           </table>
@@ -156,50 +129,31 @@ const MasterDataPenyelia = () => {
             <form onSubmit={handleSimpan}>
                <div className="form-group">
                  <label>Nama Lengkap</label>
-                 <input 
-                   type="text" 
-                   name="nama"
-                   className="form-input" 
-                   value={formData.nama}
-                   onChange={handleInputChange}
-                   required 
-                 />
+                 <input type="text" name="nama" className="form-input" value={formData.nama} onChange={handleInputChange} required />
                </div>
                <div className="form-group">
                  <label>No. Registrasi (REG LSP)</label>
-                 <input 
-                   type="text" 
-                   name="noReg"
-                   className="form-input" 
-                   placeholder="REG.LSP.XXXXX" 
-                   value={formData.noReg}
-                   onChange={handleInputChange}
-                   required 
-                 />
+                 <input type="text" name="noReg" className="form-input" placeholder="REG.LSP.XXXXX" value={formData.noReg} onChange={handleInputChange} required />
                </div>
+               
                <div className="form-group">
                  <label>Status Penyelia</label>
-                 <select 
-                   name="status"
-                   className="form-select" 
-                   value={formData.status}
-                   onChange={handleInputChange}
-                 >
+                 <select name="status" className="form-select" value={formData.status} onChange={handleInputChange}>
                    <option value="Aktif">Aktif</option>
                    <option value="Non-Aktif">Non-Aktif</option>
                  </select>
                </div>
+               
                <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
                  <Button variant="secondary" isFullWidth onClick={() => setShowModal(false)}>Batal</Button>
-                 <Button type="submit" variant="primary" isFullWidth icon="save">
-                   {isEditing ? 'Simpan Perubahan' : 'Simpan Data'}
-                 </Button>
+                 <Button type="submit" variant="primary" isFullWidth icon="save">{isEditing ? 'Simpan Perubahan' : 'Simpan Data'}</Button>
                </div>
             </form>
           </div>
         </div>
       )}
-      <AlertPopup {...alert} />
+      
+      {alert && <AlertPopup {...alert} />}
     </div>
   );
 };

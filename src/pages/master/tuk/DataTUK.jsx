@@ -1,23 +1,30 @@
 import React, { useState } from 'react';
 import Button from '../../../components/ui/Button';
-import Modal from '../../../components/ui/Modal'; // <-- BUG FIX IMPORT SEBELUMNYA
-import AlertPopup from '../../../components/ui/AlertPopup'; // <-- IMPORT BARU
+import Modal from '../../../components/ui/Modal'; 
+import AlertPopup from '../../../components/ui/AlertPopup'; 
+import Pagination from '../../../components/ui/Pagination';
 import './DataTUK.css';
 
 const DataTUK = () => {
   const [tukList, setTukList] = useState([
-    { id: 1, kode: 'TUK-001', nama: 'TUK Sewaktu BLK Surabaya', jenis: 'Sewaktu', lokasi: 'Dukuh Menanggal III/29', kapasitas: 20, status: 'Aktif' },
-    { id: 2, kode: 'TUK-002', nama: 'TUK Mandiri PT. Bambang Jaya', jenis: 'Mandiri', lokasi: 'Kawasan Industri Rungkut', kapasitas: 15, status: 'Aktif' },
-    { id: 3, kode: 'TUK-003', nama: 'TUK Sewaktu BLK Wonojati', jenis: 'Sewaktu', lokasi: 'Kabupaten Malang', kapasitas: 25, status: 'Aktif' },
+    { id: 1, kode: 'TUK-001', institusi: 'TUK Sewaktu BLK Surabaya', alamat: 'Dukuh Menanggal III/29', kota: 'Surabaya', status: 'Aktif' },
+    { id: 2, kode: 'TUK-002', institusi: 'TUK Mandiri PT. Bambang Jaya', alamat: 'Kawasan Industri Rungkut', kota: 'Surabaya', status: 'Aktif' },
+    { id: 3, kode: 'TUK-003', institusi: 'TUK Sewaktu BLK Wonojati', alamat: 'Jl. Raya Singosari', kota: 'Malang', status: 'Non-Aktif' },
+    { id: 4, kode: 'TUK-004', institusi: 'TUK Sewaktu BLK Singosari', alamat: 'Jl. Raya Randuagung', kota: 'Malang', status: 'Aktif' },
+    { id: 5, kode: 'TUK-005', institusi: 'TUK Mandiri PT ABC', alamat: 'Kawasan SIER', kota: 'Surabaya', status: 'Aktif' },
+    { id: 6, kode: 'TUK-006', institusi: 'TUK Sewaktu BLK Jember', alamat: 'Jl. Letjen Panjaitan', kota: 'Jember', status: 'Aktif' },
+    { id: 7, kode: 'TUK-007', institusi: 'TUK Mandiri LKP Mutiara', alamat: 'Jl. Pemuda No 10', kota: 'Madiun', status: 'Aktif' },
+    { id: 8, kode: 'TUK-008', institusi: 'TUK Sewaktu BLK Kediri', alamat: 'Jl. Mayor Bismo', kota: 'Kediri', status: 'Aktif' },
   ]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState('create');
   const [searchQuery, setSearchQuery] = useState('');
-  const [formData, setFormData] = useState({ id: null, kode: '', nama: '', jenis: 'Sewaktu', lokasi: '', kapasitas: '', status: 'Aktif' });
-
-  // --- LOGIKA ALERT POPUP ---
+  const [formData, setFormData] = useState({ id: null, kode: '', institusi: '', alamat: '', kota: '', status: 'Aktif' });
   const [alertConfig, setAlertConfig] = useState({ type: null, title: '', text: '', action: null });
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   const showAlert = (type, title, text, action = null) => {
     setAlertConfig({ type, title, text, action });
@@ -31,16 +38,13 @@ const DataTUK = () => {
     setAlertConfig({ type: null, title: '', text: '', action: null });
   };
 
-  const handleCancelAlert = () => {
-    setAlertConfig({ type: null, title: '', text: '', action: null });
-  };
-  // -------------------------
+  const handleCancelAlert = () => setAlertConfig({ type: null, title: '', text: '', action: null });
 
   const handleInputChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleTambah = () => {
     setModalMode('create');
-    setFormData({ id: null, kode: '', nama: '', jenis: 'Sewaktu', lokasi: '', kapasitas: '', status: 'Aktif' });
+    setFormData({ id: null, kode: '', institusi: '', alamat: '', kota: '', status: 'Aktif' });
     setIsModalOpen(true);
   };
 
@@ -50,18 +54,12 @@ const DataTUK = () => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id) => {
-    showAlert('delete', 'Hapus TUK', 'Yakin ingin menghapus data TUK ini?', () => {
-      setTukList(tukList.filter(item => item.id !== id));
-      showAlert('success', 'Berhasil', 'Data TUK telah dihapus.');
-    });
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
     showAlert('save', 'Simpan TUK', 'Apakah Anda yakin ingin menyimpan perubahan data TUK ini?', () => {
       if (modalMode === 'create') {
-        setTukList([...tukList, { ...formData, id: Date.now() }]);
+        const newId = tukList.length > 0 ? Math.max(...tukList.map(t => t.id)) + 1 : 1;
+        setTukList([...tukList, { ...formData, id: newId }]);
       } else {
         setTukList(tukList.map(item => item.id === formData.id ? formData : item));
       }
@@ -70,11 +68,12 @@ const DataTUK = () => {
     });
   };
 
-  const filteredTUK = tukList.filter(tuk => tuk.nama.toLowerCase().includes(searchQuery.toLowerCase()) || tuk.kode.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredTUK = tukList.filter(tuk => tuk.institusi.toLowerCase().includes(searchQuery.toLowerCase()) || tuk.kode.toLowerCase().includes(searchQuery.toLowerCase()));
+  const totalPages = Math.ceil(filteredTUK.length / itemsPerPage);
+  const paginatedTUK = filteredTUK.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className="dashboard-content fade-in-content">
-      
       {alertConfig.type && (
         <AlertPopup type={alertConfig.type} title={alertConfig.title} text={alertConfig.text} onConfirm={handleConfirmAlert} onCancel={handleCancelAlert} />
       )}
@@ -87,48 +86,54 @@ const DataTUK = () => {
         <Button variant="primary" icon="map-marker-alt" onClick={handleTambah}>Tambah TUK</Button>
       </div>
 
-      <div className="dashboard-card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-          <h3 style={{ margin: 0 }}>Daftar Lokasi TUK</h3>
-          <input type="text" className="form-input" placeholder="Cari TUK / Kode..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ width: '300px' }} />
+      <div className="dashboard-card" style={{ padding: 0 }}>
+        <div style={{ padding: '20px', borderBottom: '1px solid #e2e8f0', backgroundColor: '#f8fafc' }}>
+          <input type="text" className="form-input" placeholder="Cari Institusi TUK / Kode..." value={searchQuery} onChange={(e) => {setSearchQuery(e.target.value); setCurrentPage(1);}} style={{ width: '300px' }} />
         </div>
 
-        <div className="table-responsive">
+        <div className="table-responsive" style={{ padding: '20px' }}>
           <table className="admin-table">
             <thead style={{ backgroundColor: '#f8fafc' }}>
               <tr>
                 <th style={{ width: '5%', textAlign: 'center' }}>No</th>
                 <th style={{ width: '15%' }}>Kode TUK</th>
-                <th>Nama TUK & Lokasi</th>
-                <th style={{ textAlign: 'center' }}>Jenis</th>
-                <th style={{ textAlign: 'center' }}>Kapasitas</th>
-                <th style={{ textAlign: 'center' }}>Aksi</th>
+                <th style={{ width: '30%' }}>Nama Institusi</th>
+                <th style={{ width: '25%' }}>Alamat & Kota</th>
+                <th style={{ width: '15%', textAlign: 'center' }}>Status</th>
+                <th style={{ width: '10%', textAlign: 'center' }}>Aksi</th>
               </tr>
             </thead>
             <tbody>
-              {filteredTUK.map((tuk, index) => (
+              {paginatedTUK.map((tuk, index) => (
                 <tr key={tuk.id}>
-                  <td style={{ textAlign: 'center', color: '#64748b' }}>{index + 1}</td>
+                  <td style={{ textAlign: 'center', color: '#64748b' }}>{(currentPage - 1) * itemsPerPage + index + 1}</td>
                   <td><strong>{tuk.kode}</strong></td>
-                  <td><strong>{tuk.nama}</strong><br/><small className="text-muted"><i className="fas fa-map-pin"></i> {tuk.lokasi}</small></td>
+                  <td style={{ fontWeight: '600', color: '#0f172a' }}>{tuk.institusi}</td>
+                  <td>
+                    <div style={{ fontSize: '0.85rem', color: '#475569', marginBottom: '4px' }}>{tuk.alamat}</div>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#3b82f6' }}>Kota {tuk.kota}</div>
+                  </td>
+                  
+                  {/* STATUS DIKEMBALIKAN JADI BADGE BIASA (EDIT VIA FORM) */}
                   <td style={{ textAlign: 'center' }}>
-                    <span className="badge warning" style={{ backgroundColor: tuk.jenis === 'Mandiri' ? '#dbeafe' : '#fef3c7', color: tuk.jenis === 'Mandiri' ? '#1e40af' : '#b45309' }}>
-                      {tuk.jenis}
+                    <span className={`badge ${tuk.status === 'Aktif' ? 'success' : 'danger'}`}>
+                      {tuk.status}
                     </span>
                   </td>
-                  <td style={{ textAlign: 'center' }}><strong>{tuk.kapasitas}</strong> Peserta</td>
+                  
                   <td style={{ textAlign: 'center' }}>
                     <div style={{ display: 'flex', gap: '5px', justifyContent: 'center' }}>
                       <Button variant="outline" icon="edit" onClick={() => handleEdit(tuk)} />
-                      <Button variant="danger" icon="trash" onClick={() => handleDelete(tuk.id)} />
                     </div>
                   </td>
                 </tr>
               ))}
-              {filteredTUK.length === 0 && <tr><td colSpan="6" style={{ textAlign: 'center' }}>Tidak ada data TUK.</td></tr>}
+              {paginatedTUK.length === 0 && <tr><td colSpan="6" style={{ textAlign: 'center' }}>Tidak ada data TUK.</td></tr>}
             </tbody>
           </table>
         </div>
+        
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalData={filteredTUK.length} itemsPerPage={itemsPerPage} />
       </div>
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={modalMode === 'create' ? 'Tambah Data TUK' : 'Edit Data TUK'}>
@@ -138,26 +143,27 @@ const DataTUK = () => {
             <input type="text" name="kode" className="form-input" placeholder="Misal: TUK-001" value={formData.kode} onChange={handleInputChange} required />
           </div>
           <div className="form-group" style={{ marginBottom: '15px' }}>
-            <label>Nama Tempat Uji (TUK)</label>
-            <input type="text" name="nama" className="form-input" value={formData.nama} onChange={handleInputChange} required />
+            <label>Nama Institusi TUK</label>
+            <input type="text" name="institusi" className="form-input" placeholder="Contoh: TUK Sewaktu BLK Surabaya" value={formData.institusi} onChange={handleInputChange} required />
           </div>
+          
           <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
             <div className="form-group">
-              <label>Jenis TUK</label>
-              <select name="jenis" className="form-select" value={formData.jenis} onChange={handleInputChange}>
-                <option value="Sewaktu">Sewaktu</option>
-                <option value="Mandiri">Mandiri</option>
-                <option value="Tempat Kerja">Tempat Kerja</option>
-              </select>
+              <label>Kota</label>
+              <input type="text" name="kota" className="form-input" placeholder="Contoh: Surabaya" value={formData.kota} onChange={handleInputChange} required />
             </div>
             <div className="form-group">
-              <label>Kapasitas Peserta (Orang)</label>
-              <input type="number" name="kapasitas" className="form-input" min="1" value={formData.kapasitas} onChange={handleInputChange} required />
+              <label>Status TUK</label>
+              <select name="status" className="form-select" value={formData.status} onChange={handleInputChange}>
+                <option value="Aktif">Aktif</option>
+                <option value="Non-Aktif">Non-Aktif</option>
+              </select>
             </div>
           </div>
+          
           <div className="form-group" style={{ marginBottom: '25px' }}>
-            <label>Lokasi / Alamat Lengkap</label>
-            <textarea name="lokasi" className="form-input" rows="3" value={formData.lokasi} onChange={handleInputChange} required style={{ resize: 'vertical' }}></textarea>
+            <label>Alamat Lengkap</label>
+            <textarea name="alamat" className="form-input" rows="3" value={formData.alamat} onChange={handleInputChange} required style={{ resize: 'vertical' }}></textarea>
           </div>
           
           <div style={{ display: 'flex', gap: '10px' }}>

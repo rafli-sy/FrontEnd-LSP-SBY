@@ -1,172 +1,352 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './Dashboard.css';
-import Button from '../../components/ui/Button'; 
-import AlertPopup from '../../components/ui/AlertPopup';
-import TablePeserta from '../TablePeserta/TablePeserta'; // <-- Import komponen TablePeserta
+import { useUser } from '../../context/UserContext';
+import Button from '../../components/ui/Button';
+import AlertPopup from '../../components/ui/AlertPopup'; 
+import TablePeserta from '../TablePeserta/TablePeserta'; 
+
+import { PDFViewer, PDFDownloadLink } from '@react-pdf/renderer';
+import SuratBalasanPDF from '../surat/pdf/SuratBalasanPDF';
+import SuratTugasPDF from '../surat/pdf/SuratTugasPDF';
+import BeritaAcaraPDF from '../surat/pdf/BeritaAcaraPDF';
 
 const DashboardAsesor = () => {
-  const navigate = useNavigate(); 
-  const [filterTanggal, setFilterTanggal] = useState('');
-  const [alert, setAlert] = useState(null); 
-  
-  // State baru untuk menampung data peserta yang dipilih
-  const [selectedPeserta, setSelectedPeserta] = useState(null); 
+  const navigate = useNavigate();
+  const { userData } = useUser();
+  const [filterStatus, setFilterStatus] = useState('Semua');
+  const [selectedPeserta, setSelectedPeserta] = useState(null);
+  const [previewDokumen, setPreviewDokumen] = useState(null);
+  const [alertConfig, setAlertConfig] = useState(null); 
 
-  // Data Dummy Detail Peserta (agar tabel tidak kosong)
-  const dummyPeserta = [
-    { id: 1, nama: 'Giyu Tomioka', nik: '3578902006900001', jk: 'L', tempatLahir: 'Surabaya', tanggalLahir: '20 Juni 1990', alamat: 'Dukuh Menanggal III/29', rt: '1', rw: '1', kelurahan: 'Dukuh Menanggal', kecamatan: 'Gayungan', hp: '089689029754', email: 'giyu@gmail.com', pendidikan: 'S1' },
-    { id: 2, nama: 'Shinobu Kocho', nik: '3578902006900002', jk: 'P', tempatLahir: 'Malang', tanggalLahir: '15 Agustus 1995', alamat: 'Jl. Raya Mondoroko No 1', rt: '2', rw: '3', kelurahan: 'Singosari', kecamatan: 'Singosari', hp: '081234567890', email: 'shinobu@gmail.com', pendidikan: 'SMA' },
-    { id: 3, nama: 'Kyojuro Rengoku', nik: '3578902006900003', jk: 'L', tempatLahir: 'Sidoarjo', tanggalLahir: '10 Mei 1996', alamat: 'Perumahan Candi Indah', rt: '4', rw: '5', kelurahan: 'Candi', kecamatan: 'Candi', hp: '085544332211', email: 'kyojuro@gmail.com', pendidikan: 'SMK' }
-  ];
-  
-  const [penugasan, setPenugasan] = useState([
-    { id: 1, tanggal: '2026-04-06', skema: 'Junior Web Developer', tuk: 'TUK UPT Pelatihan Kerja Surabaya', asesi: 18, status: 'Menunggu Jadwal', noSurat: 'SPT-015/LSP/2026', peserta: dummyPeserta },
-    { id: 2, tanggal: '2026-03-25', skema: 'Desain UI/UX & Riset Psikologi Pengguna', tuk: 'TUK UPT Pelatihan Kerja Surabaya', asesi: 12, status: 'Menunggu Jadwal', noSurat: 'SPT-012/LSP/2026', peserta: dummyPeserta },
-    { id: 3, tanggal: '2026-03-15', skema: 'Pemrograman Web Full-Stack', tuk: 'TUK UPT Pelatihan Kerja Surabaya', asesi: 15, status: 'Menunggu Jadwal', noSurat: 'SPT-010/LSP/2026', peserta: dummyPeserta },
-    { id: 4, tanggal: '2026-03-10', skema: 'Front-End Development (React.js)', tuk: 'TUK LSP Surabaya', asesi: 20, status: 'Sedang Berlangsung', peserta: dummyPeserta },
-    { id: 5, tanggal: '2026-03-05', skema: 'Database Management', tuk: 'TUK LSP Surabaya', asesi: 20, status: 'Selesai', peserta: dummyPeserta },
-    { id: 6, tanggal: '2026-03-01', skema: 'Backend Development & API', tuk: 'TUK UPT Pelatihan Kerja Surabaya', asesi: 16, status: 'Selesai', peserta: dummyPeserta },
+  // --- SENSOR GLOBAL BACK BUTTON ---
+  useEffect(() => {
+    const handleGlobalBack = (e) => {
+      if (selectedPeserta) { 
+        setSelectedPeserta(null); 
+        e.preventDefault(); 
+      }
+      else if (previewDokumen) { 
+        setPreviewDokumen(null); 
+        e.preventDefault(); 
+      }
+    };
+    window.addEventListener('globalBackRequested', handleGlobalBack);
+    return () => window.removeEventListener('globalBackRequested', handleGlobalBack);
+  }, [selectedPeserta, previewDokumen]);
+
+  // Data Dummy: Alur 3 Status (Menunggu -> Berlangsung -> Selesai)
+  const [agendaPenugasan, setAgendaPenugasan] = useState([
+    { 
+      id: 1, 
+      skema: 'Pembuatan Roti dan Kue', 
+      kejuruan: 'Pariwisata', 
+      tanggal: '24 April 2026', 
+      tuk: 'TUK Sewaktu BLK Surabaya', 
+      status: 'Menunggu Waktu Ujian', 
+      badge: 'warning',
+      pesertaList: [
+        { id: 1, nama: 'Siti Aminah', nik: '3578001122334455', jk: 'P', tempatLahir: 'Surabaya', tanggalLahir: '12 Mei 1995', alamat: 'Jl. Kenangan No 1', rt: '01', rw: '02', kelurahan: 'Ketintang', kecamatan: 'Gayungan', hp: '08123456789', email: 'siti@mail.com', pendidikan: 'SMA' },
+        { id: 2, nama: 'Budi Santoso', nik: '3578009988776655', jk: 'L', tempatLahir: 'Gresik', tanggalLahir: '08 Agustus 1996', alamat: 'Jl. Veteran 45', rt: '03', rw: '04', kelurahan: 'Sidomoro', kecamatan: 'Kebomas', hp: '08987654321', email: 'budi@mail.com', pendidikan: 'SMK' }
+      ]
+    },
+    { 
+      id: 2, 
+      skema: 'Barista', 
+      kejuruan: 'Pariwisata', 
+      tanggal: '26 April 2026', 
+      tuk: 'TUK Sewaktu BLK Surabaya', 
+      status: 'Sedang Berlangsung', 
+      badge: 'primary',
+      pesertaList: [
+        { id: 3, nama: 'Andi Wijaya', nik: '3578002233445566', jk: 'L', tempatLahir: 'Sidoarjo', tanggalLahir: '21 Juli 1998', alamat: 'Perumahan Tropodo', rt: '05', rw: '01', kelurahan: 'Tropodo', kecamatan: 'Waru', hp: '082233445566', email: 'andi@mail.com', pendidikan: 'D3' }
+      ]
+    },
+    { 
+      id: 3, 
+      skema: 'Desain Grafis Madya', 
+      kejuruan: 'TIK', 
+      tanggal: '10 April 2026', 
+      tuk: 'TUK Mandiri Unesa', 
+      status: 'Selesai', 
+      badge: 'success',
+      pesertaList: [
+        { id: 4, nama: 'Rina Melati', nik: '3578005544332211', jk: 'P', tempatLahir: 'Malang', tanggalLahir: '15 Januari 1997', alamat: 'Jl. Kawi 22', rt: '02', rw: '05', kelurahan: 'Kauman', kecamatan: 'Klojen', hp: '085544332211', email: 'rina@mail.com', pendidikan: 'S1' }
+      ]
+    }
   ]);
 
-  const closeAlert = () => setAlert(null);
+  const filteredAgenda = filterStatus === 'Semua' 
+    ? agendaPenugasan 
+    : agendaPenugasan.filter(item => item.status === filterStatus);
 
-  const showSuccess = (text) => {
-    setAlert({ type: 'success', title: 'Sukses!', text });
-    setTimeout(() => setAlert(null), 2000);
-  };
+  const totalSelesai = agendaPenugasan.filter(u => u.status === 'Selesai').length;
 
-  const handleTerima = (id) => {
-    setAlert({
-      type: 'save', title: 'Terima Penugasan?', text: 'Jadwal ini akan masuk ke daftar agenda aktif Anda.',
-      onConfirm: () => { setPenugasan(penugasan.map(p => p.id === id ? { ...p, status: 'Sedang Berlangsung' } : p)); showSuccess('Penugasan berhasil diterima.'); },
-      onCancel: closeAlert
+  const handleMulaiUjian = (item) => {
+    setAlertConfig({
+      type: 'confirm',
+      title: 'Mulai Ujian?',
+      text: `Apakah Anda yakin ingin memulai sesi ujian untuk skema ${item.skema}?`,
+      onConfirm: () => {
+        setAgendaPenugasan(prev => prev.map(a => a.id === item.id ? { ...a, status: 'Sedang Berlangsung', badge: 'primary' } : a));
+        setAlertConfig({ type: 'success', title: 'Berhasil', text: 'Sesi ujian telah dimulai.' });
+        setTimeout(() => setAlertConfig(null), 2000);
+      },
+      onCancel: () => setAlertConfig(null)
     });
   };
 
-  const handleTolak = (id) => {
-    setAlert({
-      type: 'delete', title: 'Tolak Penugasan?', text: 'Aksi ini akan mengirim notifikasi pembatalan ke Admin LSP.',
-      onConfirm: () => { setPenugasan(penugasan.filter(p => p.id !== id)); showSuccess('Penugasan telah ditolak.'); },
-      onCancel: closeAlert
+  const handleSelesaiUjian = (item) => {
+    setAlertConfig({
+      type: 'confirm',
+      title: 'Selesai Ujian?',
+      text: `Apakah ujian untuk skema ${item.skema} sudah benar-benar selesai?`,
+      onConfirm: () => {
+        setAgendaPenugasan(prev => prev.map(a => a.id === item.id ? { ...a, status: 'Selesai', badge: 'success' } : a));
+        setAlertConfig({ type: 'success', title: 'Selesai', text: 'Sesi ujian telah ditutup.' });
+        setTimeout(() => setAlertConfig(null), 2000);
+      },
+      onCancel: () => setAlertConfig(null)
     });
   };
 
-  const tugasBaru = penugasan.filter(p => p.status === 'Menunggu Jadwal');
-  const agendaAktif = penugasan.filter(p => p.status === 'Sedang Berlangsung');
-  const riwayat = penugasan.filter(p => p.status === 'Selesai');
-  const dataTabel = penugasan.filter(p => p.status !== 'Menunggu Jadwal' && (filterTanggal === '' || p.tanggal === filterTanggal));
-
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case 'Sedang Berlangsung': return <span style={{ backgroundColor: '#38bdf8', color: '#ffffff', padding: '6px 14px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 'bold' }}>{status}</span>;
-      case 'Selesai': return <span style={{ backgroundColor: '#4ade80', color: '#ffffff', padding: '6px 14px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 'bold' }}>{status}</span>;
-      default: return <span>{status}</span>;
-    }
+  const handlePreviewDokumen = (jenis, item) => {
+    const ujkData = {
+      skema: item.skema,
+      bidang: item.kejuruan,
+      tuk: item.tuk,
+      hari1: item.tanggal,
+      hari2: item.tanggal, 
+      waktu: '08.00 WIB s/d Selesai',
+      asesor1: userData?.namaLengkap || 'Wasini, SE, MM',
+      noReg1: userData?.noReg || 'MET.000.001668.2012',
+      asesor2: 'Endang Lestari',
+      noReg2: 'MET.000.011411 2019',
+      pengusul: 'UPT BLK Surabaya', 
+      asesi: item.pesertaList.length 
+    };
+    const formData = {
+      noSurat: `ST-${item.id.toString().padStart(3, '0')}/LSP-BLK/IV/2026`,
+      tanggalSurat: item.tanggal,
+      noDokumen: jenis === 'BA' ? 'FR-SER-01.1-LSP BLK-SBY' : 'FR.KPA.02',
+      edisiRevisi: '01/00',
+      tanggalBerlaku: '10-Nov-2015',
+      halaman: '1 dari 1'
+    };
+    setPreviewDokumen({ jenis, data: { ujk: ujkData, form: formData } });
   };
+
+  if (previewDokumen) {
+    return (
+      <div className="dashboard-content fade-in-content">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', backgroundColor: '#fff', padding: '15px 20px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+          <div>
+            <h3 style={{ margin: '0 0 5px 0' }}>Pratinjau Dokumen</h3>
+            <p className="text-muted" style={{ margin: 0, fontSize: '0.9rem' }}>Periksa hasil dokumen dalam format PDF.</p>
+          </div>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <Button variant="outline" icon="arrow-left" onClick={() => setPreviewDokumen(null)}>Kembali</Button>
+            <PDFDownloadLink 
+              document={previewDokumen.jenis === 'SPT' ? <SuratTugasPDF data={previewDokumen.data} /> : <BeritaAcaraPDF data={{ ujk: previewDokumen.data.ujk }} />} 
+              fileName={`${previewDokumen.jenis}_Asesor.pdf`}
+              style={{ backgroundColor: '#10b981', color: '#fff', padding: '10px 16px', borderRadius: '8px', textDecoration: 'none', fontWeight: 'bold' }}
+            >
+              {({ loading }) => (loading ? 'Menyiapkan PDF...' : 'Unduh PDF')}
+            </PDFDownloadLink>
+          </div>
+        </div>
+        
+        <div style={{ width: '100%', height: '80vh', borderRadius: '8px', overflow: 'hidden', border: '1px solid #cbd5e1' }}>
+          <PDFViewer width="100%" height="100%" showToolbar={true}>
+            {previewDokumen.jenis === 'SPT' && <SuratTugasPDF data={previewDokumen.data} />}
+            {previewDokumen.jenis === 'BA' && <BeritaAcaraPDF data={{ ujk: previewDokumen.data.ujk }} />}
+          </PDFViewer>
+        </div>
+      </div>
+    );
+  }
+
+  if (selectedPeserta) {
+    return (
+      <div className="dashboard-content fade-in-content">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '25px', flexWrap: 'wrap' }}>
+          <Button variant="outline" icon="arrow-left" onClick={() => setSelectedPeserta(null)}>Kembali ke Jadwal</Button>
+          <div>
+            <h2 style={{ margin: '0 0 5px 0', fontSize: '1.4rem', color: '#0f172a' }}>Data Peserta Ujian</h2>
+            <p className="text-muted" style={{ margin: 0 }}>Skema: <strong>{selectedPeserta.skema}</strong> | TUK: {selectedPeserta.tuk}</p>
+          </div>
+        </div>
+        <div className="dashboard-card" style={{ padding: '25px' }}>
+          <TablePeserta dataPeserta={selectedPeserta.pesertaList || []} skemaName={selectedPeserta.skema} />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="dashboard-content fade-in-content">
-      
-      {/* === LOGIKA RENDER: Jika peserta dipilih, tampilkan Tabel Detail === */}
-      {selectedPeserta ? (
-        <div className="fade-in-content">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '20px' }}>
-            <Button variant="outline" icon="arrow-left" onClick={() => setSelectedPeserta(null)}>
-              Kembali
-            </Button>
-            <div>
-              <h2 style={{ margin: 0, fontSize: '1.5rem' }}>Data Detail Nominatif Peserta</h2>
-              <p className="text-muted" style={{ margin: 0 }}>Skema: <strong>{selectedPeserta.skema}</strong></p>
-            </div>
-          </div>
-          
-          <div className="dashboard-card" style={{ padding: '25px' }}>
-            {/* Memanggil Komponen TablePeserta */}
-            <TablePeserta dataPeserta={selectedPeserta.peserta} skemaName={selectedPeserta.skema} />
-          </div>
-        </div>
-      ) : (
-        /* === TAMPILAN DASHBOARD UTAMA ASESOR === */
-        <div className="fade-in-content">
-          <div className="stats-grid">
-            <div className="stat-card"><div className="stat-icon" style={{ background: '#fef3c7', color: '#f59e0b' }}><i className="fas fa-bell"></i></div><div className="stat-info"><h3>{tugasBaru.length}</h3><p>Tugas Baru Masuk</p></div></div>
-            <div className="stat-card"><div className="stat-icon" style={{ background: '#eff6ff', color: '#3b82f6' }}><i className="fas fa-calendar-day"></i></div><div className="stat-info"><h3>{agendaAktif.length} Ujian</h3><p>Sedang Dilaksanakan</p></div></div>
-            <div className="stat-card"><div className="stat-icon" style={{ background: '#f1f5f9', color: '#64748b' }}><i className="fas fa-history"></i></div><div className="stat-info"><h3>{riwayat.length} Ujian</h3><p>Selesai Dinilai</p></div></div>
-          </div>
-
-          {tugasBaru.length > 0 && (
-            <div style={{ marginTop: '25px', marginBottom: '20px' }}>
-              <h3 className="section-title">Konfirmasi Penugasan Baru</h3>
-              {tugasBaru.map(tugas => (
-                <div key={tugas.id} className="dashboard-card fade-in-content" style={{ borderLeft: '5px solid #f59e0b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', marginBottom: '15px', padding: '20px' }}>
-                  <div style={{ flex: '1 1 min-content' }}>
-                    <h4 style={{ margin: '0 0 8px 0', color: '#0f172a', fontSize: '1.1rem' }}><i className="fas fa-envelope-open-text" style={{ color: '#f59e0b', marginRight: '8px' }}></i> SPT Baru: {tugas.noSurat}</h4>
-                    <p style={{ margin: 0, color: '#475569', fontSize: '0.95rem' }}><strong>Skema:</strong> {tugas.skema} <br/><strong>Lokasi:</strong> {tugas.tuk} <br/><strong>Tanggal:</strong> {tugas.tanggal}</p>
-                  </div>
-                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                    {/* Menggunakan tombol untuk melihat asesi */}
-                    <Button variant="outline" icon="users" onClick={() => setSelectedPeserta(tugas)}>
-                      Lihat {tugas.asesi} Asesi
-                    </Button>
-                    <Button variant="outline" icon="file-pdf" onClick={() => alert(`Mengunduh SPT: ${tugas.noSurat}...`)}>Lihat SPT</Button>
-                    <Button variant="danger" icon="times" onClick={() => handleTolak(tugas.id)}>Tolak</Button>
-                    <Button variant="success" icon="check" onClick={() => handleTerima(tugas.id)}>Terima Tugas</Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div className="dashboard-card" style={{ marginTop: '25px', padding: '0', overflow: 'hidden' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 25px', borderBottom: '1px dashed #cbd5e1', flexWrap: 'wrap', gap: '15px' }}>
-              <div><h3 style={{ margin: '0 0 5px 0', fontSize: '1.25rem', color: '#0f172a' }}>Jadwal & Riwayat Uji Kompetensi</h3><p style={{ margin: 0, color: '#64748b', fontSize: '0.9rem' }}>Daftar seluruh penugasan asesmen yang sedang dan telah Anda laksanakan.</p></div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 'bold' }}><i className="fas fa-filter"></i> Filter:</span><input type="date" value={filterTanggal} onChange={(e) => setFilterTanggal(e.target.value)} style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} />{filterTanggal && <button onClick={() => setFilterTanggal('')} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontWeight: 'bold' }}>Reset</button>}</div>
-            </div>
-
-            <div className="table-responsive">
-              <table className="admin-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ backgroundColor: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
-                    <th style={{ padding: '16px 25px' }}>Tanggal</th>
-                    <th style={{ padding: '16px 25px' }}>Skema Kejuruan</th>
-                    <th style={{ padding: '16px 25px' }}>Lokasi (TUK)</th>
-                    <th style={{ padding: '16px 25px' }}>Peserta</th>
-                    <th style={{ padding: '16px 25px' }}>Status</th>
-                    <th style={{ padding: '16px 25px', textAlign: 'center' }}>Dokumen / Aksi</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {dataTabel.length > 0 ? dataTabel.map((item) => (
-                    <tr key={item.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                      <td style={{ padding: '16px 25px', fontWeight: '700' }}>{item.tanggal}</td>
-                      <td style={{ padding: '16px 25px' }}>{item.skema}</td>
-                      <td style={{ padding: '16px 25px' }}>{item.tuk}</td>
-                      <td style={{ padding: '16px 25px' }}>
-                        {/* Tombol pemicu TablePeserta */}
-                        <Button variant="outline" size="sm" onClick={() => setSelectedPeserta(item)}>
-                          <strong>{item.asesi}</strong> Orang <i className="fas fa-users" style={{ marginLeft: '5px' }}></i>
-                        </Button>
-                      </td>
-                      <td style={{ padding: '16px 25px' }}>{getStatusBadge(item.status)}</td>
-                      <td style={{ padding: '16px 25px', textAlign: 'center' }}>
-                        {item.status === 'Sedang Berlangsung' && <Button variant="primary" style={{ padding: '6px 12px' }} onClick={() => navigate('/asesor/tugas', { state: { tab: 'aktif' } })}>Mulai Penilaian</Button>}
-                        {item.status === 'Selesai' && <Button variant="outline" style={{ padding: '6px 12px' }} onClick={() => navigate('/asesor/tugas', { state: { tab: 'riwayat' } })}>Lihat Rekap</Button>}
-                      </td>
-                    </tr>
-                  )) : (
-                    <tr><td colSpan="6" style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>Tidak ada riwayat ujian pada tanggal tersebut.</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+    <div className="dashboard-content fade-in-content" style={{ position: 'relative' }}>
+      {alertConfig && (
+        <AlertPopup 
+          type={alertConfig.type} 
+          title={alertConfig.title} 
+          text={alertConfig.text} 
+          onConfirm={alertConfig.onConfirm || (() => setAlertConfig(null))} 
+          onCancel={alertConfig.onCancel || (() => setAlertConfig(null))} 
+        />
       )}
 
-      {/* Render AlertPopup untuk aksi Terima/Tolak */}
-      <AlertPopup {...alert} />
-      
+      <div style={{ marginBottom: '30px' }}>
+        <h2 style={{ fontSize: '1.75rem', color: '#0f172a', fontWeight: '700', margin: '0' }}>
+          Halo, {userData?.namaLengkap || 'Asesor'}!
+        </h2>
+        <p className="text-muted" style={{ fontSize: '1rem', marginTop: '6px' }}>
+          Selamat datang kembali. Berikut adalah ringkasan agenda penugasan pengujian Anda.
+        </p>
+      </div>
+
+      <div className="stats-grid">
+        <div className="stat-card">
+          <div className="stat-icon" style={{ background: '#eff6ff', color: '#2563eb' }}><i className="fas fa-tasks"></i></div>
+          <div className="stat-info"><h3>{agendaPenugasan.length}</h3><p>Total Penugasan</p></div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon" style={{ background: '#ecfdf5', color: '#10b981' }}><i className="fas fa-check-double"></i></div>
+          <div className="stat-info"><h3>{totalSelesai}</h3><p>Ujian Selesai</p></div>
+        </div>
+      </div>
+
+      <div className="dashboard-card" style={{ marginTop: '30px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
+          <div>
+            <h3 style={{ fontSize: '1.25rem', color: '#1e293b', fontWeight: '600', margin: '0' }}>Riwayat & Jadwal Penugasan UJK</h3>
+            <p className="text-muted" style={{ fontSize: '0.875rem', margin: '4px 0 0 0' }}>
+              Klik jumlah peserta untuk melihat data asesi, dan unduh dokumen administrasi di sebelah kanan.
+            </p>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#f8fafc', padding: '6px 12px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+            <label style={{ fontSize: '0.85rem', fontWeight: '600', color: '#475569' }}><i className="fas fa-filter"></i> Filter:</label>
+            <select 
+              value={filterStatus} 
+              onChange={(e) => setFilterStatus(e.target.value)}
+              style={{ border: 'none', background: 'transparent', fontSize: '0.9rem', color: '#0f172a', fontWeight: '500', outline: 'none', cursor: 'pointer' }}
+            >
+              <option value="Semua">Semua Status</option>
+              <option value="Menunggu Waktu Ujian">Menunggu Waktu Ujian</option>
+              <option value="Sedang Berlangsung">Sedang Berlangsung</option>
+              <option value="Selesai">Selesai</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="table-responsive">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th style={{ width: '5%', textAlign: 'center' }}>No.</th>
+                <th style={{ width: '15%', textAlign: 'center' }}>Tanggal</th>
+                <th style={{ width: '20%', textAlign: 'center' }}>Skema Kejuruan</th>
+                <th style={{ width: '15%', textAlign: 'center' }}>Lokasi TUK</th>
+                <th style={{ width: '10%', textAlign: 'center' }}>Peserta</th>
+                <th style={{ width: '10%', textAlign: 'center' }}>Status</th>
+                <th style={{ width: '10%', textAlign: 'center' }}>Dokumen</th>
+                <th style={{ width: '15%', textAlign: 'center' }}>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredAgenda.length > 0 ? (
+                filteredAgenda.map((item, index) => (
+                  <tr key={item.id}>
+                    <td style={{ textAlign: 'center', color: '#94a3b8' }}>{index + 1}</td>
+                    
+                    <td style={{ textAlign: 'center', fontWeight: '600', color: '#334155' }}>
+                      <i className="far fa-calendar-alt text-muted" style={{marginRight:'6px'}}></i>{item.tanggal}
+                    </td>
+                    
+                    <td style={{ textAlign: 'center' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <strong style={{ color: '#0f172a' }}>{item.skema}</strong>
+                        <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{item.kejuruan}</span>
+                      </div>
+                    </td>
+                    
+                    <td style={{ textAlign: 'center', color: '#475569', fontSize: '0.9rem' }}>{item.tuk}</td>
+                    
+                    <td style={{ textAlign: 'center' }}>
+                      <Button variant="outline" size="sm" onClick={() => setSelectedPeserta(item)} style={{ margin: '0 auto' }}>
+                        <strong>{item.pesertaList.length}</strong> <i className="fas fa-users" style={{ marginLeft: '4px' }}></i>
+                      </Button>
+                    </td>
+
+                    {/* KOLOM STATUS (BADGE) */}
+                    <td style={{ textAlign: 'center' }}>
+                      <span className={`badge ${item.badge}`}>{item.status}</span>
+                    </td>
+                    
+                    {/* KOLOM DOKUMEN */}
+                    <td style={{ textAlign: 'center' }}>
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center' }}>
+                        <button 
+                          style={{
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                            padding: '6px 10px', borderRadius: '8px', fontSize: '0.7rem', fontWeight: '600', 
+                            cursor: 'pointer', backgroundColor: '#eff6ff', color: '#2563eb', border: '1px solid #dbeafe', 
+                            transition: 'all 0.2s', minWidth: '80px', gap: '4px'
+                          }} 
+                          onClick={() => handlePreviewDokumen('SPT', item)} title="Lihat Surat Tugas"
+                        >
+                          <i className="fas fa-file-signature" style={{ fontSize: '1.2rem' }}></i>
+                          <span>Surat Tugas</span>
+                        </button>
+                        
+                        <button 
+                          style={{
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                            padding: '6px 10px', borderRadius: '8px', fontSize: '0.7rem', fontWeight: '600', 
+                            cursor: 'pointer', backgroundColor: '#eff6ff', color: '#2563eb', border: '1px solid #dbeafe', 
+                            transition: 'all 0.2s', minWidth: '80px', gap: '4px'
+                          }} 
+                          onClick={() => handlePreviewDokumen('BA', item)} title="Lihat Berita Acara"
+                        >
+                          <i className="fas fa-file-contract" style={{ fontSize: '1.2rem' }}></i>
+                          <span>Berita Acara</span>
+                        </button>
+                      </div>
+                    </td>
+
+                    {/* KOLOM AKSI (Mulai / Selesaikan) */}
+                    <td style={{ textAlign: 'center' }}>
+                      <div style={{ display: 'flex', justifyContent: 'center' }}>
+                        {item.status === 'Menunggu Waktu Ujian' && (
+                          <button onClick={() => handleMulaiUjian(item)} style={{ background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', padding: '8px 12px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: '0.2s', boxShadow: '0 2px 4px rgba(59,130,246,0.05)', minWidth: '100px', justifyContent: 'center' }}>
+                            <i className="fas fa-play"></i> Mulai Ujian
+                          </button>
+                        )}
+                        {item.status === 'Sedang Berlangsung' && (
+                          <button onClick={() => handleSelesaiUjian(item)} style={{ background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', padding: '8px 12px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: '0.2s', boxShadow: '0 2px 4px rgba(59,130,246,0.05)', minWidth: '100px', justifyContent: 'center' }}>
+                            <i className="fas fa-check-double"></i> Selesaikan Ujian
+                          </button>
+                        )}
+                        {item.status === 'Selesai' && (
+                          <span style={{ fontSize: '0.8rem', color: '#10b981', fontWeight: 'bold', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '6px', minWidth: '100px', justifyContent: 'center' }}>
+                            <i className="fas fa-check-circle"></i> Selesai
+                          </span>
+                        )}
+                      </div>
+                    </td>
+
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="8" style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
+                    <i className="fas fa-folder-open" style={{ fontSize: '2rem', display: 'block', marginBottom: '10px', color: '#cbd5e1' }}></i>
+                    Tidak ada jadwal ujian untuk status <strong>{filterStatus}</strong>.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 };

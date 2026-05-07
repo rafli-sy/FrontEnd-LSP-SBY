@@ -1,0 +1,98 @@
+/* Container Utama */
+.asesor-dashboard-container {
+    padding: 24px;
+    animation: fadeIn 0.4s ease-in-out;
+}
+
+.asesor-welcome-section {
+    margin-bottom: 30px;
+}
+
+.asesor-welcome-section h2 {
+    font-size: 1.75rem;
+    color: #0f172a;
+    font-weight: 700;
+    margin: 0;
+}
+
+.asesor-welcome-section p {
+    color: #64748b;
+    font-size: 1rem;
+    margin-top: 6px;
+}
+
+/* Header Tabel & Filter */
+.card-header-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.card-title-area h3 {
+    font-size: 1.25rem;
+    color: #1e293b;
+    font-weight: 600;
+    margin: 0;
+}
+
+.card-title-area p {
+    font-size: 0.875rem;
+    color: #94a3b8;
+    margin: 4px 0 0 0;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #f8fafc;
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.filter-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #475569;
+}
+
+.filter-select {
+    border: none;
+    background: transparent;
+    font-size: 0.9rem;
+    color: #0f172a;
+    font-weight: 500;
+    outline: none;
+    cursor: pointer;
+}
+
+/* Tombol Cetak Surat */
+.btn-lihat-file {
+    background-color: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #dbeafe;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-lihat-file:hover {
+    background-color: #dbeafe;
+}
+
+/* Responsif HP */
+@media (max-width: 768px) {
+    .asesor-dashboard-container {
+        padding: 16px;
+    }
+}
