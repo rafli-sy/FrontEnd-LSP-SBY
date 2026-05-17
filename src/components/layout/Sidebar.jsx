@@ -56,21 +56,23 @@ const Sidebar = ({ isOpen, isDesktopOpen = true, closeSidebar, toggleSidebar }) 
             {primaryRole === 'super-admin' && (
               <>
                 <div className="menu-label">SISTEM KONTROL</div>
-                <Link to="/super-admin" className={getActiveClass('/super-admin')} onClick={handleMenuClick}><i className="fas fa-home"></i> Dashboard </Link>
-                <Link to="/super-admin/manajemen-akun" className={getActiveClass('/super-admin/manajemen-akun')} onClick={handleMenuClick}><i className="fas fa-users-cog"></i> Manajemen Akun</Link>
+                {/* Menu Manajemen Akun dihapus dan disatukan ke Dashboard */}
+                <Link to="/super-admin" className={getActiveClass('/super-admin')} onClick={handleMenuClick}>
+                  <i className="fas fa-th-large"></i> Dashboard 
+                </Link>
               </>
             )}
             {primaryRole === 'admin-lsp' && (
               <>
                 <p className="menu-label">The Controller</p>
                 <Link to="/admin-lsp" className={getActiveClass('/admin-lsp')} onClick={handleMenuClick}><i className="fas fa-home"></i> Dashboard </Link>
+                <p className="menu-label">Manajemen UJK</p>
+                <Link to="/admin-lsp/penugasan" className={getActiveClass('/admin-lsp/penugasan')} onClick={handleMenuClick}><i className="fas fa-tasks"></i> Penugasan & Dokumen</Link>
                 <p className="menu-label">Master Data</p>
                 <Link to="/admin-lsp/skema" className={getActiveClass('/admin-lsp/skema')} onClick={handleMenuClick}><i className="fas fa-file-code"></i> Data Skema</Link>
                 <Link to="/admin-lsp/asesor" className={getActiveClass('/admin-lsp/asesor')} onClick={handleMenuClick}><i className="fas fa-user-tie"></i> Data Asesor</Link>
                 <Link to="/admin-lsp/penyelia" className={getActiveClass('/admin-lsp/penyelia')} onClick={handleMenuClick}><i className="fas fa-user-shield"></i> Data Penyelia</Link>
                 <Link to="/admin-lsp/tuk" className={getActiveClass('/admin-lsp/tuk')} onClick={handleMenuClick}><i className="fas fa-map-marker-alt"></i> Data TUK</Link>
-                <p className="menu-label">Manajemen UJK</p>
-                <Link to="/admin-lsp/penugasan" className={getActiveClass('/admin-lsp/penugasan')} onClick={handleMenuClick}><i className="fas fa-tasks"></i> Penugasan & Dokumen</Link>
               </>
             )}
             {primaryRole === 'staff-lsp' && (

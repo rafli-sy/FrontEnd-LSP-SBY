@@ -85,7 +85,8 @@ const ProfilPage = () => {
             
             <div style={{ marginTop: '10px' }}>
               <h3 style={{ margin: '0 0 10px 0', color: '#0f172a', fontSize: '1.25rem' }}>{tempData.namaLengkap}</h3>
-              <span style={{ backgroundColor: '#eff6ff', color: '#3b82f6', padding: '6px 14px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '600' }}>
+              {/* INSTANSI TETAP ADA SEBAGAI TAMPILAN READ-ONLY */}
+              <span style={{ backgroundColor: '#eff6ff', color: '#3b82f6', padding: '6px 14px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '600' }} title="Instansi ditentukan oleh Super Admin">
                 <i className="fas fa-building" style={{ marginRight: '5px' }}></i> {tempData.instansi}
               </span>
             </div>
@@ -135,12 +136,7 @@ const ProfilPage = () => {
               </div>
             </div>
 
-            {/* INPUT FULL WIDTH */}
-            <div className="form-group" style={{ marginTop: '20px' }}>
-              <label>Asal Instansi / Lembaga</label>
-              <input type="text" className="form-input" name="instansi" value={tempData.instansi} onChange={handleChange} disabled={!isEditing} style={{ backgroundColor: !isEditing ? '#f8fafc' : '#fff' }} required />
-            </div>
-
+            {/* INPUT FULL WIDTH - Field Instansi sudah dihapus dari sini */}
             <div className="form-group" style={{ marginTop: '20px' }}>
               <label>Alamat Lengkap Domisili</label>
               <textarea 

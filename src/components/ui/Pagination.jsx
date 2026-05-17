@@ -1,43 +1,72 @@
 import React from 'react';
 
-const Pagination = ({ currentPage, totalPages, onPageChange, totalData, itemsPerPage }) => {
-  if (totalData === 0) return null; // Sembunyikan jika tidak ada data
+const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+  // Jika tidak ada halaman atau hanya 1 halaman, tombol tidak perlu dirender
+  if (totalPages <= 1) return null;
 
-  const startItem = (currentPage - 1) * itemsPerPage + 1;
-  const endItem = Math.min(currentPage * itemsPerPage, totalData);
+  // --- LOGIKA MENAMPILKAN MAKSIMAL 3 KOTAK HALAMAN ---
+  let startPage = Math.max(1, currentPage - 1);
+  let endPage = Math.min(totalPages, startPage + 2);
+
+  // Penyesuaian jika kita berada di halaman terakhir (agar tetap tampil 3 kotak secara mundur)
+  if (endPage - startPage < 2) {
+    startPage = Math.max(1, endPage - 2);
+  }
+
+  const visiblePages = [];
+  for (let i = startPage; i <= endPage; i++) {
+    visiblePages.push(i);
+  }
+  // ----------------------------------------------------
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 20px', borderTop: '1px solid #e2e8f0', backgroundColor: '#f8fafc', borderRadius: '0 0 12px 12px' }}>
-      <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
-        Menampilkan {startItem} - {endItem} dari {totalData} data
-      </span>
-      <div style={{ display: 'flex', gap: '5px' }}>
-        <button 
-          disabled={currentPage === 1} 
-          onClick={() => onPageChange(currentPage - 1)} 
-          style={{ padding: '6px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', background: currentPage === 1 ? '#f1f5f9' : '#fff', color: currentPage === 1 ? '#94a3b8' : '#334155', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', fontSize: '0.85rem', fontWeight: '600' }}
-        >
-          Back
-        </button>
-        
-        {Array.from({ length: totalPages }, (_, i) => (
-          <button 
-            key={i + 1} 
-            onClick={() => onPageChange(i + 1)} 
-            style={{ width: '32px', height: '32px', display: 'flex', justifyContent: 'center', alignItems: 'center', border: '1px solid', borderColor: currentPage === i + 1 ? '#3b82f6' : '#cbd5e1', borderRadius: '6px', background: currentPage === i + 1 ? '#3b82f6' : '#fff', color: currentPage === i + 1 ? '#fff' : '#334155', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold' }}
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', padding: '20px' }}>
+      {/* Tombol Sebelumnya */}
+      <button
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        style={{
+          width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          border: '1px solid #e2e8f0', borderRadius: '8px', backgroundColor: '#fff',
+          cursor: currentPage === 1 ? 'not-allowed' : 'pointer', opacity: currentPage === 1 ? 0.5 : 1
+        }}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+
+      {/* Render Angka Halaman (Max 3 Kotak) */}
+      {visiblePages.map((page) => {
+        const isActive = page === currentPage;
+        return (
+          <button
+            key={page}
+            onClick={() => onPageChange(page)}
+            style={{
+              width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              borderRadius: '8px', fontWeight: '600', transition: 'all 0.2s',
+              backgroundColor: isActive ? '#2563eb' : '#fff',
+              color: isActive ? '#fff' : '#475569',
+              border: isActive ? '1px solid #2563eb' : '1px solid #e2e8f0',
+              cursor: 'pointer'
+            }}
           >
-            {i + 1}
+            {page}
           </button>
-        ))}
-        
-        <button 
-          disabled={currentPage === totalPages || totalPages === 0} 
-          onClick={() => onPageChange(currentPage + 1)} 
-          style={{ padding: '6px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', background: currentPage === totalPages || totalPages === 0 ? '#f1f5f9' : '#fff', color: currentPage === totalPages || totalPages === 0 ? '#94a3b8' : '#334155', cursor: currentPage === totalPages || totalPages === 0 ? 'not-allowed' : 'pointer', fontSize: '0.85rem', fontWeight: '600' }}
-        >
-          Next
-        </button>
-      </div>
+        );
+      })}
+
+      {/* Tombol Berikutnya */}
+      <button
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        style={{
+          width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          border: '1px solid #e2e8f0', borderRadius: '8px', backgroundColor: '#fff',
+          cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', opacity: currentPage === totalPages ? 0.5 : 1
+        }}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
     </div>
   );
 };

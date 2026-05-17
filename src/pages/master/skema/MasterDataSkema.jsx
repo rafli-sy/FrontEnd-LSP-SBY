@@ -21,11 +21,15 @@ const MasterDataSkema = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState('create');
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // --- FITUR BARU: Filter Status (Default: Aktif) ---
+  const [filterStatus, setFilterStatus] = useState('Aktif');
+
   const [formData, setFormData] = useState({ id: null, kode: '', nama: '', jenis: 'Klaster', bidang: '', status: 'Aktif' });
   const [alertConfig, setAlertConfig] = useState({ type: null, title: '', text: '', action: null });
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 8;
 
   const showAlert = (type, title, text, action = null) => {
     setAlertConfig({ type, title, text, action });
@@ -68,7 +72,13 @@ const MasterDataSkema = () => {
     });
   };
 
-  const filteredSkema = skemaList.filter(skema => skema.nama.toLowerCase().includes(searchQuery.toLowerCase()) || skema.kode.toLowerCase().includes(searchQuery.toLowerCase()));
+  // --- LOGIKA FILTER: Menggabungkan Search + Filter Aktif/Non-Aktif ---
+  const filteredSkema = skemaList.filter(skema => {
+    const matchSearch = skema.nama.toLowerCase().includes(searchQuery.toLowerCase()) || skema.kode.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchStatus = filterStatus === 'Semua' ? true : skema.status === filterStatus;
+    return matchSearch && matchStatus;
+  });
+  
   const totalPages = Math.ceil(filteredSkema.length / itemsPerPage);
   const paginatedSkema = filteredSkema.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
@@ -78,12 +88,26 @@ const MasterDataSkema = () => {
         <AlertPopup type={alertConfig.type} title={alertConfig.title} text={alertConfig.text} onConfirm={handleConfirmAlert} onCancel={handleCancelAlert} />
       )}
 
-      <div className="dashboard-header" style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+      <div className="dashboard-header" style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '15px' }}>
         <div>
           <h2>Master Data Skema</h2>
           <p className="text-muted" style={{ margin: '5px 0 0' }}>Manajemen daftar skema uji kompetensi yang aktif di LSP.</p>
         </div>
-        <Button variant="primary" icon="plus" onClick={handleTambah}>Tambah Skema</Button>
+        
+        {/* --- FITUR BARU: Dropdown Filter & Tombol Tambah --- */}
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <select 
+            className="form-input" 
+            value={filterStatus} 
+            onChange={(e) => {setFilterStatus(e.target.value); setCurrentPage(1);}} 
+            style={{ width: 'auto', padding: '10px 14px', cursor: 'pointer' }}
+          >
+            <option value="Aktif">Lihat Aktif Saja</option>
+            <option value="Non-Aktif">Lihat Non-Aktif</option>
+            <option value="Semua">Semua Status</option>
+          </select>
+          <Button variant="primary" icon="plus" onClick={handleTambah}>Tambah Skema</Button>
+        </div>
       </div>
 
       <div className="dashboard-card" style={{ padding: 0 }}>
@@ -113,14 +137,11 @@ const MasterDataSkema = () => {
                   <td style={{ fontWeight: '600', color: '#0f172a' }}>{skema.nama}</td>
                   <td style={{ textAlign: 'center' }}><span className="badge warning" style={{ backgroundColor: skema.jenis === 'KKNI' ? '#dbeafe' : '#fef3c7', color: skema.jenis === 'KKNI' ? '#1e40af' : '#b45309' }}>{skema.jenis}</span></td>
                   <td>{skema.bidang}</td>
-                  
-                  {/* STATUS DIKEMBALIKAN JADI BADGE BIASA (EDIT VIA FORM) */}
                   <td style={{ textAlign: 'center' }}>
                     <span className={`badge ${skema.status === 'Aktif' ? 'success' : 'danger'}`}>
                       {skema.status}
                     </span>
                   </td>
-                  
                   <td style={{ textAlign: 'center' }}>
                     <div style={{ display: 'flex', gap: '5px', justifyContent: 'center' }}>
                       <Button variant="outline" icon="edit" onClick={() => handleEdit(skema)} />
@@ -128,7 +149,7 @@ const MasterDataSkema = () => {
                   </td>
                 </tr>
               ))}
-              {paginatedSkema.length === 0 && <tr><td colSpan="7" style={{ textAlign: 'center', padding: '20px' }}>Tidak ada data Skema.</td></tr>}
+              {paginatedSkema.length === 0 && <tr><td colSpan="7" style={{ textAlign: 'center', padding: '20px' }}>Tidak ada data Skema untuk status {filterStatus}.</td></tr>}
             </tbody>
           </table>
         </div>

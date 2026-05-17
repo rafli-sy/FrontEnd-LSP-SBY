@@ -1,7 +1,7 @@
 import React from 'react';
 
 const AlertPopup = ({ type, title, text, onConfirm, onCancel }) => {
-  // type tersedia: 'success', 'warning', 'danger', 'confirm', 'save', 'delete'
+  // type tersedia: 'success', 'warning', 'danger', 'info', 'confirm', 'save', 'delete'
   
   const getIcon = () => {
     switch(type) {
@@ -15,6 +15,8 @@ const AlertPopup = ({ type, title, text, onConfirm, onCancel }) => {
     }
   };
 
+  // Hanya tipe ini yang menampilkan tombol interaktif. 
+  // Tipe lain (success, info, dll) akan otomatis tertutup oleh setTimeout di parent component.
   const isConfirmMode = ['confirm', 'save', 'delete'].includes(type);
 
   return (
@@ -25,15 +27,15 @@ const AlertPopup = ({ type, title, text, onConfirm, onCancel }) => {
       padding: '20px'
     }}>
       
-      {/* WADAH POP-UP ANTI-KOPONG */}
+      {/* WADAH POP-UP */}
       <div style={{
         backgroundColor: '#ffffff',
         borderRadius: '16px',
         padding: '30px 24px',
         width: '100%',
         maxWidth: '380px',
-        height: 'fit-content',   /* KUNCI: Biarkan tinggi menyesuaikan teks isinya */
-        minHeight: 'auto',       /* KUNCI: Buang paksaan tinggi minimum dari CSS global */
+        height: 'fit-content',
+        minHeight: 'auto',
         textAlign: 'center',
         boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
         display: 'flex',
@@ -52,13 +54,13 @@ const AlertPopup = ({ type, title, text, onConfirm, onCancel }) => {
           {title}
         </h3>
 
-        <p style={{ margin: '0 0 24px 0', color: '#64748b', fontSize: '0.95rem', lineHeight: '1.5' }}>
+        <p style={{ margin: isConfirmMode ? '0 0 24px 0' : '0', color: '#64748b', fontSize: '0.95rem', lineHeight: '1.5' }}>
           {text}
         </p>
 
-        {/* Tombol Aksi */}
-        <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
-          {isConfirmMode && (
+        {/* Tombol Aksi (Hanya muncul jika butuh konfirmasi) */}
+        {isConfirmMode && (
+          <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
             <button 
               onClick={onCancel} 
               style={{ 
@@ -70,20 +72,20 @@ const AlertPopup = ({ type, title, text, onConfirm, onCancel }) => {
             >
               Batal
             </button>
-          )}
-          <button 
-            onClick={isConfirmMode ? onConfirm : onCancel} 
-            style={{ 
-              flex: 1, padding: '12px 0', borderRadius: '8px', fontWeight: '700', fontSize: '0.95rem',
-              backgroundColor: type === 'delete' ? '#ef4444' : (type === 'save' || type === 'success' ? '#10b981' : '#2563eb'), 
-              color: '#fff', border: 'none', cursor: 'pointer', transition: '0.2s'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.filter = 'brightness(0.9)'}
-            onMouseLeave={(e) => e.currentTarget.style.filter = 'brightness(1)'}
-          >
-            {type === 'confirm' ? 'Ya, Lanjutkan' : type === 'save' ? 'Ya, Simpan' : type === 'delete' ? 'Ya, Hapus' : 'Tutup'}
-          </button>
-        </div>
+            <button 
+              onClick={onConfirm} 
+              style={{ 
+                flex: 1, padding: '12px 0', borderRadius: '8px', fontWeight: '700', fontSize: '0.95rem',
+                backgroundColor: type === 'delete' ? '#ef4444' : (type === 'save' ? '#10b981' : '#2563eb'), 
+                color: '#fff', border: 'none', cursor: 'pointer', transition: '0.2s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.filter = 'brightness(0.9)'}
+              onMouseLeave={(e) => e.currentTarget.style.filter = 'brightness(1)'}
+            >
+              {type === 'confirm' ? 'Ya, Lanjutkan' : type === 'save' ? 'Ya, Simpan' : type === 'delete' ? 'Ya, Hapus' : 'Selesai'}
+            </button>
+          </div>
+        )}
       </div>
 
       <style>
