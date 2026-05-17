@@ -20,11 +20,15 @@ const DataTUK = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState('create');
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // --- FITUR BARU: Filter Status (Default: Aktif) ---
+  const [filterStatus, setFilterStatus] = useState('Aktif');
+
   const [formData, setFormData] = useState({ id: null, kode: '', institusi: '', alamat: '', kota: '', status: 'Aktif' });
   const [alertConfig, setAlertConfig] = useState({ type: null, title: '', text: '', action: null });
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 8;
 
   const showAlert = (type, title, text, action = null) => {
     setAlertConfig({ type, title, text, action });
@@ -68,7 +72,13 @@ const DataTUK = () => {
     });
   };
 
-  const filteredTUK = tukList.filter(tuk => tuk.institusi.toLowerCase().includes(searchQuery.toLowerCase()) || tuk.kode.toLowerCase().includes(searchQuery.toLowerCase()));
+  // --- LOGIKA FILTER: Menggabungkan Search + Filter Aktif/Non-Aktif ---
+  const filteredTUK = tukList.filter(tuk => {
+    const matchSearch = tuk.institusi.toLowerCase().includes(searchQuery.toLowerCase()) || tuk.kode.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchStatus = filterStatus === 'Semua' ? true : tuk.status === filterStatus;
+    return matchSearch && matchStatus;
+  });
+
   const totalPages = Math.ceil(filteredTUK.length / itemsPerPage);
   const paginatedTUK = filteredTUK.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
@@ -78,12 +88,26 @@ const DataTUK = () => {
         <AlertPopup type={alertConfig.type} title={alertConfig.title} text={alertConfig.text} onConfirm={handleConfirmAlert} onCancel={handleCancelAlert} />
       )}
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
         <div>
           <h2>Data Tempat Uji Kompetensi (TUK)</h2>
           <p className="text-muted" style={{ margin: '5px 0 0' }}>Manajemen daftar lokasi penyelenggaraan ujian kompetensi.</p>
         </div>
-        <Button variant="primary" icon="map-marker-alt" onClick={handleTambah}>Tambah TUK</Button>
+        
+        {/* --- FITUR BARU: Dropdown Filter & Tombol Tambah --- */}
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <select 
+            className="form-input" 
+            value={filterStatus} 
+            onChange={(e) => {setFilterStatus(e.target.value); setCurrentPage(1);}} 
+            style={{ width: 'auto', padding: '10px 14px', cursor: 'pointer' }}
+          >
+            <option value="Aktif">Lihat Aktif Saja</option>
+            <option value="Non-Aktif">Lihat Non-Aktif</option>
+            <option value="Semua">Semua Status</option>
+          </select>
+          <Button variant="primary" icon="map-marker-alt" onClick={handleTambah}>Tambah TUK</Button>
+        </div>
       </div>
 
       <div className="dashboard-card" style={{ padding: 0 }}>
@@ -113,14 +137,11 @@ const DataTUK = () => {
                     <div style={{ fontSize: '0.85rem', color: '#475569', marginBottom: '4px' }}>{tuk.alamat}</div>
                     <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#3b82f6' }}>Kota {tuk.kota}</div>
                   </td>
-                  
-                  {/* STATUS DIKEMBALIKAN JADI BADGE BIASA (EDIT VIA FORM) */}
                   <td style={{ textAlign: 'center' }}>
                     <span className={`badge ${tuk.status === 'Aktif' ? 'success' : 'danger'}`}>
                       {tuk.status}
                     </span>
                   </td>
-                  
                   <td style={{ textAlign: 'center' }}>
                     <div style={{ display: 'flex', gap: '5px', justifyContent: 'center' }}>
                       <Button variant="outline" icon="edit" onClick={() => handleEdit(tuk)} />
@@ -128,7 +149,7 @@ const DataTUK = () => {
                   </td>
                 </tr>
               ))}
-              {paginatedTUK.length === 0 && <tr><td colSpan="6" style={{ textAlign: 'center' }}>Tidak ada data TUK.</td></tr>}
+              {paginatedTUK.length === 0 && <tr><td colSpan="6" style={{ textAlign: 'center', padding: '20px' }}>Tidak ada data TUK untuk status {filterStatus}.</td></tr>}
             </tbody>
           </table>
         </div>

@@ -9,6 +9,9 @@ const MasterDataPenyelia = () => {
   const [isEditing, setIsEditing] = useState(false);
   const alertTimer = useRef(null);
 
+  // --- FITUR BARU: Filter Status (Default: Aktif) ---
+  const [filterStatus, setFilterStatus] = useState('Aktif');
+
   const [penyeliaList, setPenyeliaList] = useState([
     { id: 1, nama: 'Budi Santoso', noReg: 'REG.LSP.001 2021', status: 'Aktif' },
     { id: 2, nama: 'Siti Aminah', noReg: 'REG.LSP.045 2022', status: 'Non-Aktif' },
@@ -71,14 +74,31 @@ const MasterDataPenyelia = () => {
     });
   };
 
+  // --- LOGIKA FILTER AKTIF / NON-AKTIF ---
+  const filteredPenyelia = penyeliaList.filter(p => filterStatus === 'Semua' ? true : p.status === filterStatus);
+
   return (
     <div className="dashboard-content fade-in-content">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px', flexWrap: 'wrap', gap: '15px' }}>
         <div>
           <h2 style={{ margin: 0, color: '#0f172a' }}>Master Data Penyelia</h2>
           <p className="text-muted">Manajemen data Penyelia tersertifikasi.</p>
         </div>
-        <Button variant="primary" icon="plus" onClick={handleBukaTambah}>Tambah Penyelia</Button>
+        
+        {/* --- FITUR BARU: Dropdown Filter & Tombol Tambah --- */}
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <select 
+            className="form-input" 
+            value={filterStatus} 
+            onChange={(e) => setFilterStatus(e.target.value)} 
+            style={{ width: 'auto', padding: '10px 14px', cursor: 'pointer' }}
+          >
+            <option value="Aktif">Lihat Aktif Saja</option>
+            <option value="Non-Aktif">Lihat Non-Aktif</option>
+            <option value="Semua">Semua Status</option>
+          </select>
+          <Button variant="primary" icon="plus" onClick={handleBukaTambah}>Tambah Penyelia</Button>
+        </div>
       </div>
 
       <div className="dashboard-card">
@@ -94,19 +114,16 @@ const MasterDataPenyelia = () => {
               </tr>
             </thead>
             <tbody>
-              {penyeliaList.map((penyelia, index) => (
+              {filteredPenyelia.map((penyelia, index) => (
                 <tr key={penyelia.id}>
                   <td style={{ textAlign: 'center' }}>{index + 1}</td>
                   <td><strong>{penyelia.nama}</strong></td>
                   <td><span className="badge info">{penyelia.noReg}</span></td>
-                  
-                  {/* STATUS MURNI HANYA MENAMPILKAN BADGE (TIDAK BISA DIKLIK) */}
                   <td style={{ textAlign: 'center' }}>
                     <span className={`badge ${penyelia.status === 'Aktif' ? 'success' : 'danger'}`}>
                       {penyelia.status}
                     </span>
                   </td>
-                  
                   <td style={{ textAlign: 'center' }}>
                     <div style={{ display: 'flex', gap: '5px', justifyContent: 'center' }}>
                       <Button variant="outline" size="sm" icon="edit" onClick={() => handleBukaEdit(penyelia)} />
@@ -114,8 +131,8 @@ const MasterDataPenyelia = () => {
                   </td>
                 </tr>
               ))}
-              {penyeliaList.length === 0 && (
-                <tr><td colSpan="5" style={{ textAlign: 'center', padding: '20px', color: '#64748b' }}>Belum ada data penyelia.</td></tr>
+              {filteredPenyelia.length === 0 && (
+                <tr><td colSpan="5" style={{ textAlign: 'center', padding: '20px', color: '#64748b' }}>Tidak ada data Penyelia untuk status {filterStatus}.</td></tr>
               )}
             </tbody>
           </table>

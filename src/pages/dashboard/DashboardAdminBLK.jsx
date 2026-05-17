@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../../components/ui/Button';
 import TablePeserta from '../TablePeserta/TablePeserta'; 
+import Pagination from '../../components/ui/Pagination';
 
-// --- IMPORT SISTEM PDF BARU ---
+// --- IMPORT SISTEM PDF ---
 import { PDFViewer, PDFDownloadLink } from '@react-pdf/renderer';
 import SuratBalasanPDF from '../surat/pdf/SuratBalasanPDF';
+import BeritaAcaraPDF from '../surat/pdf/BeritaAcaraPDF'; 
 
 const DashboardAdminBLK = () => {
   const navigate = useNavigate();
@@ -13,120 +15,214 @@ const DashboardAdminBLK = () => {
   const [filterStatus, setFilterStatus] = useState('Semua');
   const [selectedSurat, setSelectedSurat] = useState(null);
   const [previewDokumen, setPreviewDokumen] = useState(null);
-  const [viewPdf, setViewPdf] = useState(null); // State untuk view PDF Kurikulum
+  const [previewType, setPreviewType] = useState(''); // 'balasan' atau 'pengajuan'
+  const [viewPdf, setViewPdf] = useState(null); 
 
-  // DUMMY DATA: Diperbarui agar Status melekat pada tiap-tiap skema
+  // --- DUMMY DATA BANYAK ---
   const riwayatPengajuan = [
     { 
-      id: 1, 
-      nomorSurat: '088/BLK-SBY/IV/2026', 
-      tanggal: '20 April 2026', 
-      tuk: 'TUK Sewaktu BLK Surabaya',
-      suratBalasan: null,
+      id: 1, nomorSurat: '088/BLK-SBY/IV/2026', suratBalasan: null,
       skemaList: [
-        { 
-          judul: 'Pembuatan Roti Dan Kue', bidang: 'Pariwisata', jenis: 'Klaster',
-          status: 'Sedang Diproses', badge: 'warning',
-          peserta: [{ id: 1, nama: 'Siti Aminah', nik: '3578001122334455', jk: 'P', tempatLahir: 'Surabaya', tanggalLahir: '12 Mei 1995', alamat: 'Jl. Kenangan No 1', rt: '01', rw: '02', kelurahan: 'Ketintang', kecamatan: 'Gayungan', hp: '08123456789', email: 'siti@mail.com', pendidikan: 'SMA' }]
-        },
-        { 
-          judul: 'Barista', bidang: 'Pariwisata', jenis: 'Klaster',
-          status: 'Sedang Diproses', badge: 'warning',
-          peserta: [{ id: 2, nama: 'Budi Santoso', nik: '3578009988776655', jk: 'L', tempatLahir: 'Gresik', tanggalLahir: '08 Agustus 1996', alamat: 'Jl. Veteran 45', rt: '03', rw: '04', kelurahan: 'Sidomoro', kecamatan: 'Kebomas', hp: '08987654321', email: 'budi@mail.com', pendidikan: 'SMK' }]
-        }
+        { judul: 'Pembuatan Roti Dan Kue', bidang: 'Pariwisata', jenis: 'Klaster', tuk: 'TUK Sewaktu BLK Surabaya', tanggal: '20 April - 21 April 2026', status: 'Sedang Diproses', badge: 'warning', peserta: Array(16).fill({ id: 1, nama: 'Siti Aminah' }) },
+        { judul: 'Barista', bidang: 'Pariwisata', jenis: 'Klaster', tuk: 'TUK Mandiri Kopi Senja', tanggal: '22 April - 23 April 2026', status: 'Sedang Diproses', badge: 'warning', peserta: Array(12).fill({ id: 2, nama: 'Budi Santoso' }) }
       ]
     },
     { 
-      id: 2, 
-      nomorSurat: '045/BLK-SBY/III/2026', 
-      tanggal: '15 Maret 2026', 
-      tuk: 'TUK Mandiri PT. Sejahtera',
-      suratBalasan: 'Tersedia',
+      id: 2, nomorSurat: '045/BLK-SBY/III/2026', suratBalasan: 'Tersedia',
       skemaList: [
-        { 
-          judul: 'Desain Grafis Madya', bidang: 'TIK', jenis: 'Klaster',
-          status: 'Disetujui LSP', badge: 'success',
-          peserta: [{ id: 3, nama: 'Andi Wijaya', nik: '3578002233445566', jk: 'L', tempatLahir: 'Sidoarjo', tanggalLahir: '21 Juli 1998', alamat: 'Perumahan Tropodo', rt: '05', rw: '01', kelurahan: 'Tropodo', kecamatan: 'Waru', hp: '082233445566', email: 'andi@mail.com', pendidikan: 'D3' }]
-        }
+        { judul: 'Desain Grafis Madya', bidang: 'TIK', jenis: 'Klaster', tuk: 'TUK Mandiri PT. Sejahtera', tanggal: '15 Maret - 16 Maret 2026', status: 'Disetujui LSP', badge: 'success', peserta: Array(20).fill({ id: 3, nama: 'Andi Wijaya' }) }
       ]
     },
     { 
-      id: 3, 
-      nomorSurat: '012/BLK-SBY/I/2026', 
-      tanggal: '10 Januari 2026', 
-      tuk: 'TUK Sewaktu BLK Surabaya',
-      suratBalasan: null,
+      id: 3, nomorSurat: '012/BLK-SBY/I/2026', suratBalasan: null,
       skemaList: [
-        { 
-          judul: 'Welder SMAW 3G', bidang: 'Manufaktur', jenis: 'KKNI',
-          status: 'Ditolak oleh LSP', badge: 'danger',
-          peserta: [{ id: 4, nama: 'Rina Melati', nik: '3578005544332211', jk: 'P', tempatLahir: 'Malang', tanggalLahir: '15 Januari 1997', alamat: 'Jl. Kawi 22', rt: '02', rw: '05', kelurahan: 'Kauman', kecamatan: 'Klojen', hp: '085544332211', email: 'rina@mail.com', pendidikan: 'S1' }]
-        },
-        { 
-          judul: 'Servis Sepeda Motor Injeksi', bidang: 'Otomotif', jenis: 'Okupasi',
-          status: 'Disetujui LSP', badge: 'success',
-          peserta: [{ id: 5, nama: 'Tono Hermawan', nik: '3578006655443322', jk: 'L', tempatLahir: 'Sidoarjo', tanggalLahir: '10 Februari 1999', alamat: 'Jl. Pahlawan', rt: '01', rw: '03', kelurahan: 'Waru', kecamatan: 'Waru', hp: '089988776655', email: 'tono@mail.com', pendidikan: 'SMA' }]
-        }
+        { judul: 'Welder SMAW 3G', bidang: 'Manufaktur', jenis: 'KKNI', tuk: 'TUK Sewaktu BLK Surabaya', tanggal: '10 Januari - 12 Januari 2026', status: 'Ditolak oleh LSP', badge: 'danger', peserta: Array(10).fill({ id: 4, nama: 'Rina Melati' }) },
+        { judul: 'Servis Sepeda Motor Injeksi', bidang: 'Otomotif', jenis: 'Okupasi', tuk: 'TUK Sewaktu BLK Surabaya', tanggal: '15 Januari - 16 Januari 2026', status: 'Disetujui LSP', badge: 'success', peserta: Array(15).fill({ id: 5, nama: 'Tono Hermawan' }) }
+      ]
+    },
+    { 
+      id: 4, nomorSurat: '091/BLK-SBY/V/2026', suratBalasan: null,
+      skemaList: [
+        { judul: 'Network Administrator Muda', bidang: 'TIK', jenis: 'Okupasi', tuk: 'TUK Sewaktu BLK Surabaya', tanggal: '02 Mei - 04 Mei 2026', status: 'Sedang Diproses', badge: 'warning', peserta: Array(18).fill({ id: 6, nama: 'Hadid Yulian' }) }
+      ]
+    },
+    { 
+      id: 5, nomorSurat: '092/BLK-SBY/V/2026', suratBalasan: 'Tersedia',
+      skemaList: [
+        { judul: 'Digital Marketing', bidang: 'Bisnis', jenis: 'Klaster', tuk: 'TUK Mandiri PT. Maju', tanggal: '10 Mei - 11 Mei 2026', status: 'Disetujui LSP', badge: 'success', peserta: Array(25).fill({ id: 7, nama: 'Peserta Marketing' }) }
+      ]
+    },
+    { 
+      id: 6, nomorSurat: '095/BLK-SBY/V/2026', suratBalasan: null,
+      skemaList: [
+        { judul: 'Operator Mesin Bubut CNC', bidang: 'Manufaktur', jenis: 'Klaster', tuk: 'TUK Sewaktu BLK Singosari', tanggal: '15 Mei - 17 Mei 2026', status: 'Sedang Diproses', badge: 'warning', peserta: Array(10).fill({ id: 8, nama: 'Peserta Bubut' }) }
+      ]
+    },
+    { 
+      id: 7, nomorSurat: '098/BLK-SBY/VI/2026', suratBalasan: 'Tersedia',
+      skemaList: [
+        { judul: 'Menjahit dengan Mesin Lockstich', bidang: 'Garmen', jenis: 'Klaster', tuk: 'TUK Sewaktu BLK Surabaya', tanggal: '01 Juni - 02 Juni 2026', status: 'Disetujui LSP', badge: 'success', peserta: Array(16).fill({ id: 9, nama: 'Peserta Jahit' }) }
+      ]
+    },
+    { 
+      id: 8, nomorSurat: '101/BLK-SBY/VI/2026', suratBalasan: null,
+      skemaList: [
+        { judul: 'Tata Rias Pengantin', bidang: 'Kecantikan', jenis: 'Klaster', tuk: 'TUK Mandiri Salon Indah', tanggal: '05 Juni - 06 Juni 2026', status: 'Ditolak oleh LSP', badge: 'danger', peserta: Array(12).fill({ id: 10, nama: 'Peserta Rias' }) }
+      ]
+    },
+    { 
+      id: 9, nomorSurat: '103/BLK-SBY/VI/2026', suratBalasan: null,
+      skemaList: [
+        { judul: 'Teknisi AC Split', bidang: 'Refrigerasi', jenis: 'Okupasi', tuk: 'TUK Sewaktu BLK Surabaya', tanggal: '10 Juni - 12 Juni 2026', status: 'Sedang Diproses', badge: 'warning', peserta: Array(15).fill({ id: 11, nama: 'Peserta AC' }) }
+      ]
+    },
+    { 
+      id: 10, nomorSurat: '105/BLK-SBY/VII/2026', suratBalasan: 'Tersedia',
+      skemaList: [
+        { judul: 'Pemrograman Web Front-End', bidang: 'TIK', jenis: 'Klaster', tuk: 'TUK Sewaktu BLK Surabaya', tanggal: '01 Juli - 03 Juli 2026', status: 'Disetujui LSP', badge: 'success', peserta: Array(20).fill({ id: 12, nama: 'Peserta Web' }) }
+      ]
+    },
+    { 
+      id: 11, nomorSurat: '106/BLK-SBY/VII/2026', suratBalasan: null,
+      skemaList: [
+        { judul: 'Instalasi Listrik Bangunan Sederhana', bidang: 'Listrik', jenis: 'Klaster', tuk: 'TUK Sewaktu BLK Surabaya', tanggal: '05 Juli - 07 Juli 2026', status: 'Sedang Diproses', badge: 'warning', peserta: Array(14).fill({ id: 13, nama: 'Peserta Listrik' }) }
+      ]
+    },
+    { 
+      id: 12, nomorSurat: '110/BLK-SBY/VIII/2026', suratBalasan: 'Tersedia',
+      skemaList: [
+        { judul: 'Housekeeping', bidang: 'Pariwisata', jenis: 'Okupasi', tuk: 'TUK Mandiri Hotel Aston', tanggal: '10 Agustus - 11 Agustus 2026', status: 'Disetujui LSP', badge: 'success', peserta: Array(22).fill({ id: 14, nama: 'Peserta HK' }) }
+      ]
+    },
+    { 
+      id: 13, nomorSurat: '112/BLK-SBY/VIII/2026', suratBalasan: null,
+      skemaList: [
+        { judul: 'Desain UI/UX', bidang: 'TIK', jenis: 'Okupasi', tuk: 'TUK Sewaktu BLK Surabaya', tanggal: '15 Agustus - 16 Agustus 2026', status: 'Sedang Diproses', badge: 'warning', peserta: Array(18).fill({ id: 15, nama: 'Peserta UIUX' }) }
+      ]
+    },
+    { 
+      id: 14, nomorSurat: '115/BLK-SBY/IX/2026', suratBalasan: 'Tersedia',
+      skemaList: [
+        { judul: 'Pemeliharaan Kendaraan Ringan', bidang: 'Otomotif', jenis: 'Klaster', tuk: 'TUK Mandiri Auto2000', tanggal: '01 September - 03 September 2026', status: 'Disetujui LSP', badge: 'success', peserta: Array(16).fill({ id: 16, nama: 'Peserta Mobil' }) }
+      ]
+    },
+    { 
+      id: 15, nomorSurat: '118/BLK-SBY/IX/2026', suratBalasan: null,
+      skemaList: [
+        { judul: 'Pembuatan Pola Pakaian', bidang: 'Garmen', jenis: 'Klaster', tuk: 'TUK Sewaktu BLK Surabaya', tanggal: '10 September - 11 September 2026', status: 'Ditolak oleh LSP', badge: 'danger', peserta: Array(10).fill({ id: 17, nama: 'Peserta Pola' }) }
+      ]
+    },
+    { 
+      id: 16, nomorSurat: '120/BLK-SBY/X/2026', suratBalasan: null,
+      skemaList: [
+        { judul: 'Customer Service', bidang: 'Bisnis', jenis: 'Okupasi', tuk: 'TUK Sewaktu BLK Surabaya', tanggal: '05 Oktober - 06 Oktober 2026', status: 'Sedang Diproses', badge: 'warning', peserta: Array(24).fill({ id: 18, nama: 'Peserta CS' }) }
+      ]
+    },
+    { 
+      id: 17, nomorSurat: '122/BLK-SBY/X/2026', suratBalasan: 'Tersedia',
+      skemaList: [
+        { judul: 'Admin Perkantoran', bidang: 'Bisnis', jenis: 'Okupasi', tuk: 'TUK Mandiri PT. ABC', tanggal: '15 Oktober - 16 Oktober 2026', status: 'Disetujui LSP', badge: 'success', peserta: Array(18).fill({ id: 19, nama: 'Peserta Admin' }) }
+      ]
+    },
+    { 
+      id: 18, nomorSurat: '125/BLK-SBY/XI/2026', suratBalasan: null,
+      skemaList: [
+        { judul: 'Fotografi Dasar', bidang: 'Pariwisata', jenis: 'Klaster', tuk: 'TUK Sewaktu BLK Surabaya', tanggal: '01 November - 02 November 2026', status: 'Sedang Diproses', badge: 'warning', peserta: Array(14).fill({ id: 20, nama: 'Peserta Foto' }) },
+        { judul: 'Videografi', bidang: 'Pariwisata', jenis: 'Klaster', tuk: 'TUK Sewaktu BLK Surabaya', tanggal: '03 November - 04 November 2026', status: 'Sedang Diproses', badge: 'warning', peserta: Array(12).fill({ id: 21, nama: 'Peserta Video' }) }
+      ]
+    },
+    { 
+      id: 19, nomorSurat: '128/BLK-SBY/XI/2026', suratBalasan: 'Tersedia',
+      skemaList: [
+        { judul: 'Animasi 3D', bidang: 'TIK', jenis: 'Okupasi', tuk: 'TUK Mandiri Studio Kreatif', tanggal: '15 November - 18 November 2026', status: 'Disetujui LSP', badge: 'success', peserta: Array(10).fill({ id: 22, nama: 'Peserta Animasi' }) }
+      ]
+    },
+    { 
+      id: 20, nomorSurat: '130/BLK-SBY/XII/2026', suratBalasan: null,
+      skemaList: [
+        { judul: 'Pembuatan Roti Manis', bidang: 'Pariwisata', jenis: 'Klaster', tuk: 'TUK Sewaktu BLK Surabaya', tanggal: '01 Desember - 02 Desember 2026', status: 'Sedang Diproses', badge: 'warning', peserta: Array(15).fill({ id: 23, nama: 'Peserta Roti Manis' }) }
       ]
     }
   ];
 
-  // Filter jika ada skema yang sesuai dengan filter
+  // Filter 
   const filteredRiwayat = riwayatPengajuan.filter(item => {
     const matchSearch = item.nomorSurat.toLowerCase().includes(searchTerm.toLowerCase());
     const matchStatus = filterStatus === 'Semua' || item.skemaList.some(s => s.status === filterStatus);
     return matchSearch && matchStatus;
   });
 
+  // LOGIKA PAGINATION: 6 data per halaman
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6; 
+  const totalPages = Math.ceil(filteredRiwayat.length / itemsPerPage);
+  const paginatedRiwayat = filteredRiwayat.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  // Perhitungan Statistik
   const totalUsulan = riwayatPengajuan.length;
-  // Hitung jumlah skema yang diproses & disetujui
   const countDiproses = riwayatPengajuan.flatMap(r => r.skemaList).filter(s => s.status === 'Sedang Diproses').length;
   const countDisetujui = riwayatPengajuan.flatMap(r => r.skemaList).filter(s => s.status === 'Disetujui LSP').length;
 
+  // Fungsi Lihat Surat Balasan
   const handleViewBalasan = (item) => {
     const dummyBalasanData = {
       ujk: {
         nomorSurat: item.nomorSurat,
-        tanggal: item.tanggal,
-        tuk: item.tuk,
+        tanggal: item.skemaList[0]?.tanggal || 'N/A', 
+        tuk: item.skemaList[0]?.tuk || 'N/A',
         asesi: item.skemaList.reduce((acc, curr) => acc + (curr.peserta?.length || 0), 0),
         skema: item.skemaList.map(s => s.judul).join(', '),
         bidang: 'Aneka Kejuruan',
-        hari1: 'Senin, 16 Maret 2026',
-        hari2: 'Selasa, 17 Maret 2026',
         asesor1: 'Risna Amalia',
-        asesor2: '',
-        penyelia: 'Miftahul Huda'
+        penyelia: 'Putri Adelia Khairunnisa' // Mentor kamu
       },
       form: {
-        noSurat: '000.140A/LSP BLK-SBY/III/2026',
-        tanggalSurat: '12 Maret 2026',
+        noSurat: '000.140A/LSP BLK-SBY/V/2026',
+        tanggalSurat: '12 Mei 2026',
         kepadaTujuan: 'UPT BLK Surabaya'
       }
     };
     setPreviewDokumen(dummyBalasanData);
+    setPreviewType('balasan');
   };
 
-  // VIEWER SURAT BALASAN
+  // Fungsi Lihat Surat Pengajuan (Hasil Form)
+  const handleViewPengajuan = (item) => {
+    const dummyPengajuanData = {
+      nomorSurat: item.nomorSurat,
+      instansi: 'UPT Pelatihan Kerja Surabaya',
+      skema: item.skemaList.map(s => s.judul).join(', '),
+      tanggal: item.skemaList[0]?.tanggal || '',
+      tim: 'Hadid Yulian, Ade Ninda Wahyu Saputri' // Rekan tim kamu
+    };
+    setPreviewDokumen(dummyPengajuanData);
+    setPreviewType('pengajuan');
+  };
+
+  // VIEWER DOKUMEN (BALASAN / PENGAJUAN)
   if (previewDokumen) {
     return (
       <div className="dashboard-content fade-in-content">
         <div className="print-preview-container" style={{ backgroundColor: '#f8fafc', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', marginTop: '10px' }}>
           <div className="no-print print-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', backgroundColor: '#fff', padding: '15px 20px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
             <div>
-              <h3 style={{ margin: '0 0 5px 0' }}>Surat Balasan LSP</h3>
-              <p className="text-muted" style={{ margin: 0, fontSize: '0.9rem' }}>Dokumen persetujuan dari Lembaga Sertifikasi Profesi.</p>
+              <h3 style={{ margin: '0 0 5px 0' }}>{previewType === 'balasan' ? 'Surat Balasan LSP' : 'Surat Pengajuan UJK'}</h3>
+              <p className="text-muted" style={{ margin: 0, fontSize: '0.9rem' }}>Pratinjau dokumen resmi sistem LSP-BLK Surabaya.</p>
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
               <Button variant="outline" icon="arrow-left" onClick={() => setPreviewDokumen(null)}>Kembali</Button>
-              <PDFDownloadLink document={<SuratBalasanPDF data={previewDokumen} />} fileName="Surat_Balasan.pdf" style={{ backgroundColor: '#10b981', color: '#fff', padding: '10px 16px', borderRadius: '8px', textDecoration: 'none', fontWeight: 'bold' }}>
-                {({ loading }) => (loading ? 'Menyiapkan PDF...' : 'Unduh PDF')}
+              <PDFDownloadLink 
+                document={previewType === 'balasan' ? <SuratBalasanPDF data={previewDokumen} /> : <BeritaAcaraPDF data={previewDokumen} />} 
+                fileName={previewType === 'balasan' ? "Surat_Balasan.pdf" : "Form_Pengajuan.pdf"}
+                style={{ backgroundColor: '#10b981', color: '#fff', padding: '10px 16px', borderRadius: '8px', textDecoration: 'none', fontWeight: 'bold' }}
+              >
+                {({ loading }) => (loading ? 'Memproses...' : 'Unduh PDF')}
               </PDFDownloadLink>
             </div>
           </div>
           <div style={{ width: '100%', height: '80vh', borderRadius: '8px', overflow: 'hidden', border: '1px solid #cbd5e1' }}>
             <PDFViewer width="100%" height="100%" showToolbar={true}>
-              <SuratBalasanPDF data={previewDokumen} />
+              {previewType === 'balasan' ? <SuratBalasanPDF data={previewDokumen} /> : <BeritaAcaraPDF data={previewDokumen} />}
             </PDFViewer>
           </div>
         </div>
@@ -139,9 +235,7 @@ const DashboardAdminBLK = () => {
     return (
       <div className="dashboard-content fade-in-content">
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '25px', flexWrap: 'wrap' }}>
-          <Button variant="outline" icon="arrow-left" onClick={() => setSelectedSurat(null)} style={{ background: '#fff' }}>
-            Kembali
-          </Button>
+          <Button variant="outline" icon="arrow-left" onClick={() => setSelectedSurat(null)} style={{ background: '#fff' }}> Kembali </Button>
           <div>
             <h2 style={{ margin: '0 0 5px 0', fontSize: '1.4rem', color: '#0f172a' }}>Data Nominatif Peserta</h2>
             <p className="text-muted" style={{ margin: 0 }}>Nomor Surat: <strong>{selectedSurat.nomorSurat}</strong> | Skema: {selectedSurat.skema}</p>
@@ -157,6 +251,7 @@ const DashboardAdminBLK = () => {
   return (
     <div className="dashboard-content fade-in-content" style={{ position: 'relative' }}>
       
+      {/* STATS GRID */}
       <div className="stats-grid">
         <div className="stat-card">
           <div className="stat-icon" style={{ background: '#eff6ff', color: '#1d4ed8' }}><i className="fas fa-envelope"></i></div>
@@ -184,6 +279,7 @@ const DashboardAdminBLK = () => {
           </Button>
         </div>
 
+        {/* SEARCH & FILTER */}
         <div style={{ display: 'flex', gap: '15px', marginBottom: '20px', flexWrap: 'wrap', background: '#f8fafc', padding: '15px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
           <div style={{ flex: '1', minWidth: '250px', position: 'relative' }}>
             <i className="fas fa-search" style={{ position: 'absolute', left: '12px', top: '12px', color: '#94a3b8' }}></i>
@@ -191,21 +287,21 @@ const DashboardAdminBLK = () => {
               type="text" 
               placeholder="Cari berdasarkan Nomor Surat..." 
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
               style={{ width: '100%', padding: '10px 10px 10px 35px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }}
             />
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <label style={{ fontSize: '0.85rem', fontWeight: '600', color: '#475569' }}><i className="fas fa-filter"></i> Filter Status:</label>
+            <label style={{ fontSize: '0.85rem', fontWeight: '600', color: '#475569' }}><i className="fas fa-filter"></i> Status:</label>
             <select 
               value={filterStatus} 
-              onChange={(e) => setFilterStatus(e.target.value)}
+              onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }}
               style={{ padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', background: '#fff', cursor: 'pointer' }}
             >
-              <option value="Semua">Semua Status</option>
-              <option value="Sedang Diproses">Sedang Diproses</option>
-              <option value="Disetujui LSP">Disetujui LSP</option>
-              <option value="Ditolak oleh LSP">Ditolak oleh LSP</option>
+              <option value="Semua">Semua</option>
+              <option value="Sedang Diproses">Diproses</option>
+              <option value="Disetujui LSP">Disetujui</option>
+              <option value="Ditolak oleh LSP">Ditolak</option>
             </select>
           </div>
         </div>
@@ -214,62 +310,74 @@ const DashboardAdminBLK = () => {
           <table className="admin-table">
             <thead style={{ backgroundColor: '#f8fafc' }}>
               <tr>
-                <th style={{ width: '5%', textAlign: 'center' }}>No.</th>
-                <th style={{ width: '15%' }}>Nomor Surat & Tgl</th>
-                <th style={{ width: '15%' }}>TUK</th>
-                <th style={{ width: '20%' }}>Daftar Skema</th>
-                <th style={{ width: '10%', textAlign: 'center' }}>Kurikulum (PDF)</th>
-                <th style={{ width: '10%', textAlign: 'center' }}>Peserta</th>
-                <th style={{ width: '10%', textAlign: 'center' }}>Status</th>
-                <th style={{ width: '15%', textAlign: 'center' }}>Surat Balasan</th>
+                <th style={{ width: '4%', textAlign: 'center' }}>No.</th>
+                <th style={{ width: '14%' }}>Nomor Surat</th>
+                <th style={{ width: '10%', textAlign: 'center' }}>Surat Pengajuan</th>
+                <th style={{ width: '18%' }}>Lokasi TUK</th>
+                <th style={{ width: '22%' }}>Skema & Tanggal</th>
+                <th style={{ width: '8%', textAlign: 'center' }}>Kurikulum</th>
+                <th style={{ width: '8%', textAlign: 'center' }}>Peserta</th>
+                <th style={{ width: '8%', textAlign: 'center' }}>Status</th>
+                <th style={{ width: '8%', textAlign: 'center' }}>Balasan</th>
               </tr>
             </thead>
             <tbody>
-              {filteredRiwayat.length > 0 ? (
-                filteredRiwayat.map((item, index) => (
+              {paginatedRiwayat.length > 0 ? (
+                paginatedRiwayat.map((item, index) => (
                   <tr key={item.id}>
-                    <td style={{ textAlign: 'center', color: '#64748b', verticalAlign: 'top', paddingTop: '20px' }}>{index + 1}</td>
+                    <td style={{ textAlign: 'center', color: '#64748b', verticalAlign: 'top', paddingTop: '20px' }}>
+                      {(currentPage - 1) * itemsPerPage + index + 1}
+                    </td>
                     
                     <td style={{ verticalAlign: 'top', paddingTop: '20px' }}>
-                      <strong style={{ color: '#0f172a', fontSize: '1.05rem', display: 'block' }}>{item.nomorSurat}</strong>
-                      <span className="text-muted" style={{ fontSize: '0.85rem' }}><i className="far fa-calendar-alt"></i> {item.tanggal}</span>
+                      <strong style={{ color: '#0f172a', fontSize: '1rem' }}>{item.nomorSurat}</strong>
                     </td>
 
-                    <td style={{ color: '#475569', fontSize: '0.9rem', verticalAlign: 'top', paddingTop: '20px' }}>
-                       <i className="fas fa-map-marker-alt text-muted" style={{ marginRight: '4px' }}></i> {item.tuk}
+                    {/* SURAT PENGAJUAN (SUDAH DIPERBAIKI MENGGUNAKAN BUTTON) */}
+                    <td style={{ textAlign: 'center', verticalAlign: 'top', paddingTop: '20px' }}>
+                      <Button variant="outline" size="sm" icon="file-pdf" onClick={() => handleViewPengajuan(item)}>Buka</Button>
+                    </td>
+
+                    <td style={{ verticalAlign: 'top', paddingTop: '15px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                        {item.skemaList.map((skema, i) => (
+                          <div key={i} style={{ minHeight: '55px', display: 'flex', alignItems: 'center' }}>
+                            <span style={{ color: '#475569', fontSize: '0.85rem' }}>
+                               <i className="fas fa-map-marker-alt text-muted" style={{ marginRight: '6px' }}></i> {skema.tuk}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </td>
                     
-                    {/* DAFTAR SKEMA */}
                     <td style={{ verticalAlign: 'top', paddingTop: '15px' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                         {item.skemaList.map((skema, i) => (
-                          <div key={i} style={{ height: '40px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                            <strong style={{ color: '#1e293b', fontSize: '0.95rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{skema.judul}</strong>
-                            <small className="text-muted" style={{ margin: 0 }}>{skema.bidang} <span style={{margin: '0 4px'}}>|</span> {skema.jenis}</small>
+                          <div key={i} style={{ minHeight: '55px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                            <strong style={{ color: '#1e293b', fontSize: '0.9rem' }}>{skema.judul}</strong>
+                            <small className="text-muted" style={{ marginTop: '4px' }}>
+                              <i className="far fa-calendar-alt" style={{marginRight: '4px'}}></i> {skema.tanggal}
+                            </small>
                           </div>
                         ))}
                       </div>
                     </td>
 
-                    {/* KURIKULUM (PDF) */}
                     <td style={{ verticalAlign: 'top', paddingTop: '15px' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
                         {item.skemaList.map((skema, i) => (
-                          <div key={i} style={{ height: '40px', display: 'flex', alignItems: 'center' }}>
-                            <Button variant="outline" size="sm" icon="file-pdf" onClick={() => setViewPdf(`Kurikulum ${skema.judul}`)}>
-                              Buka Dokumen
-                            </Button>
+                          <div key={i} style={{ minHeight: '55px', display: 'flex', alignItems: 'center' }}>
+                            <Button variant="outline" size="sm" icon="file-pdf" onClick={() => setViewPdf(`Kurikulum ${skema.judul}`)}>Buka</Button>
                           </div>
                         ))}
                       </div>
                     </td>
 
-                    {/* PESERTA */}
                     <td style={{ verticalAlign: 'top', paddingTop: '15px' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
                         {item.skemaList.map((skema, i) => (
-                          <div key={i} style={{ height: '40px', display: 'flex', alignItems: 'center' }}>
-                            <Button variant="outline" size="sm" onClick={() => setSelectedSurat({ nomorSurat: item.nomorSurat, skema: skema.judul, pesertaList: skema.peserta || [] })} style={{ minWidth: '70px', justifyContent: 'center' }}>
+                          <div key={i} style={{ minHeight: '55px', display: 'flex', alignItems: 'center' }}>
+                            <Button variant="outline" size="sm" onClick={() => setSelectedSurat({ nomorSurat: item.nomorSurat, skema: skema.judul, pesertaList: skema.peserta || [] })} style={{ minWidth: '60px' }}>
                               <strong>{skema.peserta?.length || 0}</strong> <i className="fas fa-users" style={{ marginLeft: '4px' }}></i>
                             </Button>
                           </div>
@@ -277,67 +385,50 @@ const DashboardAdminBLK = () => {
                       </div>
                     </td>
 
-                    {/* STATUS SKEMA (Per Skema) */}
                     <td style={{ verticalAlign: 'top', paddingTop: '15px' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
                         {item.skemaList.map((skema, i) => (
-                          <div key={i} style={{ height: '40px', display: 'flex', alignItems: 'center' }}>
+                          <div key={i} style={{ minHeight: '55px', display: 'flex', alignItems: 'center' }}>
                              <span className={`badge ${skema.badge}`}>{skema.status}</span>
                           </div>
                         ))}
                       </div>
                     </td>
 
-                    {/* SURAT BALASAN (Satu Tombol per Surat) */}
                     <td style={{ textAlign: 'center', verticalAlign: 'top', paddingTop: '20px' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                        {item.suratBalasan ? (
-                          <button 
-                             onClick={() => handleViewBalasan(item)}
-                             style={{ background: '#eff6ff', border: '1px solid #dbeafe', color: '#2563eb', cursor: 'pointer', fontWeight: '600', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 12px', borderRadius: '6px', transition: '0.2s' }}
-                          >
-                            <i className="fas fa-envelope-open-text"></i> Lihat Surat Balasan
-                          </button>
-                        ) : item.skemaList.every(s => s.status === 'Ditolak oleh LSP') ? (
-                          <span style={{ fontSize: '0.8rem', color: '#ef4444', fontWeight: 'bold' }}>
-                            <i className="fas fa-times-circle"></i> Berkas Ditolak
-                          </span>
-                        ) : (
-                          <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 'bold' }}>
-                            <i className="fas fa-hourglass-half"></i> Menunggu LSP
-                          </span>
-                        )}
-                      </div>
+                      {item.suratBalasan ? (
+                        <button 
+                           onClick={() => handleViewBalasan(item)}
+                           style={{ background: '#eff6ff', border: '1px solid #dbeafe', color: '#2563eb', cursor: 'pointer', fontWeight: '600', padding: '6px 12px', borderRadius: '6px' }}
+                        >
+                          <i className="fas fa-envelope-open-text"></i>
+                        </button>
+                      ) : <span className="text-muted">-</span>}
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="8" style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
-                    <i className="fas fa-search" style={{ fontSize: '2rem', display: 'block', marginBottom: '10px', color: '#cbd5e1' }}></i>
-                    Tidak ada pengajuan yang sesuai dengan pencarian Anda.
-                  </td>
+                  <td colSpan="9" style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}> Tidak ada data. </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
+
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
       </div>
 
-      {/* MODAL VIEWER PDF KURIKULUM (SIMULASI) */}
+      {/* MODAL SIMULASI KURIKULUM */}
       {viewPdf && (
          <div className="modal-overlay" style={{ zIndex: 9999 }}>
-           <div className="modal-content" style={{ width: '800px', maxWidth: '90%', height: '80vh', backgroundColor: '#ffffff', borderRadius: '12px', padding: '0', display: 'flex', flexDirection: 'column' }}>
+           <div className="modal-content" style={{ width: '800px', maxWidth: '90%', height: '80vh', backgroundColor: '#fff', borderRadius: '12px', display: 'flex', flexDirection: 'column' }}>
              <div className="modal-header" style={{ padding: '15px 20px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-               <h3 style={{margin:0, color: '#0f172a'}}><i className="fas fa-file-pdf" style={{color: '#ef4444', marginRight: 8}}></i> Pratinjau: {viewPdf}</h3>
-               <button style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#64748b' }} onClick={() => setViewPdf(null)}>&times;</button>
+               <h3 style={{margin:0}}><i className="fas fa-file-pdf" style={{color: '#ef4444', marginRight: 8}}></i> {viewPdf}</h3>
+               <button style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer' }} onClick={() => setViewPdf(null)}>&times;</button>
              </div>
-             <div className="modal-body" style={{ flex: 1, backgroundColor: '#f8fafc', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-               <div style={{ textAlign: 'center', color: '#64748b' }}>
-                  <i className="fas fa-file-pdf" style={{ fontSize: '5rem', marginBottom: '15px', color: '#cbd5e1' }}></i>
-                  <p style={{ fontSize: '1.2rem', fontWeight: '600', color: '#334155' }}>Simulasi Penampil Dokumen</p>
-                  <p style={{ fontSize: '0.95rem' }}>Dokumen <strong>{viewPdf}</strong> yang diunggah akan tampil di area ini.</p>
-               </div>
+             <div className="modal-body" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+               <p>Area Pratinjau Dokumen PDF Kurikulum</p>
              </div>
            </div>
          </div>
