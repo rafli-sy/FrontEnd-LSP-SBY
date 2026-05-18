@@ -4,11 +4,6 @@ import Button from '../../components/ui/Button';
 import TablePeserta from '../TablePeserta/TablePeserta'; 
 import Pagination from '../../components/ui/Pagination';
 
-// --- IMPORT SISTEM PDF ---
-import { PDFViewer, PDFDownloadLink } from '@react-pdf/renderer';
-import SuratBalasanPDF from '../surat/pdf/SuratBalasanPDF';
-import BeritaAcaraPDF from '../surat/pdf/BeritaAcaraPDF'; 
-
 const DashboardAdminBLK = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
@@ -154,7 +149,7 @@ const DashboardAdminBLK = () => {
 
   // LOGIKA PAGINATION: 6 data per halaman
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6; 
+  const itemsPerPage = 10; 
   const totalPages = Math.ceil(filteredRiwayat.length / itemsPerPage);
   const paginatedRiwayat = filteredRiwayat.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
