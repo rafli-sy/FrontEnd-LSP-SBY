@@ -52,7 +52,7 @@ function App() {
             <Route path="/pengaturan" element={<PengaturanPage />} />
             <Route path="/table-peserta" element={<TablePeserta />} />
 
-            {/* Role: Super Admin (Sekarang langsung mengelola akun dari Dashboard ini) */}
+            {/* Role: Super Admin */}
             <Route path="/super-admin" element={<DashboardSuperAdmin />} />
 
             {/* Role: Admin LSP */}
@@ -67,6 +67,9 @@ function App() {
             {/* Role: Staff LSP */}
             <Route path="/staff-lsp" element={<DashboardStaffLSP />} />
             <Route path="/staff-lsp/surat" element={<SuratMenyurat />} />
+            
+            {/* INI KUNCINYA: Akses Buku Induk buat Staff */}
+            <Route path="/staff-lsp/buku-induk" element={<BukuIndukPage role="staff-lsp" />} />
             
             {/* Role: Admin BLK */}
             <Route path="/admin-blk" element={<DashboardAdminBLK />} />

@@ -15,9 +15,17 @@ const AlertPopup = ({ type, title, text, onConfirm, onCancel }) => {
     }
   };
 
-  // Hanya tipe ini yang menampilkan tombol interaktif. 
-  // Tipe lain (success, info, dll) akan otomatis tertutup oleh setTimeout di parent component.
+  // Cek apakah ini mode dua tombol (Konfirmasi) atau satu tombol (Informasi/Sukses)
   const isConfirmMode = ['confirm', 'save', 'delete'].includes(type);
+
+  // Jika tombol Selesai/OK diklik, jalankan onConfirm jika ada, jika tidak jalankan onCancel untuk tutup
+  const handleSingleAction = () => {
+    if (onConfirm) {
+      onConfirm();
+    } else if (onCancel) {
+      onCancel();
+    }
+  };
 
   return (
     <div style={{
@@ -54,12 +62,12 @@ const AlertPopup = ({ type, title, text, onConfirm, onCancel }) => {
           {title}
         </h3>
 
-        <p style={{ margin: isConfirmMode ? '0 0 24px 0' : '0', color: '#64748b', fontSize: '0.95rem', lineHeight: '1.5' }}>
+        <p style={{ margin: '0 0 24px 0', color: '#64748b', fontSize: '0.95rem', lineHeight: '1.5' }}>
           {text}
         </p>
 
-        {/* Tombol Aksi (Hanya muncul jika butuh konfirmasi) */}
-        {isConfirmMode && (
+        {/* Tombol Aksi - DUA TOMBOL */}
+        {isConfirmMode ? (
           <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
             <button 
               onClick={onCancel} 
@@ -83,6 +91,22 @@ const AlertPopup = ({ type, title, text, onConfirm, onCancel }) => {
               onMouseLeave={(e) => e.currentTarget.style.filter = 'brightness(1)'}
             >
               {type === 'confirm' ? 'Ya, Lanjutkan' : type === 'save' ? 'Ya, Simpan' : type === 'delete' ? 'Ya, Hapus' : 'Selesai'}
+            </button>
+          </div>
+        ) : (
+          /* Tombol Aksi - SATU TOMBOL (Untuk Success/Warning/Info) */
+          <div style={{ width: '100%' }}>
+            <button 
+              onClick={handleSingleAction} 
+              style={{ 
+                width: '100%', padding: '12px 0', borderRadius: '8px', fontWeight: '700', fontSize: '0.95rem',
+                backgroundColor: type === 'success' ? '#10b981' : type === 'warning' ? '#f59e0b' : '#3b82f6', 
+                color: '#fff', border: 'none', cursor: 'pointer', transition: '0.2s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.filter = 'brightness(0.9)'}
+              onMouseLeave={(e) => e.currentTarget.style.filter = 'brightness(1)'}
+            >
+              Selesai
             </button>
           </div>
         )}

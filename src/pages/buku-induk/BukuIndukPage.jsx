@@ -61,8 +61,6 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
     if (filterBulan !== 'Semua') filtered = filtered.filter(item => item.hari1.split('-')[1] === filterBulan);
     if (filterTuk !== 'Semua') filtered = filtered.filter(item => item.tuk === filterTuk);
     if (filterPendanaan !== 'Semua') filtered = filtered.filter(item => item.pendanaan === filterPendanaan);
-    
-    // Sort Dari Terbaru ke Terlama (Descending)
     return filtered.sort((a, b) => new Date(b.hari1) - new Date(a.hari1));
   }, [dataPemantauan, filterTahun, filterBulan, filterTuk, filterPendanaan]);
 
@@ -70,8 +68,16 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
   const paginatedData = sortedDataPemantauan.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const showAlert = (type, title, text, action = null) => {
-    setAlertConfig({ type, title, text, action });
-    if (['success', 'warning', 'info'].includes(type)) setTimeout(() => setAlertConfig(null), 2500);
+    setAlertConfig({ 
+      type, 
+      title, 
+      text, 
+      onConfirm: () => {
+        if (action) action();
+        setAlertConfig(null);
+      },
+      onCancel: () => setAlertConfig(null)
+    });
   };
 
   const handleProgressClick = (id, keyName, title) => {
@@ -118,13 +124,13 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
     );
   };
 
-  // --- RENDERING BUTTON PINDAH HALAMAN (SMART NAVIGATION) ---
   const renderAsesor = (name, item) => {
     if (isAdminView && !name) {
       return (
         <button 
           onClick={() => {
-             navigate('/admin-lsp/penugasan', { state: { openDetailId: item.idUjk, fromDashboard: true } });
+             // DITAMBAH: highlightOnly: true
+             navigate('/admin-lsp/penugasan', { state: { openDetailId: item.idUjk, fromDashboard: true, highlightOnly: true } });
              window.scrollTo(0,0);
           }}
           style={{ background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 'bold', width: '100%', transition: '0.2s' }}
@@ -155,8 +161,9 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
       return (
         <button 
           onClick={() => {
-              if (isAdminView) navigate('/admin-lsp/penugasan', { state: { openDetailId: item.idUjk, fromDashboard: true } });
-              if (isStaffView) navigate('/staff-lsp/surat', { state: { openDetailId: item.idUjk, fromDashboard: true } });
+              // DITAMBAH: highlightOnly: true untuk Admin dan Staff
+              if (isAdminView) navigate('/admin-lsp/penugasan', { state: { openDetailId: item.idUjk, fromDashboard: true, highlightOnly: true } });
+              if (isStaffView) navigate('/staff-lsp/surat', { state: { openDetailId: item.idUjk, fromDashboard: true, highlightOnly: true } });
               window.scrollTo(0,0);
           }} 
           style={{ background: status ? '#ecfdf5' : '#eff6ff', color: status ? '#10b981' : '#3b82f6', border: status ? '1px solid #10b981' : '1px solid #3b82f6', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 'bold', width: '100%', whiteSpace: 'nowrap' }}
@@ -313,7 +320,23 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
                   <td>{item.tuk}</td>
                   <td>{item.bidang}</td>
                   <td><strong>{item.skema}</strong></td>
-                  <td className="text-center font-bold" style={{ backgroundColor: '#f1f5f9' }}>{item.jumlahAsesi}</td>
+                  
+                  {/* TOMBOL PINTASAN MENUJU PEMBAGIAN ASESI (PENUGASAN/SURAT) */}
+                  <td className="text-center font-bold" style={{ backgroundColor: '#f1f5f9', padding: '10px' }}>
+                    <button 
+                      onClick={() => {
+                         const targetPath = isAdminView ? '/admin-lsp/penugasan' : '/staff-lsp/surat';
+                         navigate(targetPath, { state: { openDetailId: item.idUjk, openAsesi: true, skemaName: item.skema, fromDashboard: true } });
+                         window.scrollTo(0,0);
+                      }}
+                      style={{ background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold', width: '100%', transition: '0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = '#2563eb'; e.currentTarget.style.color = '#fff'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = '#eff6ff'; e.currentTarget.style.color = '#2563eb'; }}
+                    >
+                      {item.jumlahAsesi} <i className="fas fa-external-link-alt"></i>
+                    </button>
+                  </td>
+                  
                   <td className="text-center font-bold text-green-600" style={{ backgroundColor: '#f8fafc' }}>{item.keputusanK}</td>
                   <td className="text-center font-bold text-red-600" style={{ backgroundColor: '#f8fafc' }}>{item.keputusanBK}</td>
                   
@@ -321,11 +344,11 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
                   <td className="text-center">{renderAsesor(item.asesor2, item)}</td>
                   <td className="text-center">{renderAsesor(item.penyelia, item)}</td>
                   
-                  <td className="text-center">{renderSurat(item.suratBalasan, item, 'Surat Balasan', 'suratBalasan')}</td>
-                  <td className="text-center">{renderSurat(item.suratPermohonan, item, 'Surat Permohonan', 'suratPermohonan')}</td>
-                  <td className="text-center">{renderSurat(item.spt, item, 'Surat Tugas', 'spt')}</td>
-                  <td className="text-center">{renderSurat(item.administrasi, item, 'Administrasi', 'administrasi')}</td>
-                  <td className="text-center">{renderSurat(item.administrasiPleno, item, 'Administrasi Pleno', 'administrasiPleno')}</td>
+                  <td className="text-center">{renderSurat(item.suratBalasan, item, 'Surat Balasan')}</td>
+                  <td className="text-center">{renderSurat(item.suratPermohonan, item, 'Surat Permohonan')}</td>
+                  <td className="text-center">{renderSurat(item.spt, item, 'Surat Tugas')}</td>
+                  <td className="text-center">{renderSurat(item.administrasi, item, 'Administrasi')}</td>
+                  <td className="text-center">{renderSurat(item.administrasiPleno, item, 'Administrasi Pleno')}</td>
 
                   <td className="text-center">{renderProgressButton(item.pelaksanaanStatus, item.id, 'pelaksanaanStatus', 'Pelaksanaan')}</td>
                   <td className="text-center">{renderProgressButton(item.pembayaran, item.id, 'pembayaran', 'Pembayaran')}</td>
