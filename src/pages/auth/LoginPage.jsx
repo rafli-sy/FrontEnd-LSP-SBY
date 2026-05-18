@@ -44,20 +44,21 @@ const LoginPage = () => {
       localStorage.setItem('user', JSON.stringify(data.user));
 
       // 2. Arahkan pengguna berdasarkan Role dari database backend
-      const userRole = data.role.toLowerCase();
+      // Ambil role, jadikan huruf kecil, dan hilangkan spasi ekstra
+      const userRole = data.role.toLowerCase().trim();
 
-      if (userRole === 'super admin' || userRole === 'super_admin') {
+      if (userRole === 'super admin' || userRole === 'super_admin' || userRole === 'superadmin') {
         navigate('/super-admin');
-      } else if (userRole === 'staff' || userRole === 'staff lsp') {
+      } else if (userRole === 'staff' || userRole === 'staff lsp' || userRole === 'staflsp') {
         navigate('/staff-lsp'); 
-      } else if (userRole === 'admin lsp' || userRole === 'lsp') {
+      } else if (userRole === 'admin lsp' || userRole === 'admin_lsp' || userRole === 'adminlsp') {
         navigate('/admin-lsp'); 
-      } else if (userRole === 'admin blk' || userRole === 'blk') {
+      } else if (userRole === 'admin blk' || userRole === 'admin_blk' || userRole === 'adminblk') {
         navigate('/admin-blk'); 
       } else if (userRole === 'asesor') {
         navigate('/asesor'); 
       } else {
-        setErrorMsg('Role pengguna tidak dikenali sistem.');
+        setErrorMsg(`Role "${data.role}" tidak dikenali sistem.`);
       }
 
     } catch (error) {

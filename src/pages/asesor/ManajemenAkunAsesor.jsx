@@ -6,38 +6,113 @@ import Modal from '../../components/ui/Modal';
 import './ManajemenAkunAsesor.css';
 
 const ManajemenAkunAsesor = () => {
-  // MENGAMBIL DATA GLOBAL DARI USER CONTEXT AGAR SINKRON
   const { userData, updateUserData } = useUser();
+  const [isFetching, setIsFetching] = useState(true);
 
-  const masterBidang = [
-    'TIK', 'Garmen', 'Pariwisata', 'Otomotif', 'Bisnis Manajemen', 
-    'Pertanian', 'Manufaktur', 'Kesehatan', 'Konstruksi', 'Logistik', 
-    'Multimedia', 'Elektronika', 'Perhotelan', 'Kuliner', 'Desain Grafis', 'Teknologi Informasi'
-  ];
-  
-  const skemaByBidang = {
-    'TIK': ['Junior Web Developer', 'Network Administrator', 'Practical Office Advance', 'Pemrograman Web Full-Stack'],
-    'Teknologi Informasi': ['Junior Web Developer', 'Network Administrator', 'Practical Office Advance', 'Pemrograman Web Full-Stack'],
-    'Garmen': ['Menjahit dengan Mesin Lockstich', 'Pembuatan Pola Pakaian', 'Desain Fashion'],
-    'Pariwisata': ['Barista', 'Pembuatan Roti Dan Kue', 'Tour Guide'],
-    'Otomotif': ['Mekanik Sepeda Motor', 'Teknisi Mobil', 'Audio Video Mobil'],
-    'Bisnis Manajemen': ['Administrasi Perkantoran', 'Akuntansi Dasar', 'Digital Marketing']
-  };
+  // State untuk menyimpan data dari Master API
+  const [masterBidang, setMasterBidang] = useState([]);
+  const [masterSkema, setMasterSkema] = useState([]);
 
   const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState({});
+  const [editData, setEditData] = useState({
+    noRegistrasi: '',
+    bidang_id: [],
+    skema_id: [],
+    sertifikatFile: null 
+  });
+  
   const [alertConfig, setAlertConfig] = useState({ type: null, title: '', text: '', action: null });
-
-  // State untuk Pop-up Bidang Keahlian
+  
+  // State untuk mengembalikan UI Sub-Modal Bidang yang lama
   const [isBidangModalOpen, setIsBidangModalOpen] = useState(false);
   const [bidangSearch, setBidangSearch] = useState('');
   const [bidangPage, setBidangPage] = useState(1);
   const ITEMS_PER_PAGE = 8;
+  
+  const token = localStorage.getItem('access_token');
+  const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
+  // ==== 1. FETCH DATA ASESOR & MASTER DATA (DIPISAH AGAR AMAN) ====
   useEffect(() => {
-    // Sinkronkan state lokal dengan data global
-    if (!isEditing) setEditData({ ...userData });
-  }, [userData, isEditing]);
+    const fetchInitialData = async () => {
+      setIsFetching(true); 
+
+      // Headers TANPA Token (Untuk master data publik)
+      const publicHeaders = {
+        'Accept': 'application/json',
+        'ngrok-skip-browser-warning': '69420'
+      };
+
+      // Headers DENGAN Token (Untuk data spesifik user)
+      const authHeaders = {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json',
+        'ngrok-skip-browser-warning': '69420'
+      };
+
+      // --- FETCH 1: MASTER BIDANG ---
+      try {
+        const resBidang = await fetch(`${baseUrl}/api/master/bidang`, { headers: publicHeaders });
+        if (resBidang.ok) {
+          const dataBidang = await resBidang.json();
+          const arrBidang = dataBidang.data || dataBidang;
+          setMasterBidang(Array.isArray(arrBidang) ? arrBidang : []);
+        } else {
+          console.error("Gagal fetch Bidang. Status:", resBidang.status);
+        }
+      } catch (error) {
+        console.error('Error jaringan saat fetch Bidang:', error);
+      }
+
+      // --- FETCH 2: MASTER SKEMA ---
+      try {
+        const resSkema = await fetch(`${baseUrl}/api/master/skema`, { headers: publicHeaders });
+        if (resSkema.ok) {
+          const dataSkema = await resSkema.json();
+          const arrSkema = dataSkema.data || dataSkema;
+          setMasterSkema(Array.isArray(arrSkema) ? arrSkema : []);
+        } else {
+          console.error("Gagal fetch Skema. Status:", resSkema.status);
+        }
+      } catch (error) {
+        console.error('Error jaringan saat fetch Skema:', error);
+      }
+
+      // --- FETCH 3: DATA PROFIL ASESOR ---
+      try {
+        const resAsesor = await fetch(`${baseUrl}/api/asesor/data`, { headers: authHeaders });
+        if (resAsesor.ok) {
+          const resultAsesor = await resAsesor.json();
+          if (resultAsesor.data) {
+            const asesorInfo = resultAsesor.data;
+            
+            updateUserData({
+              ...userData,
+              noReg: asesorInfo.noRegistrasi || '',
+              bidang: asesorInfo.bidang || [], 
+              skema: asesorInfo.skema || [], 
+              sertifikatUrl: asesorInfo.sertifikat || null
+            });
+
+            setEditData({
+              noRegistrasi: asesorInfo.noRegistrasi || '',
+              bidang_id: asesorInfo.bidang ? asesorInfo.bidang.map(b => b.id) : [],
+              skema_id: asesorInfo.skema ? asesorInfo.skema.map(s => s.id) : [],
+              sertifikatFile: null
+            });
+          }
+        } else {
+          console.error("Gagal fetch Profil Asesor. Status:", resAsesor.status);
+        }
+      } catch (error) {
+        console.error('Error jaringan saat fetch Profil Asesor:', error);
+      }
+
+      setIsFetching(false);
+    };
+
+    fetchInitialData();
+  }, []); 
 
   const showAlert = (type, title, text, action = null) => {
     setAlertConfig({ type, title, text, action });
@@ -46,53 +121,106 @@ const ManajemenAkunAsesor = () => {
     }
   };
 
-  const handleEditClick = () => {
-    setEditData({ ...userData });
-    setIsEditing(true);
-  };
-
+  const handleEditClick = () => setIsEditing(true);
   const handleCancelEdit = () => {
     setIsEditing(false);
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setEditData({ ...editData, [name]: value });
-  };
-
-  const handleSkemaToggle = (skemaName) => {
-    const currentSkema = editData.skema || [];
-    if (currentSkema.includes(skemaName)) {
-      setEditData({ ...editData, skema: currentSkema.filter(s => s !== skemaName) });
-    } else {
-      setEditData({ ...editData, skema: [...currentSkema, skemaName] });
-    }
-  };
-
-  const handleSave = () => {
-    if (!editData.noReg || !editData.kejuruan || !editData.skema || editData.skema.length === 0) {
-      showAlert('warning', 'Data Belum Lengkap', 'Pastikan No. Reg, Bidang, dan Skema telah diisi.');
-      return;
-    }
-    showAlert('save', 'Simpan Pembaruan', 'Apakah Anda yakin ingin menyimpan perubahan data lisensi ini?', () => {
-      updateUserData(editData);
-      setIsEditing(false);
-      showAlert('success', 'Berhasil Disimpan', 'Data Lisensi dan Skema telah diperbarui secara global.');
+    setEditData({
+      noRegistrasi: userData?.noReg || '',
+      bidang_id: userData?.bidang?.map(b => b.id) || [],
+      skema_id: userData?.skema?.map(s => s.id) || [],
+      sertifikatFile: null
     });
   };
 
-  const filteredBidang = masterBidang.filter(b => b.toLowerCase().includes(bidangSearch.toLowerCase()));
+  const handleInputChange = (e) => setEditData({ ...editData, noRegistrasi: e.target.value });
+  
+  const handleFileChange = (e) => {
+    if (e.target.files.length > 0) {
+      setEditData({ ...editData, sertifikatFile: e.target.files[0] });
+    }
+  };
+
+  // Logika toggle bidang (Bisa pilih lebih dari satu)
+  const handleBidangToggle = (id) => {
+    const current = [...editData.bidang_id];
+    if (current.includes(id)) {
+      const skemaToKeep = masterSkema.filter(s => current.filter(b => b !== id).includes(s.bidang_id)).map(s => s.id);
+      const updatedSkemaIds = editData.skema_id.filter(skemaId => skemaToKeep.includes(skemaId));
+      
+      setEditData({ 
+        ...editData, 
+        bidang_id: current.filter(b => b !== id),
+        skema_id: updatedSkemaIds
+      });
+    } else {
+      setEditData({ ...editData, bidang_id: [...current, id] });
+    }
+  };
+
+  const handleSkemaToggle = (id) => {
+    const current = [...editData.skema_id];
+    if (current.includes(id)) {
+      setEditData({ ...editData, skema_id: current.filter(s => s !== id) });
+    } else {
+      setEditData({ ...editData, skema_id: [...current, id] });
+    }
+  };
+
+  // ==== 2. HANDLE SAVE ====
+  const handleSave = () => {
+    if (!editData.noRegistrasi || editData.bidang_id.length === 0 || editData.skema_id.length === 0) {
+      showAlert('warning', 'Data Belum Lengkap', 'Pastikan No. Registrasi MET, Bidang, dan Skema telah dipilih.');
+      return;
+    }
+
+    showAlert('save', 'Simpan Pembaruan', 'Apakah Anda yakin ingin menyimpan perubahan data lisensi ini?', async () => {
+      try {
+        const formData = new FormData();
+        formData.append('noRegistrasi', editData.noRegistrasi);
+        
+        editData.bidang_id.forEach(id => formData.append('bidang_id[]', id));
+        editData.skema_id.forEach(id => formData.append('skema_id[]', id));
+        
+        if (editData.sertifikatFile) {
+          formData.append('sertifikat', editData.sertifikatFile);
+        }
+
+        const response = await fetch(`${baseUrl}/api/asesor/edit-data`, {
+          method: 'POST', 
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+            'ngrok-skip-browser-warning': '69420'
+          },
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          setIsEditing(false);
+          showAlert('success', 'Berhasil Disimpan', 'Data Lisensi dan Skema telah diperbarui.');
+          setTimeout(() => window.location.reload(), 1500); 
+        } else {
+          const errorMsg = result.errors ? Object.values(result.errors).flat().join('\n') : result.message;
+          showAlert('warning', 'Gagal', errorMsg || 'Periksa kembali data Anda.');
+        }
+      } catch (error) {
+        showAlert('warning', 'Error Jaringan', 'Terjadi kesalahan saat menghubungi server.');
+      }
+    });
+  };
+
+  // Pagination & Pencarian Bidang
+  const filteredBidang = masterBidang.filter(b => (b.namaBidang || b.nama_bidang || '').toLowerCase().includes(bidangSearch.toLowerCase()));
   const totalBidangPages = Math.ceil(filteredBidang.length / ITEMS_PER_PAGE);
   const currentBidangItems = filteredBidang.slice((bidangPage - 1) * ITEMS_PER_PAGE, bidangPage * ITEMS_PER_PAGE);
 
-  const handleSelectBidang = (b) => {
-    setEditData({ ...editData, kejuruan: b, skema: [] });
-    setIsBidangModalOpen(false);
-    setBidangSearch('');
-    setBidangPage(1);
-  };
+  const skemaOptions = masterSkema.filter(skema => editData.bidang_id.includes(skema.bidang_id));
 
-  const skemaOptions = editData.kejuruan && skemaByBidang[editData.kejuruan] ? skemaByBidang[editData.kejuruan] : [];
+  if (isFetching || !userData) {
+    return <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>Memuat data Asesor...</div>;
+  }
 
   return (
     <div className="dashboard-content fade-in-content" style={{ padding: '20px', minHeight: '100vh', backgroundColor: '#f8fafc' }}>
@@ -111,80 +239,69 @@ const ManajemenAkunAsesor = () => {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px' }}>
         
-        {/* KARTU 1: INFORMASI PROFIL (SINKRON DARI USERCONTEXT) */}
+        {/* KARTU 1: INFORMASI PROFIL */}
         <div className="dashboard-card" style={{ padding: '24px', backgroundColor: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
           <h3 style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '15px', marginBottom: '20px', color: '#0f172a' }}>
             <i className="fas fa-user-circle text-blue" style={{ marginRight: '8px' }}></i> Informasi Pribadi
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-            <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-               <div style={{ width: '60px', height: '60px', borderRadius: '50%', backgroundColor: '#eff6ff', color: '#3b82f6', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '1.5rem', fontWeight: 'bold', overflow: 'hidden', border: '2px solid #e2e8f0' }}>
-                  {userData.foto ? (
-                    <img src={userData.foto} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    userData.namaLengkap?.charAt(0) || 'A'
-                  )}
-               </div>
-               <div>
-                  <h4 style={{ margin: '0 0 4px 0', fontSize: '1.1rem', color: '#1e293b' }}>{userData.namaLengkap}</h4>
+             <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                <div style={{ width: '60px', height: '60px', borderRadius: '50%', backgroundColor: '#eff6ff', color: '#3b82f6', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                  {userData?.namaLengkap?.charAt(0) || 'A'}
+                </div>
+                <div>
+                  <h4 style={{ margin: '0 0 4px 0', fontSize: '1.1rem', color: '#1e293b' }}>{userData?.namaLengkap || 'User Asesor'}</h4>
                   <span style={{ fontSize: '0.85rem', padding: '4px 10px', backgroundColor: '#d1fae5', color: '#065f46', borderRadius: '20px', fontWeight: 'bold' }}>Asesor Aktif</span>
-               </div>
-            </div>
-            <div style={{ borderTop: '1px dashed #cbd5e1', paddingTop: '15px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div><small style={{ color: '#64748b', display: 'block' }}>Nomor Induk Kependudukan (NIK)</small><strong style={{ color: '#334155' }}>{userData.nik || '3578001122334455'}</strong></div>
-              <div><small style={{ color: '#64748b', display: 'block' }}>Alamat Email</small><strong style={{ color: '#334155' }}>{userData.email}</strong></div>
-              <div><small style={{ color: '#64748b', display: 'block' }}>No. Handphone / WhatsApp</small><strong style={{ color: '#334155' }}>{userData.noTelp}</strong></div>
-            </div>
+                </div>
+             </div>
+             <div style={{ borderTop: '1px dashed #cbd5e1', paddingTop: '15px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div><small style={{ color: '#64748b', display: 'block' }}>Alamat Email</small><strong style={{ color: '#334155' }}>{userData?.email || '-'}</strong></div>
+                <div><small style={{ color: '#64748b', display: 'block' }}>Username</small><strong style={{ color: '#334155' }}>{userData?.username || '-'}</strong></div>
+             </div>
           </div>
         </div>
 
-        {/* KARTU 2: LISENSI & KEAHLIAN (READ MODE) */}
+        {/* KARTU 2: LISENSI & KEAHLIAN */}
         <div className="dashboard-card" style={{ padding: '24px', backgroundColor: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '15px', marginBottom: '20px' }}>
-            <h3 style={{ margin: 0, color: '#0f172a' }}>
-              <i className="fas fa-id-badge text-blue" style={{ marginRight: '8px' }}></i> Detail Lisensi
-            </h3>
+            <h3 style={{ margin: 0, color: '#0f172a' }}><i className="fas fa-id-badge text-blue" style={{ marginRight: '8px' }}></i> Detail Lisensi</h3>
             <Button variant="outline" size="sm" icon="edit" onClick={handleEditClick}>Perbarui Lisensi</Button>
           </div>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-            <div><small style={{ color: '#64748b', display: 'block' }}>Nomor Registrasi MET</small><strong style={{ color: '#0f172a', fontSize: '1.1rem' }}>{userData.noReg || '-'}</strong></div>
+            <div><small style={{ color: '#64748b', display: 'block' }}>Nomor Registrasi MET</small><strong style={{ color: '#0f172a', fontSize: '1.1rem' }}>{userData?.noReg || 'Belum Diatur'}</strong></div>
             <div>
-              <small style={{ color: '#64748b', display: 'block', marginBottom: '4px' }}>Sertifikat Asesor</small>
-              <span style={{ display: 'inline-block', padding: '6px 12px', background: '#ecfdf5', color: '#047857', borderRadius: '6px', fontSize: '0.85rem', border: '1px solid #10b981' }}>
-                <i className="fas fa-file-pdf" style={{ marginRight: '6px' }}></i> File Tersimpan
-              </span>
+              <small style={{ color: '#64748b', display: 'block', marginBottom: '4px' }}>Sertifikat Lisensi Asesor</small>
+              {userData?.sertifikatUrl ? (
+                <a href={`${baseUrl}/storage/${userData.sertifikatUrl}`} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', padding: '6px 12px', background: '#ecfdf5', color: '#047857', borderRadius: '6px', fontSize: '0.85rem', border: '1px solid #10b981', textDecoration: 'none' }}>
+                  <i className="fas fa-file-download" style={{ marginRight: '6px' }}></i> Lihat File Tersimpan
+                </a>
+              ) : (
+                <span style={{ fontSize: '0.85rem', color: '#ef4444', fontStyle: 'italic' }}>File sertifikat belum diunggah.</span>
+              )}
             </div>
-            <div style={{ display: 'flex', gap: '20px' }}>
-              <div><small style={{ color: '#64748b', display: 'block' }}>Masa Berlaku</small><strong style={{ color: '#334155' }}>{userData.masaBerlaku || '-'}</strong></div>
-              <div><small style={{ color: '#64748b', display: 'block' }}>Bidang Keahlian</small><strong style={{ color: '#3b82f6' }}>{userData.kejuruan || '-'}</strong></div>
+            <div>
+              <small style={{ color: '#64748b', display: 'block', marginBottom: '4px' }}>Bidang Keahlian</small>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                {userData?.bidang?.length > 0 ? userData.bidang.map(b => (
+                   <span key={b.id} style={{ padding: '4px 8px', background: '#eff6ff', color: '#2563eb', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 'bold' }}>{b.namaBidang || b.nama_bidang}</span>
+                )) : <span style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Belum ada bidang dipilih</span>}
+              </div>
             </div>
           </div>
         </div>
       </div>
 
+      {/* KARTU 3: DAFTAR SKEMA */}
       <div className="dashboard-card" style={{ marginTop: '24px', padding: '24px', backgroundColor: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
         <h3 style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '15px', marginBottom: '20px', color: '#0f172a' }}>
           <i className="fas fa-tags text-blue" style={{ marginRight: '8px' }}></i> Daftar Skema Kompetensi yang Dimiliki
         </h3>
-        
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
-          {userData.skema && userData.skema.length > 0 ? (
-            userData.skema.map((s, index) => (
-              <div key={index} style={{ 
-                 padding: '10px 20px', 
-                 backgroundColor: '#eff6ff', 
-                 color: '#1e3a8a', 
-                 border: '1px solid #93c5fd', 
-                 borderRadius: '12px', 
-                fontSize: '0.95rem', 
-                fontWeight: '700', 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '8px', 
-                boxShadow: '0 2px 4px rgba(59, 130, 246, 0.1)' 
-              }}>
-                <i className="fas fa-check-circle" style={{ color: '#3b82f6' }}></i> {s}
+          {userData?.skema && userData.skema.length > 0 ? (
+            userData.skema.map((s) => (
+              <div key={s.id} style={{ padding: '10px 20px', backgroundColor: '#eff6ff', color: '#1e3a8a', border: '1px solid #93c5fd', borderRadius: '12px', fontSize: '0.95rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <i className="fas fa-check-circle" style={{ color: '#3b82f6' }}></i> {s.namaSkema || s.nama_skema}
               </div>
             ))
           ) : (
@@ -193,52 +310,50 @@ const ManajemenAkunAsesor = () => {
         </div>
       </div>
 
-      {/* MODAL EDIT LISENSI MENGGANTIKAN INLINE FORM */}
+      {/* MODAL EDIT LISENSI */}
       <Modal isOpen={isEditing} onClose={handleCancelEdit} title="Perbarui Data Lisensi">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
           <div>
             <label style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '6px' }}>1. No. Registrasi MET <span style={{color:'red'}}>*</span></label>
-            <input type="text" name="noReg" value={editData.noReg || ''} onChange={handleInputChange} placeholder="Contoh: MET.000.003697 2013" style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+            <input type="text" value={editData.noRegistrasi} onChange={handleInputChange} placeholder="Contoh: MET.000.003697 2013" style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
           </div>
           <div>
-            <label style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '6px' }}>2. Upload File Sertifikat (PDF)</label>
-            <input type="file" accept=".pdf" style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px dashed #cbd5e1', backgroundColor: '#f8fafc' }} />
+            <label style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '6px' }}>2. Upload File Sertifikat (PDF/JPG/PNG)</label>
+            <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileChange} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px dashed #cbd5e1', backgroundColor: '#f8fafc' }} />
+            <small style={{ color: '#94a3b8', fontSize: '0.75rem', display: 'block', marginTop: '4px' }}>Maksimal ukuran file 2MB.</small>
           </div>
           <div>
-            <label style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '6px' }}>3. Masa Berlaku Sertifikat <span style={{color:'red'}}>*</span></label>
-            <input type="date" name="masaBerlaku" value={editData.masaBerlaku || ''} onChange={handleInputChange} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
-          </div>
-          <div>
-            <label style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '6px' }}>4. Bidang Keahlian <span style={{color:'red'}}>*</span></label>
+            <label style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '6px' }}>3. Bidang Keahlian <span style={{color:'red'}}>*</span></label>
             <div 
                onClick={() => setIsBidangModalOpen(true)} 
                style={{ width: '100%', padding: '10px 15px', borderRadius: '6px', border: '1px solid #3b82f6', backgroundColor: '#eff6ff', color: '#1e3a8a', fontWeight: '600', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>{editData.kejuruan || '-- Klik untuk Memilih Bidang --'}</span>
+              <span>
+                {editData.bidang_id.length > 0 
+                  ? `${editData.bidang_id.length} Bidang Terpilih` 
+                  : '-- Klik untuk Memilih Bidang --'}
+              </span>
               <i className="fas fa-search"></i>
             </div>
           </div>
-          {editData.kejuruan && (
-            <div style={{ backgroundColor: '#f8fafc', padding: '15px', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
-              <label style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '10px' }}>5. Pilih Skema Kompetensi (Bisa Lebih Dari 1)</label>
-              {skemaOptions.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {skemaOptions.map(skema => (
-                    <label key={skema} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', padding: '8px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '6px' }}>
-                      <input 
-                         type="checkbox" 
-                         checked={(editData.skema || []).includes(skema)} 
-                         onChange={() => handleSkemaToggle(skema)} 
-                         style={{ width: '18px', height: '18px', cursor: 'pointer' }} 
-                      />
-                      <span style={{ fontSize: '0.9rem', color: '#334155' }}>{skema}</span>
-                    </label>
-                  ))}
-                </div>
-              ) : (
-                <p style={{ fontSize: '0.85rem', color: '#ef4444', margin: 0 }}>Belum ada data skema untuk bidang ini.</p>
-              )}
-            </div>
-          )}
+          
+          <div style={{ backgroundColor: '#f8fafc', padding: '15px', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
+            <label style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '10px' }}>4. Pilih Skema Kompetensi <span style={{color:'red'}}>*</span></label>
+            {skemaOptions.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '200px', overflowY: 'auto' }}>
+                {skemaOptions.map(skema => (
+                  <label key={skema.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', padding: '6px 0' }}>
+                    <input type="checkbox" checked={editData.skema_id.includes(skema.id)} onChange={() => handleSkemaToggle(skema.id)} style={{ width: '16px', height: '16px', cursor: 'pointer' }} />
+                    <span style={{ fontSize: '0.85rem' }}>{skema.namaSkema || skema.nama_skema}</span>
+                  </label>
+                ))}
+              </div>
+            ) : editData.bidang_id.length > 0 ? (
+              <p style={{ fontSize: '0.85rem', color: '#ef4444', margin: 0, fontStyle: 'italic' }}>Belum ada data skema dari sistem untuk bidang yang Anda pilih.</p>
+            ) : (
+              <p style={{ fontSize: '0.85rem', color: '#ef4444', margin: 0, fontStyle: 'italic' }}>Pilih bidang terlebih dahulu untuk memunculkan pilihan skema.</p>
+            )}
+          </div>
+          
           <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
             <Button variant="secondary" onClick={handleCancelEdit} style={{ flex: 1 }}>Batal</Button>
             <Button variant="primary" icon="save" onClick={handleSave} style={{ flex: 1 }}>Simpan Data</Button>
@@ -246,6 +361,7 @@ const ManajemenAkunAsesor = () => {
         </div>
       </Modal>
 
+      {/* MODAL KEDUA UNTUK PENCARIAN BIDANG */}
       <Modal isOpen={isBidangModalOpen} onClose={() => setIsBidangModalOpen(false)} title="Pilih Bidang Keahlian">
         <div style={{ position: 'relative', marginBottom: '20px' }}>
           <i className="fas fa-search" style={{ position: 'absolute', top: '12px', left: '15px', color: '#94a3b8' }}></i>
@@ -259,20 +375,25 @@ const ManajemenAkunAsesor = () => {
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', minHeight: '220px', alignItems: 'start' }}>
           {currentBidangItems.length > 0 ? (
-            currentBidangItems.map(b => (
-              <div 
-                 key={b} 
-                 onClick={() => handleSelectBidang(b)}
-                style={{ 
-                   padding: '12px', border: '1px solid', borderRadius: '8px', cursor: 'pointer', textAlign: 'center', fontWeight: '600', transition: '0.2s',
-                  borderColor: editData.kejuruan === b ? '#3b82f6' : '#cbd5e1',
-                  backgroundColor: editData.kejuruan === b ? '#eff6ff' : '#fff',
-                  color: editData.kejuruan === b ? '#1e3a8a' : '#334155'
-                }}
-              >
-                {b}
-              </div>
-            ))
+            currentBidangItems.map(b => {
+              const isSelected = editData.bidang_id.includes(b.id);
+              return (
+                <div 
+                   key={b.id} 
+                   onClick={() => handleBidangToggle(b.id)}
+                  style={{ 
+                     padding: '12px', border: '1px solid', borderRadius: '8px', cursor: 'pointer', textAlign: 'center', fontWeight: '600', transition: '0.2s',
+                     borderColor: isSelected ? '#3b82f6' : '#cbd5e1',
+                     backgroundColor: isSelected ? '#eff6ff' : '#fff',
+                     color: isSelected ? '#1e3a8a' : '#334155',
+                     display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                  }}
+                >
+                  <span style={{ flex: 1, textAlign: 'center' }}>{b.namaBidang || b.nama_bidang}</span>
+                  {isSelected && <i className="fas fa-check-circle" style={{ color: '#3b82f6', marginLeft: '5px' }}></i>}
+                </div>
+              );
+            })
           ) : (
             <div style={{ gridColumn: 'span 2', textAlign: 'center', padding: '30px', color: '#94a3b8' }}>
               Bidang tidak ditemukan.
@@ -301,6 +422,9 @@ const ManajemenAkunAsesor = () => {
             })}
           </div>
         )}
+        <div style={{ marginTop: '20px' }}>
+          <Button variant="primary" isFullWidth onClick={() => setIsBidangModalOpen(false)}>Selesai Memilih</Button>
+        </div>
       </Modal>
 
     </div>

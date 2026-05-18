@@ -11,6 +11,19 @@ const Sidebar = ({ isOpen, isDesktopOpen = true, closeSidebar, toggleSidebar }) 
 
   const { userData } = useUser();
   const [primaryRole, setPrimaryRole] = useState('');
+  
+  // Ambil Base URL dari environment
+  const baseUrl = import.meta.env.VITE_API_BASE_URL;
+
+  // ==== FUNGSI BARU: Memperbaiki URL Gambar ====
+  const getProfileImage = (path) => {
+    if (!path) return null;
+    // Jika path sudah berupa URL lengkap atau Base64, kembalikan apa adanya
+    if (path.startsWith('http') || path.startsWith('data:image')) return path;
+    
+    // Jika path relatif dari backend, gabungkan dengan baseUrl
+    return `${baseUrl.replace(/\/$/, '')}/storage/${path.replace(/^\//, '')}`;
+  };
 
   useEffect(() => {
     if (currentPath.startsWith('/super-admin')) setPrimaryRole('super-admin');
@@ -76,7 +89,7 @@ const Sidebar = ({ isOpen, isDesktopOpen = true, closeSidebar, toggleSidebar }) 
               <>
                 <p className="menu-label">Workspace Staff</p>
                 <Link to="/staff-lsp" className={getActiveClass('/staff-lsp')} onClick={handleMenuClick}><i className="fas fa-home"></i> Dashboard </Link>
-                <Link to="/staff-lsp/surat" className={getActiveClass('/staff-lsp/surat')} onClick={handleMenuClick}><i className="fas fa-envelope-open-text"></i>Dokumen & Administrasi</Link>
+                <Link to="/staff-lsp/surat" className={getActiveClass('/staff-lsp/surat')} onClick={handleMenuClick}><i className="fas fa-envelope-open-text"></i> Dokumen & Administrasi</Link>
               </>
             )}
             {primaryRole === 'admin-blk' && (
@@ -90,8 +103,6 @@ const Sidebar = ({ isOpen, isDesktopOpen = true, closeSidebar, toggleSidebar }) 
               <>
                 <p className="menu-label">The Field Expert</p>
                 <Link to="/asesor" className={getActiveClass('/asesor')} onClick={handleMenuClick}><i className="fas fa-home"></i> Dashboard </Link>
-                {/* Ujian Aktif Dihapus */}
-                {/* Akun Asesor diganti Data Asesor */}
                 <Link to="/asesor/data-asesor" className={getActiveClass('/asesor/data-asesor')} onClick={handleMenuClick}><i className="fas fa-id-card-clip"></i> Data Asesor</Link>
               </>
             )}
@@ -101,10 +112,17 @@ const Sidebar = ({ isOpen, isDesktopOpen = true, closeSidebar, toggleSidebar }) 
       <div className="sidebar-bottom">
         <div className="profile-switch-card">
           <div className="user-profile-info" onClick={handleGoToProfile} style={{ cursor: 'pointer' }} title="Buka Profil">
+            
+            {/* ==== MENGGUNAKAN FUNGSI getProfileImage ==== */}
             <div className="user-avatar-wrapper">
-              {userData?.foto ? <img src={userData.foto} alt="Avatar" className="user-avatar-img" /> : <i className="fas fa-user-circle user-avatar-icon"></i>}
+              {userData?.foto ? (
+                <img src={getProfileImage(userData.foto)} alt="Avatar" className="user-avatar-img" /> 
+              ) : (
+                <i className="fas fa-user-circle user-avatar-icon"></i>
+              )}
               <span className="status-indicator"></span>
             </div>
+
             <div className="user-details">
               <span className="user-name">{getShortName(userData?.namaLengkap)}</span>
               <span className="user-role-text">{primaryRole.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</span>

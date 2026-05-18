@@ -3,29 +3,39 @@ import React, { createContext, useState, useContext } from 'react';
 const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
-  const [userData, setUserData] = useState({
-    namaLengkap: 'Moch. Nur Rafli Hikmal Putra',
-    username: 'rafli_hikmal',
-    email: 'rafli.hikmal@example.com',
-    noTelp: '081234567890',
-    tanggalLahir: '2000-01-01',
-    jenisKelamin: 'Laki-laki',
-    alamat: 'Kediri, Jawa Timur',
-    instansi: 'UPT Pelatihan Kerja Surabaya',
-    foto: null,
-    // Data Lisensi Asesor
-    noReg: 'MET.011411 2026',
-    kejuruan: 'Teknologi Informasi',
-    masaBerlaku: '2029-12-31',
-    skema: ['Pemrograman Web Full-Stack']
+  // 1. Inisialisasi state dengan membaca dari localStorage (agar tahan refresh)
+  const [userData, setUserData] = useState(() => {
+    try {
+      const savedUser = localStorage.getItem('user');
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch (error) {
+      console.error("Gagal membaca data user dari localStorage", error);
+      return null;
+    }
   });
 
+  // 2. Modifikasi fungsi update agar ikut menyimpan ke localStorage
   const updateUserData = (newData) => {
-    setUserData(prev => ({ ...prev, ...newData }));
+    setUserData((prev) => {
+      // Gabungkan data lama dengan data baru
+      const updatedData = { ...prev, ...newData };
+      
+      // Simpan juga ke localStorage agar tidak hilang saat di-refresh
+      localStorage.setItem('user', JSON.stringify(updatedData));
+      
+      return updatedData;
+    });
+  };
+
+  // Fungsi tambahan yang berguna saat Logout
+  const clearUserData = () => {
+    setUserData(null);
+    localStorage.removeItem('user');
+    localStorage.removeItem('access_token');
   };
 
   return (
-    <UserContext.Provider value={{ userData, updateUserData }}>
+    <UserContext.Provider value={{ userData, updateUserData, setUserData, clearUserData }}>
       {children}
     </UserContext.Provider>
   );
