@@ -104,6 +104,7 @@ const DashboardAdminLSP = () => {
       <div style={{ marginTop: '30px' }}>
          <BukuIndukPage isEmbedded={true} role="admin-lsp" />
       </div>
+
     </div>
   );
 };
