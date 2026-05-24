@@ -1,29 +1,44 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import axios from 'axios';
 import Button from '../../../components/ui/Button';
 import AlertPopup from '../../../components/ui/AlertPopup';
+import Modal from '../../../components/ui/Modal';
 import './MasterDataPenyelia.css';
 
 const MasterDataPenyelia = () => {
+  // Konfigurasi API
+  const token = sessionStorage.getItem('auth_token') || localStorage.getItem('access_token');
+  const baseUrl = `${import.meta.env.VITE_API_BASE_URL}/api`;
+  const config = useMemo(() => ({
+    headers: { 'ngrok-skip-browser-warning': 'true', 'Authorization': `Bearer ${token}` }
+  }), [token]);
+
+  const [penyeliaList, setPenyeliaList] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [alert, setAlert] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const alertTimer = useRef(null);
 
-  // --- FITUR BARU: Filter Status (Default: Aktif) ---
   const [filterStatus, setFilterStatus] = useState('Aktif');
+  const [formData, setFormData] = useState({ 
+    id: null, namaPenyilia: '', noRegistrasi: '', jabatan: '', institusi: '', alamat: '', kota: '', status: 'Aktif' 
+  });
 
-  const [penyeliaList, setPenyeliaList] = useState([
-    { id: 1, nama: 'Budi Santoso', noReg: 'REG.LSP.001 2021', status: 'Aktif' },
-    { id: 2, nama: 'Siti Aminah', noReg: 'REG.LSP.045 2022', status: 'Non-Aktif' },
-    { id: 3, nama: 'Miftahul Huda', noReg: 'REG.LSP.055 2023', status: 'Aktif' },
-    { id: 4, nama: 'Mohamad Andrian A', noReg: 'REG.LSP.066 2023', status: 'Aktif' },
-    { id: 5, nama: 'Ramadhan Budi Prasetyo', noReg: 'REG.LSP.077 2024', status: 'Aktif' },
-    { id: 6, nama: 'Dewi Ratnasari', noReg: 'REG.LSP.088 2024', status: 'Aktif' },
-    { id: 7, nama: 'Agus Setiawan', noReg: 'REG.LSP.099 2025', status: 'Aktif' },
-    { id: 8, nama: 'Sri Wahyuni', noReg: 'REG.LSP.100 2025', status: 'Aktif' }
-  ]);
+  // Fetch Data dari API
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      const res = await axios.get(`${baseUrl}/admin-lsp/Penyilia?status=semua`, config);
+      setPenyeliaList(res.data.data || []);
+    } catch (error) {
+      console.error("Gagal memuat data penyelia:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const [formData, setFormData] = useState({ id: null, nama: '', noReg: '', status: 'Aktif' });
+  useEffect(() => { fetchData(); }, []);
 
   const closeAlert = () => {
     setAlert(null);
@@ -41,7 +56,7 @@ const MasterDataPenyelia = () => {
   };
 
   const handleBukaTambah = () => {
-    setFormData({ id: null, nama: '', noReg: '', status: 'Aktif' });
+    setFormData({ id: null, namaPenyilia: '', noRegistrasi: '', jabatan: '', institusi: '', alamat: '', kota: '', status: 'Aktif' });
     setIsEditing(false);
     setShowModal(true);
   };
@@ -52,29 +67,33 @@ const MasterDataPenyelia = () => {
     setShowModal(true);
   };
 
-  const handleSimpan = (e) => {
+  const handleSimpan = async (e) => {
     e.preventDefault();
-    const actionTitle = isEditing ? 'Simpan Perubahan?' : 'Simpan Penyelia Baru?';
-    const actionText = isEditing ? 'Data penyelia akan diperbarui.' : 'Pastikan Nomor Registrasi LSP sudah sesuai.';
-
-    setAlert({
-      type: 'save', title: actionTitle, text: actionText,
-      onConfirm: () => {
-        if (isEditing) {
-          setPenyeliaList(penyeliaList.map(p => (p.id === formData.id ? formData : p)));
-          showSuccess('Diperbarui!', 'Data Penyelia berhasil diperbarui.');
-        } else {
-          const newId = penyeliaList.length > 0 ? Math.max(...penyeliaList.map(p => p.id)) + 1 : 1;
-          setPenyeliaList([...penyeliaList, { ...formData, id: newId }]);
-          showSuccess('Tersimpan!', 'Penyelia berhasil ditambahkan ke dalam Master Data.');
-        }
-        setShowModal(false);
-      },
-      onCancel: closeAlert
-    });
+    try {
+      if (isEditing) {
+        await axios.put(`${baseUrl}/admin-lsp/penyilia/${formData.id}/edit`, formData, config);
+        showSuccess('Diperbarui!', 'Data Penyelia berhasil diperbarui.');
+      } else {
+        await axios.post(`${baseUrl}/admin-lsp/penyilia/add`, formData, config);
+        showSuccess('Tersimpan!', 'Penyelia berhasil ditambahkan.');
+      }
+      setShowModal(false);
+      fetchData();
+    } catch (error) {
+      setAlert({ type: 'error', title: 'Gagal', text: error.response?.data?.message || 'Terjadi kesalahan.', onCancel: closeAlert });
+    }
   };
 
-  // --- LOGIKA FILTER AKTIF / NON-AKTIF ---
+  const handleToggleStatus = async (penyelia) => {
+    try {
+      await axios.patch(`${baseUrl}/admin-lsp/penyilia/${penyelia.id}/status`, {}, config);
+      fetchData();
+      showSuccess('Berhasil!', 'Status berhasil diubah.');
+    } catch (error) {
+      setAlert({ type: 'error', title: 'Gagal', text: 'Gagal mengubah status.', onCancel: closeAlert });
+    }
+  };
+
   const filteredPenyelia = penyeliaList.filter(p => filterStatus === 'Semua' ? true : p.status === filterStatus);
 
   return (
@@ -85,14 +104,8 @@ const MasterDataPenyelia = () => {
           <p className="text-muted">Manajemen data Penyelia tersertifikasi.</p>
         </div>
         
-        {/* --- FITUR BARU: Dropdown Filter & Tombol Tambah --- */}
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          <select 
-            className="form-input" 
-            value={filterStatus} 
-            onChange={(e) => setFilterStatus(e.target.value)} 
-            style={{ width: 'auto', padding: '10px 14px', cursor: 'pointer' }}
-          >
+          <select className="form-input" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} style={{ width: 'auto', padding: '10px 14px', cursor: 'pointer' }}>
             <option value="Aktif">Lihat Aktif Saja</option>
             <option value="Non-Aktif">Lihat Non-Aktif</option>
             <option value="Semua">Semua Status</option>
@@ -107,33 +120,30 @@ const MasterDataPenyelia = () => {
             <thead>
               <tr>
                 <th style={{ width: '5%', textAlign: 'center' }}>No</th>
-                <th style={{ width: '35%' }}>Nama Penyelia</th>
-                <th style={{ width: '25%' }}>No Registrasi (REG LSP)</th>
-                <th style={{ width: '20%', textAlign: 'center' }}>Status</th>
-                <th style={{ width: '15%', textAlign: 'center' }}>Aksi</th>
+                <th style={{ width: '25%' }}>Nama Penyelia</th>
+                <th style={{ width: '20%' }}>No Registrasi</th>
+                <th style={{ width: '15%' }}>Institusi</th>
+                <th style={{ width: '15%', textAlign: 'center' }}>Status</th>
+                <th style={{ width: '20%', textAlign: 'center' }}>Aksi</th>
               </tr>
             </thead>
             <tbody>
-              {filteredPenyelia.map((penyelia, index) => (
+              {isLoading ? <tr><td colSpan="6" style={{textAlign:'center', padding:'20px'}}>Memuat Data...</td></tr> : filteredPenyelia.map((penyelia, index) => (
                 <tr key={penyelia.id}>
                   <td style={{ textAlign: 'center' }}>{index + 1}</td>
-                  <td><strong>{penyelia.nama}</strong></td>
-                  <td><span className="badge info">{penyelia.noReg}</span></td>
+                  <td><strong>{penyelia.namaPenyilia}</strong></td>
+                  <td><span className="badge info">{penyelia.noRegistrasi}</span></td>
+                  <td>{penyelia.institusi}</td>
                   <td style={{ textAlign: 'center' }}>
-                    <span className={`badge ${penyelia.status === 'Aktif' ? 'success' : 'danger'}`}>
+                    <Button variant={penyelia.status === 'Aktif' ? 'success' : 'danger'} size="sm" onClick={() => handleToggleStatus(penyelia)}>
                       {penyelia.status}
-                    </span>
+                    </Button>
                   </td>
                   <td style={{ textAlign: 'center' }}>
-                    <div style={{ display: 'flex', gap: '5px', justifyContent: 'center' }}>
-                      <Button variant="outline" size="sm" icon="edit" onClick={() => handleBukaEdit(penyelia)} />
-                    </div>
+                    <Button variant="outline" size="sm" icon="edit" onClick={() => handleBukaEdit(penyelia)} />
                   </td>
                 </tr>
               ))}
-              {filteredPenyelia.length === 0 && (
-                <tr><td colSpan="5" style={{ textAlign: 'center', padding: '20px', color: '#64748b' }}>Tidak ada data Penyelia untuk status {filterStatus}.</td></tr>
-              )}
             </tbody>
           </table>
         </div>
@@ -146,15 +156,30 @@ const MasterDataPenyelia = () => {
             <form onSubmit={handleSimpan}>
                <div className="form-group">
                  <label>Nama Lengkap</label>
-                 <input type="text" name="nama" className="form-input" value={formData.nama} onChange={handleInputChange} required />
+                 <input type="text" name="namaPenyilia" className="form-input" value={formData.namaPenyilia} onChange={handleInputChange} required />
                </div>
                <div className="form-group">
-                 <label>No. Registrasi (REG LSP)</label>
-                 <input type="text" name="noReg" className="form-input" placeholder="REG.LSP.XXXXX" value={formData.noReg} onChange={handleInputChange} required />
+                 <label>Jabatan</label>
+                 <input type="text" name="jabatan" className="form-input" value={formData.jabatan} onChange={handleInputChange} required />
                </div>
-               
                <div className="form-group">
-                 <label>Status Penyelia</label>
+                 <label>No. Registrasi</label>
+                 <input type="text" name="noRegistrasi" className="form-input" value={formData.noRegistrasi} onChange={handleInputChange} required />
+               </div>
+               <div className="form-group">
+                 <label>Institusi</label>
+                 <input type="text" name="institusi" className="form-input" value={formData.institusi} onChange={handleInputChange} required />
+               </div>
+               <div className="form-group">
+                 <label>Alamat</label>
+                 <input type="text" name="alamat" className="form-input" value={formData.alamat} onChange={handleInputChange} required />
+               </div>
+               <div className="form-group">
+                 <label>Kota</label>
+                 <input type="text" name="kota" className="form-input" value={formData.kota} onChange={handleInputChange} required />
+               </div>
+               <div className="form-group">
+                 <label>Status</label>
                  <select name="status" className="form-select" value={formData.status} onChange={handleInputChange}>
                    <option value="Aktif">Aktif</option>
                    <option value="Non-Aktif">Non-Aktif</option>
@@ -169,7 +194,6 @@ const MasterDataPenyelia = () => {
           </div>
         </div>
       )}
-      
       {alert && <AlertPopup {...alert} />}
     </div>
   );

@@ -1,23 +1,11 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import axios from 'axios';
 import Button from '../../components/ui/Button';
 import AlertPopup from '../../components/ui/AlertPopup'; 
 import Pagination from '../../components/ui/Pagination';
-import TablePeserta from '../TablePeserta/TablePeserta'; 
 
 import './PenugasanPage.css';
-
-const masterAsesor = [
-  { id: 1, nama: 'Endang Lestari', noReg: 'MET.011411 2019', bidang: 'Garmen', skema: ['Menjahit'], load1Tahun: 2, status: 'Available' },
-  { id: 2, nama: 'Ahmad Fauzi', noReg: 'MET.123456 2020', bidang: 'Pariwisata', skema: ['Barista', 'Pembuatan Roti Dan Kue'], load1Tahun: 0, status: 'Available' },
-  { id: 3, nama: 'Kartika Nova Wahyuni', noReg: 'MET.005313 2018', bidang: 'Pariwisata', skema: ['Pembuatan Roti Dan Kue', 'Tata Graha (Housekeeping)'], load1Tahun: 6, status: 'Available' },
-  { id: 4, nama: 'Risna Amalia', noReg: 'MET.003697 2013', bidang: 'TIK', skema: ['Practical Office Advance'], load1Tahun: 12, status: 'Sedang Bertugas' },
-  { id: 5, nama: 'Budi Santoso', noReg: 'MET.999888 2021', bidang: 'Pariwisata', skema: ['Barista', 'Tata Graha (Housekeeping)'], load1Tahun: 8, status: 'Available' },
-];
-
-const daftarPenyelia = ['Miftahul Huda', 'Mohamad Andrian A', 'Budi Santoso'];
-const listBidang = [...new Set(masterAsesor.map(a => a.bidang))].filter(Boolean);
-const listSkema = [...new Set(masterAsesor.flatMap(a => a.skema || []))].filter(Boolean);
 
 const formatTgl = (tgl) => {
   if (!tgl) return '-';
@@ -30,16 +18,24 @@ const PenugasanPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [antreanSurat, setAntreanSurat] = useState([
-    { idUjk: 'UJK-001', pengusul: 'UPT BLK Surabaya', pendanaan: 'APBD', skemaList: [{ idSkema: 'S-1', judul: 'Pembuatan Roti Dan Kue', bidang: 'Pariwisata', jenis: 'Klaster', asesi: 16, hari1: '2026-04-28', hari2: '2026-04-29', tuk: 'UPT BLK Surabaya', waktu: '08.00 WIB s/d selesai', asesor1: 'Kartika Nova Wahyuni', noReg1: 'MET.005313 2018', asesor2: 'Hari Emijuniati', noReg2: 'MET.011411 2019', penyelia: 'Miftahul Huda', isPlotted: true, status: 'Selesai Diplot', statusSurat: { balasan: true, permohonan: true, tugas: true, administrasi: ['DOC.01', 'DOC.02'], administrasiPleno: [] }, savedForms: {} }, { idSkema: 'S-2', judul: 'Barista', bidang: 'Pariwisata', jenis: 'Klaster', asesi: 20, hari1: '2026-04-28', hari2: '2026-04-29', tuk: 'UPT BLK Surabaya', waktu: '08.00 WIB s/d selesai', asesor1: 'Ahmad Fauzi', noReg1: 'MET.123456 2020', asesor2: '', noReg2: '', penyelia: 'Miftahul Huda', isPlotted: true, status: 'Selesai Diplot', statusSurat: { balasan: true, permohonan: true, tugas: true, administrasi: [], administrasiPleno: [] }, savedForms: {} }, { idSkema: 'S-3', judul: 'Tata Graha (Housekeeping)', bidang: 'Pariwisata', jenis: 'Klaster', asesi: 15, hari1: '2026-04-28', hari2: '2026-04-29', tuk: 'UPT BLK Surabaya', waktu: '08.00 WIB s/d selesai', asesor1: 'Budi Santoso', noReg1: 'MET.999888 2021', asesor2: '', noReg2: '', penyelia: 'Mohamad Andrian A', isPlotted: true, status: 'Selesai Diplot', statusSurat: { balasan: true, permohonan: true, tugas: true, administrasi: [], administrasiPleno: [] }, savedForms: {} }] },
-    { idUjk: 'UJK-002', pengusul: 'UPT BLK Singosari', pendanaan: 'APBN', skemaList: [{ idSkema: 'S-4', judul: 'Desain Grafis', bidang: 'TIK', jenis: 'Klaster', asesi: 20, hari1: '2026-04-25', hari2: '2026-04-26', tuk: 'UPT BLK Singosari', waktu: '08.00 WIB s/d selesai', asesor1: '', noReg1: '', asesor2: '', noReg2: '', penyelia: '', isPlotted: false, status: 'Sedang Diproses', statusSurat: { balasan: false, permohonan: false, tugas: false, administrasi: [], administrasiPleno: [] }, savedForms: {} }, { idSkema: 'S-5', judul: 'Network Administrator', bidang: 'TIK', jenis: 'Klaster', asesi: 16, hari1: '2026-04-25', hari2: '2026-04-26', tuk: 'UPT BLK Singosari', waktu: '08.00 WIB s/d selesai', asesor1: '', noReg1: '', asesor2: '', noReg2: '', penyelia: '', isPlotted: false, status: 'Sedang Diproses', statusSurat: { balasan: false, permohonan: false, tugas: false, administrasi: [], administrasiPleno: [] }, savedForms: {} }] },
-    { idUjk: 'UJK-003', pengusul: 'UPT BLK Madiun', pendanaan: 'Mandiri', skemaList: [{ idSkema: 'S-6', judul: 'Pemrograman Web', bidang: 'TIK', jenis: 'Klaster', asesi: 15, hari1: '2026-04-22', hari2: '2026-04-23', tuk: 'UPT BLK Madiun', waktu: '08.00 WIB s/d selesai', asesor1: '', noReg1: '', asesor2: '', noReg2: '', penyelia: '', isPlotted: false, status: 'Sedang Diproses', statusSurat: { balasan: false, permohonan: false, tugas: false, administrasi: [], administrasiPleno: [] }, savedForms: {} }] },
-    { idUjk: 'UJK-004', pengusul: 'PT ABC Motor', pendanaan: 'APBD', skemaList: [{ idSkema: 'S-7', judul: 'Teknisi Kendaraan Ringan', bidang: 'Otomotif', jenis: 'Klaster', asesi: 10, hari1: '2026-04-18', hari2: '2026-04-19', tuk: 'PT ABC Motor', waktu: '08.00 WIB s/d selesai', asesor1: 'Endang Lestari', noReg1: 'MET.011411 2019', asesor2: 'Ahmad Fauzi', noReg2: 'MET.123456 2020', penyelia: 'Mohamad Andrian A', isPlotted: true, status: 'Selesai Diplot', statusSurat: { balasan: true, permohonan: true, tugas: true, administrasi: [], administrasiPleno: [] }, savedForms: {} }] },
-    { idUjk: 'UJK-005', pengusul: 'LKP Mutiara', pendanaan: 'APBN', skemaList: [{ idSkema: 'S-8', judul: 'Menjahit', bidang: 'Garmen', jenis: 'Klaster', asesi: 16, hari1: '2026-04-15', hari2: '2026-04-16', tuk: 'LKP Mutiara', waktu: '08.00 WIB s/d selesai', asesor1: '', noReg1: '', asesor2: '', noReg2: '', penyelia: '', isPlotted: false, status: 'Sedang Diproses', statusSurat: { balasan: false, permohonan: false, tugas: false, administrasi: [], administrasiPleno: [] }, savedForms: {} }] },
-    { idUjk: 'UJK-006', pengusul: 'UPT BLK Kediri', pendanaan: 'Mandiri', skemaList: [{ idSkema: 'S-9', judul: 'Practical Office Advance', bidang: 'TIK', jenis: 'Klaster', asesi: 20, hari1: '2026-04-12', hari2: '2026-04-13', tuk: 'UPT BLK Kediri', waktu: '08.00 WIB s/d selesai', asesor1: 'Risna Amalia', noReg1: 'MET.003697 2013', asesor2: 'Endang Lestari', noReg2: 'MET.011411 2019', penyelia: 'Budi Santoso', isPlotted: true, status: 'Selesai Diplot', statusSurat: { balasan: true, permohonan: true, tugas: true, administrasi: ['DOC.01', 'DOC.02', 'DOC.03'], administrasiPleno: [] }, savedForms: {} }] },
-    { idUjk: 'UJK-007', pengusul: 'UPT BLK Jember', pendanaan: 'APBD', skemaList: [{ idSkema: 'S-10', judul: 'Budidaya Jamur', bidang: 'Pertanian', jenis: 'Klaster', asesi: 15, hari1: '2026-04-10', hari2: '2026-04-11', tuk: 'UPT BLK Jember', waktu: '08.00 WIB s/d selesai', asesor1: '', noReg1: '', asesor2: '', noReg2: '', penyelia: '', isPlotted: false, status: 'Sedang Diproses', statusSurat: { balasan: false, permohonan: false, tugas: false, administrasi: [], administrasiPleno: [] }, savedForms: {} }] },
-    { idUjk: 'UJK-008', pengusul: 'LKP Sinar Terang', pendanaan: 'APBN', skemaList: [{ idSkema: 'S-11', judul: 'Tata Rias', bidang: 'Kecantikan', jenis: 'Klaster', asesi: 12, hari1: '2026-04-05', hari2: '2026-04-06', tuk: 'LKP Sinar Terang', waktu: '08.00 WIB s/d selesai', asesor1: 'Kartika Nova Wahyuni', noReg1: 'MET.005313 2018', asesor2: 'Hari Emijuniati', noReg2: 'MET.011411 2019', penyelia: 'Miftahul Huda', isPlotted: true, status: 'Selesai Diplot', statusSurat: { balasan: true, permohonan: true, tugas: true, administrasi: ['DOC.01', 'DOC.02'], administrasiPleno: [] }, savedForms: {} }] }
-  ]);
+  // Konfigurasi Axios Sentral (Inline)
+  const token = sessionStorage.getItem('auth_token') || localStorage.getItem('access_token');
+  const baseUrl = `${import.meta.env.VITE_API_BASE_URL}/api`;
+  const config = useMemo(() => ({
+    headers: {
+      'ngrok-skip-browser-warning': 'true',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  }), [token]);
+
+  const [antreanSurat, setAntreanSurat] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Data Modal Asesor & Penyelia dari Backend
+  const [masterAsesor, setMasterAsesor] = useState([]);
+  const [daftarPenyelia, setDaftarPenyelia] = useState([]);
+  const [isLoadingModal, setIsLoadingModal] = useState(false);
 
   const [selectedPenugasan, setSelectedPenugasan] = useState(null); 
   const [editingId, setEditingId] = useState(null); 
@@ -59,6 +55,9 @@ const PenugasanPage = () => {
   const [selectedSubDoc, setSelectedSubDoc] = useState(null);
   const [activeSubMenu, setActiveSubMenu] = useState(null); 
   const [activeSubMenuKey, setActiveSubMenuKey] = useState(null);
+  
+  // STATE BARU: Untuk membedakan mode cetak (TTD atau Biasa)
+  const [submitMode, setSubmitMode] = useState('normal'); 
 
   const [formData, setFormData] = useState({ noSurat: '', tanggalSurat: '', noDokumen: '', edisiRevisi: '', tanggalBerlaku: '', halaman: '', tanggalVerif: '', noSptAsesor: '', noSptPenyelia: '' });
   const [previewDokumen, setPreviewDokumen] = useState(null);
@@ -70,16 +69,94 @@ const PenugasanPage = () => {
   const [isFromDashboard, setIsFromDashboard] = useState(false);
   const [highlightedId, setHighlightedId] = useState(null);
 
+  // --- STATE PAGINATION ---
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
+  // List Menu Dokumen
   const listSuratTugas = [ { code: 'SPT.01', name: 'Surat Tugas Asesor', icon: 'fa-user-tie', target: 'asesor' }, { code: 'SPT.02', name: 'Surat Tugas Penyelia', icon: 'fa-user-shield', target: 'penyelia' } ];
   const listSuratPermohonan = [ { code: 'SPM.01', name: 'Permohonan Asesor 1', icon: 'fa-user-tie', target: 'asesor1' }, { code: 'SPM.02', name: 'Permohonan Asesor 2', icon: 'fa-user-tie', target: 'asesor2' }, { code: 'SPM.03', name: 'Permohonan Penyelia', icon: 'fa-user-shield', target: 'penyelia' } ];
   const listAdministrasi = [ { code: 'DOC.01', name: 'Laporan Penyelia', icon: 'fa-user-tie' }, { code: 'DOC.02', name: 'Berita Acara Pelaksanaan', icon: 'fa-file-contract' }, { code: 'DOC.03', name: 'Penerapan TUK', icon: 'fa-building' }, { code: 'DOC.04', name: 'SK Penyelenggara', icon: 'fa-certificate' }, { code: 'DOC.05', name: 'Lampiran SK', icon: 'fa-paperclip' }, { code: 'DOC.06', name: 'Daftar Hadir Pra-Asesmen', icon: 'fa-clipboard-list' }, { code: 'DOC.07', name: 'Daftar Hadir Asesmen H1', icon: 'fa-clipboard-check' }, { code: 'DOC.08', name: 'Daftar Hadir Asesmen H2', icon: 'fa-clipboard-check' }, { code: 'DOC.09', name: 'Tanda Terima Dokumen', icon: 'fa-handshake' }, { code: 'DOC.10', name: 'Pernyataan Asesor 1', icon: 'fa-user-lock' }, { code: 'DOC.11', name: 'Pernyataan Asesor 2', icon: 'fa-user-lock' }, { code: 'DOC.12', name: 'Pengembalian Dokumen', icon: 'fa-undo' }, { code: 'DOC.13', name: 'Rencana Verifikasi TUK', icon: 'fa-search-location' } ];
   const listAdministrasiPleno = [ { code: 'PLN.01', name: 'SK Pleno', icon: 'fa-certificate' }, { code: 'PLN.02', name: 'BA Pleno', icon: 'fa-file-signature' }, { code: 'PLN.03', name: 'Hasil Sidang Pleno', icon: 'fa-users' }, { code: 'PLN.04', name: 'SK Penetapan Hasil', icon: 'fa-file-contract' }, { code: 'PLN.05', name: 'Hasil Final', icon: 'fa-check-double' } ];
 
-  // LIST DOKUMEN YANG MEMBUTUHKAN FORM
   const docsWithForm = ['SPT.01', 'SPT.02', 'SPM.01', 'SPM.02', 'SPM.03', 'balasan', 'DOC.02', 'DOC.06', 'DOC.07', 'DOC.08', 'DOC.10', 'DOC.11', 'DOC.13', 'PLN.01', 'PLN.04'];
+
+  // ARRAY DOKUMEN YANG MENDUKUNG TTD (Berdasarkan api.php)
+  const docsWithTtd = ['balasan', 'SPT.01', 'SPT.02', 'SPM.01', 'SPM.02'];
+
+  // --- MENGAMBIL DATA PENGAJUAN DARI BACKEND ---
+  const fetchPengajuan = async () => {
+    setIsLoading(true);
+    try {
+      const res = await axios.get(`${baseUrl}/admin-lsp/semua-pengajuan`, config);
+      const rawData = res.data.data || [];
+
+      // Grouping data berdasarkan ID Pengajuan Induk
+      const grouped = {};
+      rawData.forEach(item => {
+        if (item.status_pengajuan === 'Dibatalkan') return;
+
+        const validPengajuanId = item.pengajuan_ujk_id || item.pengajuan?.id || item.pengajuan_id;
+
+        const ujkId = item.pengajuan?.nomor_surat_pengajuan || `UJK-${validPengajuanId}`;
+        if (!grouped[ujkId]) {
+          grouped[ujkId] = {
+            idUjk: ujkId,
+            pengajuan_id: validPengajuanId, 
+            pengusul: item.pengajuan?.admin_blk?.instansi?.nama_institusi || item.pengajuan?.adminBlk?.instansi?.nama_institusi || 'Instansi BLK',
+            pendanaan: item.pengajuan?.sumber_anggaran?.namaAnggaran || 'Mandiri',
+            skemaList: []
+          };
+        }
+
+        const jadwal = item.jadwal_asesmen || item.jadwalAsesmen;
+        const penugasan = jadwal?.penugasan_asesor || jadwal?.penugasanAsesor || [];
+        const isPlotted = !!jadwal;
+
+        grouped[ujkId].skemaList.push({
+          idSkema: item.id,
+          skema_id_db: item.skema_id, 
+          judul: item.skema?.namaSkema,
+          bidang: item.skema?.bidang?.namaBidang || item.bidang?.namaBidang,
+          jenis: item.skema?.jenisSkema || 'Klaster',
+          asesi: item.jumlah_peserta || item.peserta_pengajuan_ujk?.length || 0,
+          hari1: jadwal?.tanggal_mulai_asesmen || '',
+          hari2: jadwal?.tanggal_selesai_asesmen || '',
+          tuk: item.tuk?.namaInstitusi || item.tuk?.nama_lembaga || '',
+          tuk_id: item.jejaring_id,
+          waktu: '08.00 WIB s/d selesai',
+          asesor1: penugasan[0]?.asesor?.user?.namaLengkap || penugasan[0]?.asesor?.nama || '',
+          noReg1: penugasan[0]?.asesor?.noRegistrasi || '',
+          asesor1_id: penugasan[0]?.asesor_id || null,
+          asesor2: penugasan[1]?.asesor?.user?.namaLengkap || penugasan[1]?.asesor?.nama || '',
+          noReg2: penugasan[1]?.asesor?.noRegistrasi || '',
+          asesor2_id: penugasan[1]?.asesor_id || null,
+          penyelia: jadwal?.penyilia?.namaPenyilia || '',
+          penyelia_id: jadwal?.penyilia_id || null,
+          isPlotted: isPlotted,
+          status: isPlotted ? 'Selesai Diplot' : 'Sedang Diproses',
+          statusSurat: {
+            balasan: !!validPengajuanId,
+            permohonan: isPlotted,
+            tugas: isPlotted,
+            administrasi: [],
+            administrasiPleno: []
+          },
+          savedForms: {},
+          peserta: item.peserta_pengajuan_ujk || item.pesertaPengajuanUjk || []
+        });
+      });
+      setAntreanSurat(Object.values(grouped));
+    } catch (error) {
+      console.error('Error fetching pengajuan:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPengajuan();
+  }, []);
 
   useEffect(() => {
     if (selectedPenugasan) {
@@ -94,7 +171,7 @@ const PenugasanPage = () => {
       else if (isFormOpen) { setIsFormOpen(false); e.preventDefault(); }
       else if (viewPdf) { setViewPdf(null); e.preventDefault(); }
       else if (viewPesertaUjk) { setViewPesertaUjk(null); e.preventDefault(); }
-      else if (previewDokumen) { setPreviewDokumen(null); e.preventDefault(); }
+      else if (previewDokumen) { setPreviewDokumen(null); URL.revokeObjectURL(previewDokumen.fileUrl); e.preventDefault(); }
       else if (activeSubMenu) { setActiveSubMenu(null); setActiveSubMenuKey(null); setSelectedSubDoc(null); e.preventDefault(); }
       else if (selectedPenugasan) { setSelectedPenugasan(null); setEditingId(null); e.preventDefault(); }
     };
@@ -103,7 +180,7 @@ const PenugasanPage = () => {
   }, [isAsesorModalOpen, isFormOpen, viewPdf, viewPesertaUjk, previewDokumen, selectedPenugasan, activeSubMenu]);
 
   useEffect(() => {
-    if (location.state?.openDetailId) {
+    if (location.state?.openDetailId && antreanSurat.length > 0) {
       setSearchTerm('');
       setFilterStatus('Semua');
       setHighlightedId(location.state.openDetailId);
@@ -114,12 +191,7 @@ const PenugasanPage = () => {
       if (foundItem) {
         if (location.state.openAsesi && location.state.skemaName) {
           const foundSkema = foundItem.skemaList.find(s => s.judul === location.state.skemaName);
-          if (foundSkema) {
-            const dummyPeserta = Array.from({ length: foundSkema.asesi || 10 }).map((_, i) => ({ 
-              id: i + 1, nama: `Peserta Nominatif ${i + 1}`, nik: `35780000000000${i}`, jk: i % 2 === 0 ? 'L' : 'P', tempatLahir: 'Surabaya', tanggalLahir: '01 Januari 2000', alamat: 'Jl. Pahlawan', rt: '01', rw: '02', kelurahan: 'Alun-Alun Contong', kecamatan: 'Bubutan', hp: '08123456789' + i, email: `peserta${i+1}@mail.com`, pendidikan: 'SMK', asesor: '', keputusan: '' 
-            }));
-            setViewPesertaUjk({ ...foundSkema, peserta: dummyPeserta });
-          }
+          if (foundSkema) setViewPesertaUjk(foundSkema);
         } else if (!location.state.highlightOnly) {
           setSelectedPenugasan(foundItem);
           setEditingId(null);
@@ -127,8 +199,7 @@ const PenugasanPage = () => {
       }
       window.history.replaceState(null, '');
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.state]);
+  }, [location.state, antreanSurat]);
 
   const filteredUsulan = antreanSurat.filter(item => {
     const term = searchTerm.toLowerCase();
@@ -156,7 +227,7 @@ const PenugasanPage = () => {
     return result;
   }, [filteredUsulan, highlightedId]);
 
-  const totalPages = Math.ceil(sortedUsulan.length / itemsPerPage);
+  const totalPages = Math.ceil(sortedUsulan.length / itemsPerPage) || 1;
   const paginatedUsulan = sortedUsulan.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const showAlert = (type, title, text, action = null) => {
@@ -165,89 +236,113 @@ const PenugasanPage = () => {
   const handleConfirmAlert = () => { if (alertConfig?.onConfirm) alertConfig.onConfirm(); else setAlertConfig(null); };
   const handleCancelAlert = () => { if (alertConfig?.onCancel) alertConfig.onCancel(); else setAlertConfig(null); };
 
-  const handleOpenAsesorModal = (role, bidangUjk, skemaUjk) => { setAsesorTargetRole(role); setFilterBidang(bidangUjk || ''); setFilterSkema(skemaUjk || ''); setIsAsesorModalOpen(true); };
-  const handlePilihAsesor = (asesor) => {
+  const handleOpenAsesorModal = async (role, bidangUjk, skemaUjk, idSkemaDb) => { 
+    setAsesorTargetRole(role); 
+    setFilterBidang(bidangUjk || ''); 
+    setFilterSkema(skemaUjk || ''); 
+    setIsAsesorModalOpen(true); 
+    setIsLoadingModal(true);
+
+    try {
+      if (role === 'penyelia') {
+        const res = await axios.get(`${baseUrl}/master/penyelia`, config);
+        setDaftarPenyelia(res.data.data?.filter(p => p.status === 'Aktif') || []);
+      } else {
+        const tglMulai = editData.hari1 || '';
+        const tglSelesai = editData.hari2 || '';
+        const endpoint = `${baseUrl}/admin-lsp/asesor-by-skema/${idSkemaDb}?tanggal_mulai=${tglMulai}&tanggal_selesai=${tglSelesai}`;
+        const res = await axios.get(endpoint, config);
+        setMasterAsesor(res.data.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching asesor/penyelia', error);
+      if(role !== 'penyelia') setMasterAsesor([]);
+    } finally {
+      setIsLoadingModal(false);
+    }
+  };
+
+  const handlePilihAsesor = (person) => {
     if (asesorTargetRole === 'penyelia') {
-      setEditData(prev => ({ ...prev, penyelia: asesor?.nama || '' }));
+      setEditData(prev => ({ ...prev, penyelia: person.namaPenyilia, penyelia_id: person.id }));
       setIsAsesorModalOpen(false);
       return;
     }
-    if (!asesor || !asesor.nama) {
-      setEditData(prev => ({ ...prev, [asesorTargetRole]: '', [`noReg${asesorTargetRole === 'asesor1' ? '1' : '2'}`]: '' }));
+    
+    if (!person || !person.id) {
+      setEditData(prev => ({ ...prev, [asesorTargetRole]: '', [`noReg${asesorTargetRole === 'asesor1' ? '1' : '2'}`]: '', [`${asesorTargetRole}_id`]: null }));
       setIsAsesorModalOpen(false);
       return;
     }
-    if (asesor.status !== 'Available') { showAlert('warning', 'Akses Ditolak', 'Asesor sedang bertugas!'); return; }
-    setEditData(prev => ({ ...prev, [asesorTargetRole]: asesor.nama, [`noReg${asesorTargetRole === 'asesor1' ? '1' : '2'}`]: asesor.noReg }));
+    if (person.is_available === false) { 
+      showAlert('warning', 'Akses Ditolak', 'Asesor sedang bertugas di rentang tanggal tersebut!'); 
+      return; 
+    }
+
+    const namaLengkap = person.user?.namaLengkap || person.nama;
+    setEditData(prev => ({ 
+      ...prev, 
+      [asesorTargetRole]: namaLengkap, 
+      [`noReg${asesorTargetRole === 'asesor1' ? '1' : '2'}`]: person.noRegistrasi,
+      [`${asesorTargetRole}_id`]: person.id 
+    }));
     setIsAsesorModalOpen(false);
   };
 
   const handleEditChange = (e) => setEditData({ ...editData, [e.target.name]: e.target.value });
   const handleInputChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
-  const filteredAsesors = useMemo(() => {
-    try { 
-      return masterAsesor.filter(a => {
-        const matchBidang = filterBidang ? (a.bidang || '').toLowerCase() === filterBidang.toLowerCase() : true;
-        const matchSkema = filterSkema ? (a.skema || []).some(s => (s || '').toLowerCase() === filterSkema.toLowerCase()) : true;
-        return matchBidang && matchSkema;
-      }).sort((a, b) => (a.load1Tahun || 0) - (b.load1Tahun || 0)); 
-    } catch (error) { return []; }
-  }, [filterBidang, filterSkema]);
-
   const handleGoToPeserta = (skema) => {
-    const dummyPeserta = Array.from({ length: skema.asesi || 10 }).map((_, i) => ({ 
-      id: i + 1, nama: `Peserta Nominatif ${i + 1}`, nik: `35780000000000${i}`, jk: i % 2 === 0 ? 'L' : 'P', tempatLahir: 'Surabaya', tanggalLahir: '01 Januari 2000', alamat: 'Jl. Pahlawan', rt: '01', rw: '02', kelurahan: 'Alun-Alun Contong', kecamatan: 'Bubutan', hp: '08123456789' + i, email: `peserta${i+1}@mail.com`, pendidikan: 'SMK', asesor: '', keputusan: '' 
-    }));
-    setViewPesertaUjk({ ...skema, peserta: dummyPeserta });
+    setViewPesertaUjk(skema);
   };
 
   const handleMulaiPlotting = (skema) => { setEditingId(skema.idSkema); setEditData({ ...skema }); };
   const handleBatalEdit = () => setEditingId(null);
 
   const handleSimpanPlotting = () => {
-    if (!editData.asesor1 || !editData.penyelia || !editData.hari1 || !editData.hari2 || !editData.tuk) { 
-      showAlert('warning', 'Data Belum Lengkap', 'Pastikan Lokasi TUK, Tanggal Ujian, Asesor 1, dan Penyelia telah terisi semua.'); return; 
+    if (!editData.asesor1_id || !editData.penyelia_id || !editData.hari1 || !editData.hari2 || !editData.tuk) { 
+      showAlert('warning', 'Data Belum Lengkap', 'Pastikan Lokasi TUK, Tanggal Ujian, Asesor 1, dan Penyelia telah terisi.'); return; 
     }
-    showAlert('save', 'Simpan Plotting', 'Apakah Anda yakin ingin menetapkan jadwal dan tim asesor ini?', () => {
-      setAntreanSurat(prev => prev.map(surat => {
-        if (surat.idUjk === selectedPenugasan.idUjk) {
-          return {
-            ...surat,
-            skemaList: surat.skemaList.map(s => s.idSkema === editingId ? { ...editData, isPlotted: true, status: 'Selesai Diplot' } : s)
-          };
-        }
-        return surat;
-      }));
-      setEditingId(null); 
-      showAlert('success', 'Plotting Berhasil', 'Plotting Asesor dan Jadwal berhasil disimpan!');
+    showAlert('save', 'Simpan Plotting', 'Apakah Anda yakin ingin menetapkan jadwal dan tim asesor ini?', async () => {
+      try {
+        const payload = {
+          penyelia_id: editData.penyelia_id,
+          tanggal_mulai_asesmen: editData.hari1,
+          tanggal_selesai_asesmen: editData.hari2,
+          asesor_ids: [editData.asesor1_id, editData.asesor2_id].filter(Boolean)
+        };
+        await axios.post(`${baseUrl}/admin-lsp/ploting-jadwal/${editingId}`, payload, config);
+        
+        showAlert('success', 'Plotting Berhasil', 'Jadwal dan Asesor telah ditetapkan di sistem!');
+        setEditingId(null); 
+        fetchPengajuan(); 
+      } catch (error) {
+        showAlert('error', 'Gagal Plotting', error.response?.data?.message || 'Terjadi kesalahan sistem');
+      }
     });
   };
 
-  const handleTolakSkema = (idUjk, idSkema) => {
+  const handleTolakSkema = (idSkema) => {
     setAlertConfig({
-       type: 'delete', title: 'Tolak Skema?', text: 'Apakah Anda yakin menolak pengajuan untuk skema ini? Data akan dihapus secara permanen.',
-       onConfirm: () => {
-          setAntreanSurat(prev => {
-            const updated = prev.map(surat => {
-               if(surat.idUjk === idUjk) {
-                  return { ...surat, skemaList: surat.skemaList.filter(s => s.idSkema !== idSkema) };
-               }
-               return surat;
-            }).filter(surat => surat.skemaList.length > 0);
-            return updated;
-          });
-          showAlert('success', 'Berhasil Ditolak', 'Skema telah dihapus dari penugasan.');
+       type: 'delete', title: 'Batalkan Pengajuan?', text: 'Apakah Anda yakin membatalkan pengajuan untuk skema ini?',
+       onConfirm: async () => {
+         try {
+           await axios.put(`${baseUrl}/admin-lsp/${idSkema}/batalkan-pengajuan`, {}, config);
+           showAlert('success', 'Berhasil', 'Skema telah dibatalkan.');
+           fetchPengajuan(); 
+         } catch (error) {
+           showAlert('error', 'Gagal Membatalkan', error.response?.data?.message || 'Terjadi kesalahan sistem');
+         }
        }
     });
   };
 
-  const checkBentrok = (jadwalSibuk = [], tglMulaiUjian, tglSelesaiUjian, currentTuk) => { 
-    if (!tglMulaiUjian || !tglSelesaiUjian) return false; 
-    return jadwalSibuk.some(sibuk => (new Date(tglMulaiUjian) <= new Date(sibuk.tglSelesai)) && (new Date(sibuk.tglMulai) <= new Date(tglSelesaiUjian)) && sibuk.tuk !== currentTuk ); 
-  };
-
   const handleDocClick = (jenisSurat, suratItem, skemaItem, docKey) => {
+    if (!suratItem || !suratItem.pengajuan_id) {
+       showAlert('error', 'Kesalahan Data', 'ID Pengajuan tidak ditemukan pada baris ini.');
+       return;
+    }
+
     if (!skemaItem?.isPlotted && jenisSurat !== 'Surat Balasan') { showAlert('warning', 'Terkunci', 'Lengkapi Plotting Jadwal & Asesor terlebih dahulu.'); return; }
     
     if (jenisSurat === 'Asesi') {
@@ -295,58 +390,125 @@ const PenugasanPage = () => {
     setFormData(initialForm);
 
     if (!docsWithForm.includes(doc.code)) {
-       // AUTO GENERATE TANPA FORM
-       handleAutoGenerateSurat(doc.code, doc, initialForm, activeSubMenu);
+       // Dokumen instan tanpa form, secara otomatis pakai mode normal (non-ttd)
+       handleAutoGenerateSurat(doc.code, doc, initialForm, activeSubMenu, false);
     } else {
        setIsFormOpen(true);
     }
   };
 
-  // FUNGSI AUTO-GENERATE (Bypass Modal Form)
-  const handleAutoGenerateSurat = (docKey, subDoc, formToSave, currentMenu) => {
-    setAlertConfig({ type: 'info', title: 'Menyiapkan Dokumen...', text: 'Sistem sedang memproses dokumen otomatis...' });
+  // KUNCI PERBAIKAN 2: Penambahan param `isTtd` untuk mapping endpoint yang sesuai
+  const mapPdfEndpoint = (docKey, skemaId, pengajuanId, isTtd = false) => {
+    const ttdSuffix = isTtd ? '-ttd' : '';
     
-    setTimeout(() => {
-      setAntreanSurat(prev => prev.map(surat => {
-        if (surat.idUjk === targetUjk.surat.idUjk) {
-          return { ...surat, skemaList: surat.skemaList.map(s => s.idSkema === targetUjk.skema.idSkema ? { ...s, savedForms: { ...(s.savedForms || {}), [docKey]: formToSave } } : s) };
-        }
-        return surat;
-      }));
- 
+    const map = {
+      'balasan': `/admin-lsp/cetak-surat-balasan${ttdSuffix}/${pengajuanId}`,
+      'SPT.01': `/admin-lsp/cetak-surat-spt-asesor${ttdSuffix}/${skemaId}`,
+      'SPT.02': `/admin-lsp/cetak-surat-spt-penyilia${ttdSuffix}/${skemaId}`,
+      'SPM.01': `/admin-lsp/cetak-surat-permohonan-asesor1${ttdSuffix}/${skemaId}`,
+      'SPM.02': `/admin-lsp/cetak-surat-permohonan-asesor2${ttdSuffix}/${skemaId}`,
+      // Catatan: SPM.03 (Permohonan Penyelia) tidak ada route TTD di backend
+      'SPM.03': `/admin-lsp/cetak-surat-permohonan-penyilia/${skemaId}`, 
+      'DOC.01': `/admin-lsp/cetak-surat-laporan-penyilia/${skemaId}`,
+      'DOC.02': `/admin-lsp/cetak-surat-berita-acara/${skemaId}`,
+      'DOC.03': `/admin-lsp/cetak-surat-penetapan-TUK/${skemaId}`,
+      'DOC.04': `/admin-lsp/cetak-surat-SK-penyelanggara/${skemaId}`,
+      'DOC.05': `/admin-lsp/cetak-surat-lampiran-SK/${skemaId}`,
+      'DOC.06': `/admin-lsp/cetak-surat-daftar-hadir-pra-asesmen/${skemaId}`,
+      'DOC.07': `/admin-lsp/cetak-surat-daftar-hadir-asesmen-h1/${skemaId}`,
+      'DOC.08': `/admin-lsp/cetak-surat-daftar-hadir-asesmen-h2/${skemaId}`,
+      'DOC.09': `/admin-lsp/cetak-surat-tanda-terima-dokumen/${skemaId}`,
+      'DOC.10': `/admin-lsp/cetak-surat-pernyataan-asesor-1/${skemaId}`,
+      'DOC.11': `/admin-lsp/cetak-surat-pernyataan-asesor-2/${skemaId}`,
+      'DOC.12': `/admin-lsp/cetak-surat-pengembalian-dokumen/${skemaId}`,
+      'DOC.13': `/admin-lsp/cetak-surat-rencana-verif-TUK/${skemaId}`,
+      'PLN.01': `/admin-lsp/cetak-surat-sk-pleno/${skemaId}`,
+      'PLN.02': `/admin-lsp/cetak-surat-berita-acara-pleno/${skemaId}`,
+      'PLN.03': `/admin-lsp/cetak-surat-hasil-sidang-pleno/${skemaId}`,
+      'PLN.04': `/admin-lsp/cetak-surat-sk-penetapan-hasil/${skemaId}`,
+      'PLN.05': `/admin-lsp/cetak-surat-hasil-final-pleno/${skemaId}`,
+    };
+    return map[docKey];
+  };
+
+  const handleAutoGenerateSurat = async (docKey, subDoc, formToSave, currentMenu, isTtd = false) => {
+    setAlertConfig({ type: 'info', title: 'Menarik Dokumen PDF...', text: `Sistem sedang men-generate dokumen ${isTtd ? 'dengan Tanda Tangan' : 'Biasa'}...` });
+    
+    try {
+      if (!targetUjk || !targetUjk.surat) {
+         throw new Error("Data UJK tidak terpilih. Silakan pilih kembali UJK dari daftar.");
+      }
+
+      const skemaId = targetUjk.skema?.idSkema;
+      const pengajuanId = targetUjk.surat?.pengajuan_id; 
+      const endpointId = docKey === 'balasan' ? pengajuanId : skemaId; 
+
+      if (!endpointId) {
+          throw new Error(`Gagal mendapatkan ID (Skema: ${skemaId}, Pengajuan: ${pengajuanId}). Data mungkin tidak sinkron.`);
+      }
+
+      // Mempassing status isTtd ke fungsi mapping
+      const endpoint = mapPdfEndpoint(docKey, skemaId, pengajuanId, isTtd);
+      if(!endpoint) throw new Error("Endpoint surat tidak ditemukan");
+
+      const queryParams = new URLSearchParams({
+        nomor_surat: formToSave.noSurat || '',
+        tanggal_surat: formToSave.tanggalSurat || '',
+        nomor_spt_asesor: formToSave.noSptAsesor || '',
+        nomor_spt_penyilia: formToSave.noSptPenyelia || '',
+        tanggal_rencana_verif_tuk: formToSave.tanggalVerif || ''
+      }).toString();
+
+      const res = await axios.get(`${baseUrl}${endpoint}?${queryParams}`, {
+        ...config,
+        responseType: 'blob' 
+      });
+
+      const pdfUrl = URL.createObjectURL(res.data);
+
       setTargetUjk(prev => ({
          ...prev, 
          skema: { ...prev.skema, savedForms: { ...(prev.skema.savedForms || {}), [docKey]: formToSave } }
       }));
- 
-      const dummyPdfFromBackend = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf";
-      
+
       setPreviewDokumen({ 
         jenis: currentMenu, 
-        fileUrl: dummyPdfFromBackend,
+        fileUrl: pdfUrl,
         docKey: docKey, 
         dataUjk: targetUjk.skema, 
         ujkId: targetUjk.surat.idUjk, 
         skemaId: targetUjk.skema.idSkema, 
-        subDoc: subDoc 
+        subDoc: subDoc,
+        isTtd: isTtd // Penanda bahwa yang di-preview adalah versi TTD
       });
 
       setAlertConfig(null);
-    }, 1500);
+    } catch (error) {
+      console.error(error);
+      let errorMessage = 'Terjadi kesalahan sistem saat menghubungi backend.';
+
+      if (error.response) {
+        if (error.response.data instanceof Blob) {
+          try {
+            const errorText = await error.response.data.text();
+            const errorJson = JSON.parse(errorText);
+            errorMessage = errorJson.message || errorMessage;
+          } catch (e) {
+            errorMessage = `Akses Ditolak Server (Status: ${error.response.status}).`;
+          }
+        } else {
+          errorMessage = error.response.data?.message || errorMessage;
+        }
+      }
+      showAlert('error', 'Gagal Render Dokumen', errorMessage);
+    }
   };
 
   const handleGenerateSurat = async (e) => {
     e.preventDefault(); 
     setIsFormOpen(false);
-    handleAutoGenerateSurat(activeDocKey, selectedSubDoc, formData, formType);
-  };
-
-  const handleKirimApi = (target) => {
-    setAlertConfig({ type: 'info', title: 'Sedang Mengirim...', text: `Mengirim dokumen ke ${target} melalui sistem...` });
-    setTimeout(() => {
-      showAlert('success', 'Berhasil Dikirim!', `Dokumen telah berhasil dikirim ke ${target}.`);
-      setPreviewDokumen(null);
-    }, 1500);
+    const isTtd = submitMode === 'ttd';
+    handleAutoGenerateSurat(activeDocKey, selectedSubDoc, formData, formType, isTtd);
   };
 
   const markDocAsDone = (idUjk, idSkema, docTypeKey, docCode) => {
@@ -403,29 +565,27 @@ const PenugasanPage = () => {
   const showTanggalSurat = isVerifTuk || isOnlyTanggal || isSuratForm;
   const showSptFields = isKelompokDH;
   const showTglVerif = isVerifTuk;
-  const showDetailKontrolSpt = formType === 'Surat Tugas';
-
   const isAlreadyGenerated = Boolean(targetUjk?.skema?.savedForms?.[docCodeActive || 'balasan']);
   const isLandscapeDoc = ['PLN.03', 'DOC.06', 'DOC.07', 'DOC.08'].includes(previewDokumen?.subDoc?.code || previewDokumen?.docKey);
-
-  let kirimTarget = null;
-  if (previewDokumen?.docKey === 'balasan' || previewDokumen?.subDoc?.code === 'DOC.02') kirimTarget = 'Admin BLK & BKN';
-  else if (['SPT.01', 'SPM.01', 'SPM.02'].includes(previewDokumen?.docKey)) kirimTarget = 'Asesor 1 & 2';
-  else if (['SPT.02', 'SPM.03'].includes(previewDokumen?.docKey)) kirimTarget = 'Penyelia LSP';
 
   return (
     <div className="dashboard-content fade-in-content" style={{ backgroundColor: '#f4f7fb', padding: '20px', minHeight: '100vh', position: 'relative' }}>
       
       {alertConfig && <AlertPopup type={alertConfig.type} title={alertConfig.title} text={alertConfig.text} onConfirm={handleConfirmAlert} onCancel={handleCancelAlert} />}
       
-      {viewPesertaUjk ? (
+      {isLoading ? (
+        <div style={{ textAlign: 'center', padding: '100px 0', color: '#64748b' }}>
+          <i className="fas fa-spinner fa-spin fa-3x" style={{ marginBottom: '15px' }}></i>
+          <h3>Memuat Data Penugasan...</h3>
+        </div>
+      ) : viewPesertaUjk ? (
         <div className="fade-in-content" style={{ background: 'white', padding: '30px', borderRadius: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '25px', paddingBottom: '15px', borderBottom: '1px solid #e2e8f0' }}>
             <Button variant="outline" icon="arrow-left" onClick={() => setViewPesertaUjk(null)}>Kembali</Button>
             <div><h2 style={{ margin: 0, fontSize: '1.5rem', color: '#0f172a' }}>Data Nominatif & Keputusan Asesi</h2><p className="text-muted" style={{ margin: 0 }}>Skema: <strong>{viewPesertaUjk.judul}</strong></p></div>
           </div>
           <div className="dashboard-card" style={{ padding: '25px' }}>
-            <TablePeserta dataPeserta={viewPesertaUjk.peserta || []} skemaName={viewPesertaUjk.judul} asesor1={viewPesertaUjk.asesor1} asesor2={viewPesertaUjk.asesor2} isAdmin={true} onSave={() => setViewPesertaUjk(null)} />
+            <TablePeserta dataPeserta={viewPesertaUjk.peserta || []} detail_id={viewPesertaUjk.idSkema} skemaName={viewPesertaUjk.judul} asesor1={viewPesertaUjk.asesor1} asesor2={viewPesertaUjk.asesor2} isAdmin={true} onSave={() => setViewPesertaUjk(null)} />
           </div>
         </div>
 
@@ -433,13 +593,16 @@ const PenugasanPage = () => {
           <div className="print-preview-container fade-in-content" style={{ backgroundColor: '#f8fafc', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', marginTop: '10px' }}>
             <div className="no-print print-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', backgroundColor: '#ffffff', padding: '15px 20px', borderRadius: '8px', marginBottom: '20px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)', border: '1px solid #e2e8f0' }}>
               <div>
-                <h3 style={{ margin: '0 0 5px 0', color: '#0f172a', fontSize: '1.2rem' }}>Pratinjau {previewDokumen.subDoc?.name || previewDokumen.jenis} {isLandscapeDoc && <span style={{fontSize:'0.75rem', padding:'2px 8px', borderRadius:'10px', background:'#fef3c7', color:'#d97706', marginLeft:'8px'}}>Landscape Mode</span>}</h3>
-                <p style={{ margin: 0, color: '#64748b', fontSize: '0.85rem' }}>Dokumen dikelola oleh sistem Backend.</p>
+                <h3 style={{ margin: '0 0 5px 0', color: '#0f172a', fontSize: '1.2rem' }}>
+                  Pratinjau {previewDokumen.subDoc?.name || previewDokumen.jenis} 
+                  {previewDokumen.isTtd && <span style={{fontSize:'0.75rem', padding:'2px 8px', borderRadius:'10px', background:'#d1fae5', color:'#065f46', marginLeft:'8px'}}>+ TTD</span>}
+                  {isLandscapeDoc && <span style={{fontSize:'0.75rem', padding:'2px 8px', borderRadius:'10px', background:'#fef3c7', color:'#d97706', marginLeft:'8px'}}>Landscape Mode</span>}
+                </h3>
+                <p style={{ margin: 0, color: '#64748b', fontSize: '0.85rem' }}>Dokumen dirender dari API Laravel DomPDF.</p>
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                <Button variant="outline" icon="arrow-left" onClick={() => setPreviewDokumen(null)}>Kembali</Button>
-                {kirimTarget && <button onClick={() => handleKirimApi(kirimTarget)} style={{ backgroundColor: '#2563eb', color: '#fff', padding: '10px 16px', borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', border: 'none', cursor: 'pointer' }}><i className="fas fa-paper-plane"></i> Kirim ke {kirimTarget}</button>}
-                <a href={previewDokumen.fileUrl} download={`Dokumen_${previewDokumen.docKey}.pdf`} style={{ backgroundColor: '#10b981', color: '#fff', padding: '10px 16px', borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', cursor: 'pointer' }} onClick={() => { if (previewDokumen?.docKey) { const docTypeKey = activeSubMenuKey || previewDokumen.docKey; markDocAsDone(previewDokumen.ujkId, previewDokumen.skemaId, docTypeKey, previewDokumen.docKey); } showAlert('success', 'Berhasil Diunduh!', 'Dokumen PDF berhasil diunduh.'); }}><i className="fas fa-download"></i> Unduh PDF</a>
+                <Button variant="outline" icon="arrow-left" onClick={() => { setPreviewDokumen(null); URL.revokeObjectURL(previewDokumen.fileUrl); }}>Kembali</Button>
+                <a href={previewDokumen.fileUrl} download={`Dokumen_${previewDokumen.docKey}${previewDokumen.isTtd ? '_TTD' : ''}.pdf`} style={{ backgroundColor: '#10b981', color: '#fff', padding: '10px 16px', borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', cursor: 'pointer' }} onClick={() => { if (previewDokumen?.docKey) { const docTypeKey = activeSubMenuKey || previewDokumen.docKey; markDocAsDone(previewDokumen.ujkId, previewDokumen.skemaId, docTypeKey, previewDokumen.docKey); } showAlert('success', 'Berhasil Diunduh!', 'Dokumen PDF berhasil diunduh.'); }}><i className="fas fa-download"></i> Unduh PDF</a>
               </div>
             </div>
             
@@ -524,7 +687,7 @@ const PenugasanPage = () => {
                         {isEditing ? (
                           <div style={{ backgroundColor: '#f8fafc', padding: '20px', borderRadius: '10px', border: '1px dashed #cbd5e1' }}>
                             <h5 style={{ margin: '0 0 15px 0', fontSize: '0.9rem', color: '#1e3a8a', fontWeight: '800' }}><i className="fas fa-map-marker-alt"></i> Lokasi & Tanggal Pelaksanaan</h5>
-                            <div style={{ marginBottom: '15px' }}><label style={{ fontSize: '0.75rem', fontWeight: '800', color: '#475569', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Lokasi Ujian (TUK)</label><input type="text" name="tuk" value={editData.tuk || ''} onChange={handleEditChange} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '10px' }} /></div>
+                            <div style={{ marginBottom: '15px' }}><label style={{ fontSize: '0.75rem', fontWeight: '800', color: '#475569', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Lokasi Ujian (TUK)</label><input type="text" disabled value={editData.tuk || ''} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '10px', backgroundColor: '#e2e8f0', color: '#64748b' }} /></div>
                             <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
                               <div style={{ flex: 1 }}><label style={{ fontSize: '0.75rem', fontWeight: '800', color: '#475569', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Mulai Asesmen</label><input type="date" name="hari1" value={editData.hari1 || ''} onChange={handleEditChange} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '10px' }} /></div>
                               <div style={{ flex: 1 }}><label style={{ fontSize: '0.75rem', fontWeight: '800', color: '#475569', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Selesai Asesmen</label><input type="date" name="hari2" value={editData.hari2 || ''} onChange={handleEditChange} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '10px' }} /></div>
@@ -532,8 +695,8 @@ const PenugasanPage = () => {
                             
                             <h5 style={{ margin: '0 0 15px 0', fontSize: '0.9rem', color: '#1e3a8a', fontWeight: '800' }}><i className="fas fa-users-cog"></i> Plotting Tim</h5>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                              <div><label style={{ fontSize: '0.75rem', fontWeight: '800', color: '#475569', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Asesor 1</label><Button variant="outline" icon="user-tie" isFullWidth onClick={(e) => { e.preventDefault(); handleOpenAsesorModal('asesor1', editData.bidang || editData.kejuruan, editData.judul); }} style={{ justifyContent: 'flex-start', backgroundColor: '#fff', textAlign: 'left' }}>{editData.asesor1 || 'Pilih Asesor 1...'}</Button></div>
-                              <div><label style={{ fontSize: '0.75rem', fontWeight: '800', color: '#475569', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Asesor 2</label><Button variant="outline" icon="user-tie" isFullWidth onClick={(e) => { e.preventDefault(); handleOpenAsesorModal('asesor2', editData.bidang || editData.kejuruan, editData.judul); }} style={{ justifyContent: 'flex-start', backgroundColor: '#fff', textAlign: 'left' }}>{editData.asesor2 || 'Pilih Asesor 2...'}</Button></div>
+                              <div><label style={{ fontSize: '0.75rem', fontWeight: '800', color: '#475569', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Asesor 1</label><Button variant="outline" icon="user-tie" isFullWidth onClick={(e) => { e.preventDefault(); handleOpenAsesorModal('asesor1', editData.bidang || editData.kejuruan, editData.judul, skema.skema_id_db); }} style={{ justifyContent: 'flex-start', backgroundColor: '#fff', textAlign: 'left' }}>{editData.asesor1 || 'Pilih Asesor 1...'}</Button></div>
+                              <div><label style={{ fontSize: '0.75rem', fontWeight: '800', color: '#475569', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Asesor 2</label><Button variant="outline" icon="user-tie" isFullWidth onClick={(e) => { e.preventDefault(); handleOpenAsesorModal('asesor2', editData.bidang || editData.kejuruan, editData.judul, skema.skema_id_db); }} style={{ justifyContent: 'flex-start', backgroundColor: '#fff', textAlign: 'left' }}>{editData.asesor2 || 'Pilih Asesor 2...'}</Button></div>
                               <div><label style={{ fontSize: '0.75rem', fontWeight: '800', color: '#475569', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Penyelia LSP</label><Button variant="outline" icon="user-shield" isFullWidth onClick={(e) => { e.preventDefault(); handleOpenAsesorModal('penyelia'); }} style={{ justifyContent: 'flex-start', backgroundColor: '#fff', textAlign: 'left' }}>{editData.penyelia || 'Pilih Penyelia...'}</Button></div>
                             </div>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '20px' }}>
@@ -559,7 +722,7 @@ const PenugasanPage = () => {
                             {!isEditing && !skema.isPlotted && (
                                <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
                                   <Button variant="primary" icon="user-plus" isFullWidth style={{backgroundColor: '#2563eb', color: '#fff', border: 'none'}} onClick={() => handleMulaiPlotting(skema)}>Mulai Plotting</Button>
-                                  <button onClick={() => handleTolakSkema(activeSurat.idUjk, skema.idSkema)} style={{ background: 'white', color: '#ef4444', border: '1px solid #ef4444', padding: '10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}><i className="fas fa-times-circle"></i> Tolak</button>
+                                  <button onClick={() => handleTolakSkema(skema.idSkema)} style={{ background: 'white', color: '#ef4444', border: '1px solid #ef4444', padding: '10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}><i className="fas fa-times-circle"></i> Tolak</button>
                                </div>
                             )}
                           </div>
@@ -571,7 +734,7 @@ const PenugasanPage = () => {
                           <>
                             {[
                               { id: 'asesi', title: '1. Pembagian Asesi & Hasil Uji', status: true, key: 'asesi', type: 'Asesi' }, 
-                              { id: 'tugas', title: '2. Surat Tugas', status: skema.statusSurat?.tugas, key: 'spt', type: 'Surat Tugas' },
+                              { id: 'tugas', title: '2. Surat Tugas', status: skema.statusSurat?.tugas, key: 'spt', type: 'Sur Tugas' },
                               { id: 'permohonan', title: '3. Srt. Permohonan', status: skema.statusSurat?.permohonan, key: 'permohonan', type: 'Surat Permohonan' },
                               { id: 'administrasi', title: '4. Administrasi', status: skema.statusSurat?.administrasi?.length === 13, key: 'administrasi', type: 'Administrasi' },
                               { id: 'administrasiPleno', title: '5. Admin. Pleno', status: skema.statusSurat?.administrasiPleno?.length === 5, key: 'administrasiPleno', type: 'Administrasi Pleno' }
@@ -622,10 +785,10 @@ const PenugasanPage = () => {
 
             <div className="table-responsive" style={{ padding: '20px', overflowX: 'auto' }}>
               <table className="admin-table">
-                <thead><tr><th style={{ width: '5%', textAlign: 'center' }}>No.</th><th style={{ width: '20%' }}>ID Surat & Instansi</th><th style={{ width: '10%', textAlign: 'center' }}>Srt. Pengajuan</th><th style={{ width: '25%' }}>Daftar Skema</th><th style={{ width: '20%' }}>Pelaksanaan & TUK</th><th style={{ width: '10%', textAlign: 'center' }}>Status Global</th><th style={{ width: '10%', textAlign: 'center' }}>Aksi</th></tr></thead>
+                <thead><tr><th style={{ width: '5%', textAlign: 'center' }}>No.</th><th style={{ width: '20%' }}>ID Surat & Instansi</th><th style={{ width: '10%', textAlign: 'center' }}>Srt. Pengajuan</th><th style={{ width: '25%' }}>Daftar Skema</th><th style={{ width: '20%' }}>Pelaksanaan & TUK</th><th style={{ width: '10%', textAlign: 'center' }}>Status</th><th style={{ width: '10%', textAlign: 'center' }}>Aksi</th></tr></thead>
                 <tbody>
                   {paginatedUsulan.map((item, index) => {
-                    const isSemuaDiplot = item.skemaList.every(s => s.isPlotted);
+                    const isSemuaDiplot = item.skemaList.every(s => s.isPlotted || s.status === 'Ditolak');
                     const isHighlighted = highlightedId === item.idUjk;
                     
                     return (
@@ -633,7 +796,7 @@ const PenugasanPage = () => {
                       <td style={{ textAlign: 'center', color: '#94a3b8', verticalAlign: 'top', paddingTop: '20px' }}>{(currentPage - 1) * itemsPerPage + index + 1}</td>
                       <td style={{ verticalAlign: 'top', paddingTop: '20px' }}><strong style={{ display: 'block', color: '#0f172a', fontSize: '1.05rem' }}>{item.idUjk}</strong><small className="text-muted"><i className="fas fa-building"></i> {item.pengusul}</small></td>
                       
-                      <td style={{ textAlign: 'center', verticalAlign: 'top', paddingTop: '20px' }}><Button variant="outline" size="sm" icon="file-pdf" onClick={() => setViewPdf('Surat Pengajuan BLK')}>Lihat</Button></td>
+                      <td style={{ textAlign: 'center', verticalAlign: 'top', paddingTop: '20px' }}><Button variant="outline" size="sm" icon="file-pdf" onClick={() => showAlert('info', 'File Pengajuan', 'API download pengajuan belum direquest ke backend.')}>Lihat</Button></td>
                       
                       <td style={{ verticalAlign: 'top', paddingTop: '15px' }}>
                         <ul style={{ margin: 0, paddingLeft: '15px', color: '#334155', fontSize: '0.9rem' }}>
@@ -659,38 +822,80 @@ const PenugasanPage = () => {
                 </tbody>
               </table>
             </div>
-            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalData={filteredUsulan.length} itemsPerPage={itemsPerPage} />
+            
+            <div style={{ padding: '15px 20px', borderTop: '1px solid #e2e8f0', backgroundColor: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+              <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
+                Menampilkan <strong>{filteredUsulan.length === 0 ? 0 : ((currentPage - 1) * itemsPerPage) + 1}</strong> - <strong>{Math.min(currentPage * itemsPerPage, filteredUsulan.length)}</strong> dari total <strong>{filteredUsulan.length}</strong> data penugasan
+              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                <button 
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
+                  disabled={currentPage === 1}
+                  style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #cbd5e1', backgroundColor: currentPage === 1 ? '#f1f5f9' : '#fff', color: currentPage === 1 ? '#94a3b8' : '#0f172a', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', transition: '0.2s' }}
+                >
+                  <i className="fas fa-chevron-left"></i> Sebelumnya
+                </button>
+                
+                <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: '#0f172a' }}>
+                  Halaman {currentPage} / {totalPages}
+                </span>
+
+                <button 
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} 
+                  disabled={currentPage === totalPages}
+                  style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #cbd5e1', backgroundColor: currentPage === totalPages ? '#f1f5f9' : '#fff', color: currentPage === totalPages ? '#94a3b8' : '#0f172a', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', transition: '0.2s' }}
+                >
+                  Selanjutnya <i className="fas fa-chevron-right"></i>
+                </button>
+              </div>
+            </div>
+            
           </div>
         </div>
       )}
 
-      {/* MODAL PILIH ASESOR */}
+      {/* MODAL PILIH ASESOR/PENYELIA */}
       {isAsesorModalOpen && (
         <div className="modal-overlay" style={{ zIndex: 9999 }}>
           <div className="modal-content modal-large" style={{ display: 'flex', flexDirection: 'column', padding: 0, width: '100%', maxWidth: '700px' }}>
-            <div className="modal-header" style={{ padding: '20px', borderBottom: '1px solid #e2e8f0', backgroundColor: '#f8fafc', borderRadius: '12px 12px 0 0' }}><h3 style={{ margin: 0 }}><i className="fas fa-filter text-blue"></i> Pilih {asesorTargetRole === 'asesor1' ? 'Asesor 1' : asesorTargetRole === 'asesor2' ? 'Asesor 2' : 'Penyelia LSP'}</h3></div>
+            <div className="modal-header" style={{ padding: '20px', borderBottom: '1px solid #e2e8f0', backgroundColor: '#f8fafc', borderRadius: '12px 12px 0 0' }}>
+              <h3 style={{ margin: 0 }}><i className="fas fa-filter text-blue"></i> Pilih {asesorTargetRole === 'asesor1' ? 'Asesor 1' : asesorTargetRole === 'asesor2' ? 'Asesor 2' : 'Penyelia LSP'}</h3>
+            </div>
             <div className="modal-body" style={{ padding: '20px', flex: 1, overflowY: 'auto' }}>
-              {asesorTargetRole !== 'penyelia' && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', background: 'white', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '20px' }}>
-                  <div style={{ flex: 1 }}><label style={{ fontSize: '0.75rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>Filter Bidang</label><select value={filterBidang} onChange={(e) => setFilterBidang(e.target.value)} style={{ width: '100%', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '8px', background: '#fff' }}><option value="">-- Semua Bidang --</option>{listBidang.map(b => <option key={b} value={b}>{b}</option>)}</select></div>
-                  <div style={{ flex: 1 }}><label style={{ fontSize: '0.75rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>Filter Skema</label><select value={filterSkema} onChange={(e) => setFilterSkema(e.target.value)} style={{ width: '100%', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '8px', background: '#fff' }}><option value="">-- Semua Skema --</option>{listSkema.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
+              {isLoadingModal ? (
+                <div style={{ textAlign: 'center', padding: '50px 0', color: '#64748b' }}><i className="fas fa-spinner fa-spin fa-2x"></i><p>Memuat Data...</p></div>
+              ) : (
+                <div style={{ maxHeight: '400px', overflowY: 'auto', overflowX: 'auto' }}>
+                  <table className="admin-table">
+                    <thead><tr><th style={{ width: '50px', textAlign: 'center' }}>Pilih</th><th>{asesorTargetRole === 'penyelia' ? 'Nama Penyelia' : 'Nama Asesor'}</th>{asesorTargetRole !== 'penyelia' && <th>No. Registrasi</th>}{asesorTargetRole !== 'penyelia' && <th>Status Jadwal</th>}</tr></thead>
+                    <tbody>
+                      {asesorTargetRole === 'penyelia' ? daftarPenyelia.map((penyelia, idx) => {
+                          const isChecked = editData.penyelia_id === penyelia.id;
+                          return (
+                            <tr key={idx} style={{ backgroundColor: isChecked ? '#f0fdf4' : 'inherit' }}>
+                              <td style={{ textAlign: 'center' }}><input type="radio" checked={isChecked} onChange={() => handlePilihAsesor(penyelia)} style={{ width: '18px', height: '18px', cursor: 'pointer' }} /></td>
+                              <td><strong>{penyelia.namaPenyilia}</strong></td>
+                            </tr>
+                          );
+                        }) : masterAsesor.map(asesor => {
+                          const isBentrok = !asesor.is_available;
+                          const isChecked = editData[`${asesorTargetRole}_id`] === asesor.id;
+                          return (
+                            <tr key={asesor.id} style={{ backgroundColor: isBentrok ? '#fee2e2' : isChecked ? '#f0fdf4' : 'inherit' }}>
+                              <td style={{ textAlign: 'center' }}><input type="radio" checked={isChecked} onChange={() => handlePilihAsesor(asesor)} disabled={isBentrok} style={{ width: '18px', height: '18px', cursor: isBentrok ? 'not-allowed' : 'pointer' }} /></td>
+                              <td><strong>{asesor.user?.namaLengkap || asesor.nama}</strong><br/><small className="text-muted">Beban: {asesor.penugasan_asesor_count || 0} UJK</small></td>
+                              <td className="text-muted">{asesor.noRegistrasi}</td>
+                              <td>{isBentrok ? <span className="badge danger"><i className="fas fa-times-circle"></i> Bentrok</span> : <span className="badge success"><i className="fas fa-check-circle"></i> Tersedia</span>}</td>
+                            </tr>
+                          );
+                        })}
+                        {(asesorTargetRole === 'penyelia' ? daftarPenyelia.length === 0 : masterAsesor.length === 0) && (
+                          <tr><td colSpan="4" style={{ textAlign: 'center', padding: '20px', color: '#94a3b8' }}>Data tidak ditemukan.</td></tr>
+                        )}
+                    </tbody>
+                  </table>
                 </div>
               )}
-              <div style={{ maxHeight: '400px', overflowY: 'auto', overflowX: 'auto' }}>
-                <table className="admin-table">
-                  <thead><tr><th style={{ width: '50px', textAlign: 'center' }}>Pilih</th><th>{asesorTargetRole === 'penyelia' ? 'Nama Penyelia' : 'Nama Asesor'}</th>{asesorTargetRole !== 'penyelia' && <th>No. Registrasi</th>}{asesorTargetRole !== 'penyelia' && <th>Status Jadwal</th>}</tr></thead>
-                  <tbody>
-                    {asesorTargetRole === 'penyelia' ? daftarPenyelia.map((penyelia, idx) => {
-                        const isChecked = editData.penyelia === penyelia;
-                        return (<tr key={idx} style={{ backgroundColor: isChecked ? '#f0fdf4' : 'inherit' }}><td style={{ textAlign: 'center' }}><input type="radio" checked={isChecked} onChange={() => handlePilihAsesor({ nama: penyelia })} style={{ width: '18px', height: '18px', cursor: 'pointer' }} /></td><td><strong>{penyelia}</strong></td></tr>);
-                      }) : filteredAsesors.map(asesor => {
-                        const isBentrok = checkBentrok(asesor.jadwalSibuk, editData.hari1, editData.hari2, editData.tuk);
-                        const isChecked = editData[asesorTargetRole] === asesor.nama;
-                        return (<tr key={asesor.id} style={{ backgroundColor: isBentrok ? '#fee2e2' : isChecked ? '#f0fdf4' : 'inherit' }}><td style={{ textAlign: 'center' }}><input type="radio" checked={isChecked} onChange={() => handlePilihAsesor(asesor)} disabled={isBentrok} style={{ width: '18px', height: '18px', cursor: isBentrok ? 'not-allowed' : 'pointer' }} /></td><td><strong>{asesor.nama}</strong><br/><small className="text-muted">Beban: {asesor.load1Tahun} UJK</small></td><td className="text-muted">{asesor.noReg}</td><td>{isBentrok ? <span className="badge danger"><i className="fas fa-times-circle"></i> Bentrok TUK Lain</span> : <span className="badge success"><i className="fas fa-check-circle"></i> Tersedia</span>}</td></tr>);
-                      })}
-                  </tbody>
-                </table>
-              </div>
             </div>
             <div className="modal-footer" style={{ padding: '15px 20px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', backgroundColor: '#f8fafc', borderRadius: '0 0 12px 12px' }}>
               <Button variant="secondary" onClick={() => setIsAsesorModalOpen(false)}>Batal</Button>
@@ -703,62 +908,43 @@ const PenugasanPage = () => {
       {isFormOpen && (
          <div className="modal-overlay" style={{ zIndex: 9999 }}>
            <div className="modal-content" style={{ width: '100%', maxWidth: '420px', backgroundColor: '#ffffff', borderRadius: '12px', padding: '0' }}>
-             <div className="modal-header"><h3 style={{margin:0}}>Lengkapi Data Surat</h3></div>
-             <div className="modal-body">
+             <div className="modal-header" style={{ padding: '15px 20px', borderBottom: '1px solid #e2e8f0', backgroundColor: '#f8fafc', borderRadius: '12px 12px 0 0' }}><h3 style={{margin:0}}>Lengkapi Data Surat</h3></div>
+             <div className="modal-body" style={{ padding: '20px' }}>
                 <form onSubmit={handleGenerateSurat}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '20px' }}>
                     {showNoSurat && (
-                      <div>
-                        <label style={{fontWeight:'bold', fontSize:'0.85rem', color:'#475569', marginBottom: '6px', display: 'block'}}>Nomor Surat <span style={{color:'red'}}>*</span></label>
-                        <input type="text" style={{width:'100%', border:'1px solid #cbd5e1', borderRadius:'6px', padding: '10px'}} name="noSurat" value={formData.noSurat || ''} onChange={handleInputChange} required />
-                      </div>
+                      <div><label style={{fontWeight:'bold', fontSize:'0.85rem', color:'#475569', marginBottom: '6px', display: 'block'}}>Nomor Surat <span style={{color:'red'}}>*</span></label>
+                      <input type="text" style={{width:'100%', border:'1px solid #cbd5e1', borderRadius:'6px', padding: '10px'}} name="noSurat" value={formData.noSurat || ''} onChange={handleInputChange} required /></div>
                     )}
-
                     {showTanggalSurat && (
-                      <div>
-                        <label style={{fontWeight:'bold', fontSize:'0.85rem', color:'#475569', marginBottom: '6px', display: 'block'}}>Tanggal Dokumen <span style={{color:'red'}}>*</span></label>
-                        <input type="date" style={{width:'100%', border:'1px solid #cbd5e1', borderRadius:'6px', padding: '10px'}} name="tanggalSurat" value={formData.tanggalSurat || ''} onChange={handleInputChange} required />
-                      </div>
+                      <div><label style={{fontWeight:'bold', fontSize:'0.85rem', color:'#475569', marginBottom: '6px', display: 'block'}}>Tanggal Dokumen <span style={{color:'red'}}>*</span></label>
+                      <input type="date" style={{width:'100%', border:'1px solid #cbd5e1', borderRadius:'6px', padding: '10px'}} name="tanggalSurat" value={formData.tanggalSurat || ''} onChange={handleInputChange} required /></div>
                     )}
-                    
                     {showTglVerif && (
-                      <div>
-                        <label style={{fontWeight:'bold', fontSize:'0.85rem', color:'#475569', marginBottom: '6px', display: 'block'}}>Tanggal Verifikasi TUK <span style={{color:'red'}}>*</span></label>
-                        <input type="date" style={{width:'100%', border:'1px solid #cbd5e1', borderRadius:'6px', padding: '10px'}} name="tanggalVerif" value={formData.tanggalVerif || ''} onChange={handleInputChange} required />
-                      </div>
+                      <div><label style={{fontWeight:'bold', fontSize:'0.85rem', color:'#475569', marginBottom: '6px', display: 'block'}}>Tanggal Verifikasi TUK <span style={{color:'red'}}>*</span></label>
+                      <input type="date" style={{width:'100%', border:'1px solid #cbd5e1', borderRadius:'6px', padding: '10px'}} name="tanggalVerif" value={formData.tanggalVerif || ''} onChange={handleInputChange} required /></div>
                     )}
-
                     {showSptFields && (
                       <div style={{ padding: '15px', backgroundColor: '#fdf4ff', border: '1px dashed #d8b4fe', borderRadius: '8px' }}>
-                        <div style={{ marginBottom: '12px' }}>
-                          <label style={{fontWeight:'bold', fontSize:'0.75rem', color:'#6b21a8', marginBottom: '6px', display: 'block'}}>Nomor Surat SPT Asesor <span style={{color:'red'}}>*</span></label>
-                          <input type="text" style={{width:'100%', border:'1px solid #e9d5ff', borderRadius:'6px', padding: '8px'}} name="noSptAsesor" value={formData.noSptAsesor || ''} onChange={handleInputChange} required placeholder="000.140D/..." />
-                        </div>
-                        <div>
-                          <label style={{fontWeight:'bold', fontSize:'0.75rem', color:'#6b21a8', marginBottom: '6px', display: 'block'}}>Nomor Surat SPT Penyelia <span style={{color:'red'}}>*</span></label>
-                          <input type="text" style={{width:'100%', border:'1px solid #e9d5ff', borderRadius:'6px', padding: '8px'}} name="noSptPenyelia" value={formData.noSptPenyelia || ''} onChange={handleInputChange} required placeholder="000.140D/..." />
-                        </div>
-                      </div>
-                    )}
-
-                    {showDetailKontrolSpt && (
-                      <div style={{ padding: '15px', backgroundColor: '#f8fafc', border: '1px dashed #94a3b8', borderRadius: '8px' }}>
-                        <h5 style={{ margin: '0 0 10px 0', color: '#334155', fontSize:'0.9rem' }}>Detail Kontrol Dokumen SPT</h5>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                          <div><label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#475569' }}>No. Dokumen</label><input type="text" style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '8px' }} name="noDokumen" value={formData.noDokumen || ''} onChange={handleInputChange} required /></div>
-                          <div><label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#475569' }}>Edisi / Revisi</label><input type="text" style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '8px' }} name="edisiRevisi" value={formData.edisiRevisi || ''} onChange={handleInputChange} required /></div>
-                          <div><label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#475569' }}>Tanggal Berlaku</label><input type="date" style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '8px' }} name="tanggalBerlaku" value={formData.tanggalBerlaku || ''} onChange={handleInputChange} required /></div>
-                          <div><label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#475569' }}>Halaman</label><input type="text" style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '8px' }} name="halaman" value={formData.halaman || ''} onChange={handleInputChange} required /></div>
-                        </div>
+                        <div style={{ marginBottom: '12px' }}><label style={{fontWeight:'bold', fontSize:'0.75rem', color:'#6b21a8', marginBottom: '6px', display: 'block'}}>Nomor Surat SPT Asesor <span style={{color:'red'}}>*</span></label>
+                        <input type="text" style={{width:'100%', border:'1px solid #e9d5ff', borderRadius:'6px', padding: '8px'}} name="noSptAsesor" value={formData.noSptAsesor || ''} onChange={handleInputChange} required placeholder="000.140D/..." /></div>
+                        <div><label style={{fontWeight:'bold', fontSize:'0.75rem', color:'#6b21a8', marginBottom: '6px', display: 'block'}}>Nomor Surat SPT Penyelia <span style={{color:'red'}}>*</span></label>
+                        <input type="text" style={{width:'100%', border:'1px solid #e9d5ff', borderRadius:'6px', padding: '8px'}} name="noSptPenyelia" value={formData.noSptPenyelia || ''} onChange={handleInputChange} required placeholder="000.140D/..." /></div>
                       </div>
                     )}
                   </div>
-
+                  
+                  {/* TOMBOL DINAMIS BERDASARKAN DOC KEY */}
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                     <Button variant="secondary" onClick={() => setIsFormOpen(false)} style={{flex: 1}}>Batal</Button>
-                    <Button type="submit" variant="primary" icon="print" style={{flex: 2, backgroundColor: '#10b981', color: '#fff', border: 'none'}}>
-                      {isAlreadyGenerated ? 'Cetak Ulang Dokumen' : 'Cetak & Selesaikan'}
-                    </Button>
+                    <button type="submit" onClick={() => setSubmitMode('normal')} style={{flex: 1, backgroundColor: '#3b82f6', color: '#fff', border: 'none', padding: '10px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', transition: '0.2s'}}>
+                      Cetak Biasa
+                    </button>
+                    {docsWithTtd.includes(docCodeActive) && (
+                      <button type="submit" onClick={() => setSubmitMode('ttd')} style={{flex: 1, backgroundColor: '#10b981', color: '#fff', border: 'none', padding: '10px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', transition: '0.2s'}}>
+                        Cetak + TTD
+                      </button>
+                    )}
                   </div>
                 </form>
              </div>
@@ -766,27 +952,6 @@ const PenugasanPage = () => {
          </div>
       )}
 
-      {/* MODAL PREVIEW SURAT PENGAJUAN (PDF DARI INSTANSI) FIX */}
-      {viewPdf && (
-         <div className="modal-overlay" style={{ zIndex: 9999 }}>
-           <div className="modal-content" style={{ width: '800px', maxWidth: '90%', height: '80vh', backgroundColor: '#ffffff', borderRadius: '12px', padding: '0', display: 'flex', flexDirection: 'column', animation: 'zoomIn 0.2s ease-out' }}>
-             <div className="modal-header" style={{ padding: '15px 20px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-               <h3 style={{margin:0, color: '#0f172a', fontSize: '1.2rem'}}><i className="fas fa-file-pdf" style={{color: '#ef4444', marginRight: 8}}></i> {viewPdf}</h3>
-               <button type="button" onClick={() => setViewPdf(null)} style={{background:'none', border:'none', fontSize:'1.8rem', cursor:'pointer', color: '#64748b'}}>&times;</button>
-             </div>
-             <div className="modal-body" style={{ flex: 1, backgroundColor: '#f8fafc', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-               <div style={{ textAlign: 'center', color: '#64748b' }}>
-                  <i className="fas fa-file-pdf" style={{ fontSize: '6rem', marginBottom: '15px', color: '#cbd5e1' }}></i>
-                  <p style={{ fontSize: '1.25rem', fontWeight: '700', color: '#334155', margin: '0 0 5px 0' }}>Simulasi Penampil Dokumen</p>
-                  <p style={{ fontSize: '0.95rem', margin: 0 }}>Dokumen asli <strong>{viewPdf}</strong> yang diunggah oleh Instansi akan dirender di area ini.</p>
-               </div>
-             </div>
-             <div className="modal-footer" style={{ padding: '15px 20px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', backgroundColor: '#f8fafc', borderRadius: '0 0 12px 12px' }}>
-                <Button variant="secondary" onClick={() => setViewPdf(null)}>Tutup Preview</Button>
-             </div>
-           </div>
-         </div>
-      )}
     </div>
   );
 };

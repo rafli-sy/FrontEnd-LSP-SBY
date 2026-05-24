@@ -1,8 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import axios from 'axios';
 import Button from '../../components/ui/Button';
 import AlertPopup from '../../components/ui/AlertPopup'; 
 import Pagination from '../../components/ui/Pagination'; 
+import TablePeserta from '../TablePeserta/TablePeserta';
 
 import './BukuIndukPage.css';
 
@@ -28,25 +30,104 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
   const [filterTuk, setFilterTuk] = useState('Semua');
   const [filterPendanaan, setFilterPendanaan] = useState('Semua');
 
+  const [dataPemantauan, setDataPemantauan] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [viewPeserta, setViewPeserta] = useState(null);
+  const [asesorList, setAsesorList] = useState([]);
+
+  // --- INTEGRASI LOGIKA DATA ---
+  const token = sessionStorage.getItem('auth_token') || localStorage.getItem('access_token');
+  const baseUrl = `${import.meta.env.VITE_API_BASE_URL}/api`;
+  const config = useMemo(() => ({
+    headers: {
+      'ngrok-skip-browser-warning': 'true',
+      'Authorization': `Bearer ${token}`
+    }
+  }), [token]);
+
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      const endpoint = isAdminView 
+        ? `${baseUrl}/admin-lsp/semua-pengajuan` 
+        : `${baseUrl}/staf-lsp/semua-pengajuan`;
+
+      const response = await axios.get(endpoint, config);
+      const rawData = response.data.data || [];
+      
+      const mappedData = rawData.map(item => {
+        const jadwal = item.jadwal_asesmen || item.jadwalAsesmen;
+        const penugasan = jadwal?.penugasan_asesor || jadwal?.penugasanAsesor || [];
+        const pesertaData = item.peserta_pengajuan_ujk || item.pesertaPengajuanUjk || [];
+        
+        let countK = 0, countBK = 0;
+        pesertaData.forEach(p => {
+          if (p.keputusan_uji === 'kompeten' || p.keputusan_uji === 'K') countK++;
+          if (p.keputusan_uji === 'belum kompeten' || p.keputusan_uji === 'BK') countBK++;
+        });
+        const isSudahDinilai = countK > 0 || countBK > 0;
+
+        return {
+          id: item.id,
+          detailSkemaId: item.id, 
+          pesertaRaw: pesertaData, 
+          idUjk: item.pengajuan?.nomor_surat_pengajuan || `UJK-${item.id}`,
+          pendanaan: item.pengajuan?.sumber_anggaran?.namaAnggaran || 'Tidak Diketahui',
+          hari1: jadwal?.tanggal_mulai_asesmen || item.tanggal_mulai || '',
+          hari2: jadwal?.tanggal_selesai_asesmen || item.tanggal_selesai || '',
+          tuk: item.tuk?.namaInstitusi || item.tuk?.nama_lembaga || '',
+          bidang: item.skema?.bidang?.namaBidang || item.bidang?.namaBidang || '',
+          skema: item.skema?.namaSkema || '',
+          jumlahAsesi: item.jumlah_peserta || pesertaData.length || 0,
+          keputusanK: isSudahDinilai ? countK : '-', 
+          keputusanBK: isSudahDinilai ? countBK : '-', 
+          asesor1: penugasan[0]?.asesor?.user?.namaLengkap || penugasan[0]?.asesor?.nama || '',
+          asesor2: penugasan[1]?.asesor?.user?.namaLengkap || penugasan[1]?.asesor?.nama || '',
+          penyelia: jadwal?.penyilia?.namaPenyilia || '',
+          suratBalasan: !!item.pengajuan_id,
+          suratPermohonan: !!jadwal,
+          spt: !!jadwal,
+          administrasi: false,
+          administrasiPleno: false,
+          // FETCHING: Data otomatis dari backend berdasarkan tabel detail pengajuan ujk
+          pelaksanaanStatus: item.status_pelaksanaan === 'Selesai',
+          pembayaran: item.status_pembayaran === 'Selesai',
+          tglPleno: item.tanggal_pleno || '',
+          noPleno: item.no_pleno || '',
+          draft: item.status_draft === 'Selesai',
+          cetak: item.status_cetak === 'Selesai',
+          dikirim: item.status_dikirim === 'Selesai',
+          noResi: item.no_resi || '',
+          diterima: item.status_diterima === 'Selesai',
+          ttSertifikat: item.status_tt_sertifikat === 'Selesai'
+        };
+      });
+      setDataPemantauan(mappedData);
+    } catch (error) {
+      console.error('Error fetching Buku Induk:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+    if (isAdminView) {
+      axios.get(`${baseUrl}/admin-lsp/asesor`, config)
+        .then(res => setAsesorList(res.data.data || []))
+        .catch(err => console.error("Gagal load asesor:", err));
+    }
+  }, [isAdminView]);
+
   useEffect(() => {
     const handleGlobalBack = (e) => {
       if (isInputModalOpen) { setIsInputModalOpen(false); e.preventDefault(); }
+      else if (viewPeserta) { setViewPeserta(null); e.preventDefault(); }
     };
     window.addEventListener('globalBackRequested', handleGlobalBack);
     return () => window.removeEventListener('globalBackRequested', handleGlobalBack);
-  }, [isInputModalOpen]);
-
-  // DATA DUMMY SINKRON (8 DATA)
-  const [dataPemantauan, setDataPemantauan] = useState([
-    { id: 1, idUjk: 'UJK-001', pendanaan: 'APBD', hari1: '2026-04-28', hari2: '2026-04-29', tuk: 'UPT BLK Surabaya', bidang: 'Pariwisata', skema: 'Pembuatan Roti Dan Kue', jumlahAsesi: 16, keputusanK: 16, keputusanBK: 0, asesor1: 'Kartika Nova Wahyuni', asesor2: 'Hari Emijuniati', penyelia: 'Miftahul Huda', suratBalasan: true, suratPermohonan: true, spt: true, administrasi: true, administrasiPleno: false, pelaksanaanStatus: true, pembayaran: true, tglPleno: '2026-05-02', noPleno: '012/PLENO/2026', draft: true, cetak: false, dikirim: false, noResi: '', diterima: false, ttSertifikat: false },
-    { id: 2, idUjk: 'UJK-002', pendanaan: 'APBN', hari1: '2026-04-25', hari2: '2026-04-26', tuk: 'UPT BLK Surabaya', bidang: 'Pariwisata', skema: 'Barista', jumlahAsesi: 20, keputusanK: '', keputusanBK: 20, asesor1: '', asesor2: '', penyelia: '', suratBalasan: false, suratPermohonan: false, spt: false, administrasi: false, administrasiPleno: false, pelaksanaanStatus: false, pembayaran: false, tglPleno: '', noPleno: '', draft: false, cetak: false, dikirim: false, noResi: '', diterima: false, ttSertifikat: false },
-    { id: 3, idUjk: 'UJK-003', pendanaan: 'Mandiri', hari1: '2026-04-22', hari2: '2026-04-23', tuk: 'UPT BLK Singosari', bidang: 'TIK', skema: 'Desain Grafis', jumlahAsesi: 15, keputusanK: '', keputusanBK: 15, asesor1: '', asesor2: '', penyelia: '', suratBalasan: false, suratPermohonan: false, spt: false, administrasi: false, administrasiPleno: false, pelaksanaanStatus: false, pembayaran: false, tglPleno: '', noPleno: '', draft: false, cetak: false, dikirim: false, noResi: '', diterima: false, ttSertifikat: false },
-    { id: 4, idUjk: 'UJK-004', pendanaan: 'APBD', hari1: '2026-04-18', hari2: '2026-04-19', tuk: 'PT ABC Motor', bidang: 'Otomotif', skema: 'Teknisi Kendaraan Ringan', jumlahAsesi: 10, keputusanK: '', keputusanBK: 10, asesor1: 'Endang Lestari', asesor2: 'Ahmad Fauzi', penyelia: 'Mohamad Andrian A', suratBalasan: true, suratPermohonan: true, spt: true, administrasi: false, administrasiPleno: false, pelaksanaanStatus: false, pembayaran: false, tglPleno: '', noPleno: '', draft: false, cetak: false, dikirim: false, noResi: '', diterima: false, ttSertifikat: false },
-    { id: 5, idUjk: 'UJK-005', pendanaan: 'APBN', hari1: '2026-04-15', hari2: '2026-04-16', tuk: 'UPT BLK Madiun', bidang: 'Garmen', skema: 'Menjahit', jumlahAsesi: 16, keputusanK: '', keputusanBK: 16, asesor1: '', asesor2: '', penyelia: '', suratBalasan: false, suratPermohonan: false, spt: false, administrasi: false, administrasiPleno: false, pelaksanaanStatus: false, pembayaran: false, tglPleno: '', noPleno: '', draft: false, cetak: false, dikirim: false, noResi: '', diterima: false, ttSertifikat: false },
-    { id: 6, idUjk: 'UJK-006', pendanaan: 'Mandiri', hari1: '2026-04-12', hari2: '2026-04-13', tuk: 'UPT BLK Kediri', bidang: 'TIK', skema: 'Practical Office Advance', jumlahAsesi: 20, keputusanK: 18, keputusanBK: 2, asesor1: 'Risna Amalia', asesor2: 'Endang Lestari', penyelia: 'Budi Santoso', suratBalasan: true, suratPermohonan: true, spt: true, administrasi: true, administrasiPleno: true, pelaksanaanStatus: true, pembayaran: true, tglPleno: '2026-04-18', noPleno: '010/PLENO/2026', draft: true, cetak: true, dikirim: true, noResi: 'JNT12345678', diterima: true, ttSertifikat: true },
-    { id: 7, idUjk: 'UJK-007', pendanaan: 'APBD', hari1: '2026-04-10', hari2: '2026-04-11', tuk: 'UPT BLK Jember', bidang: 'Pertanian', skema: 'Budidaya Jamur', jumlahAsesi: 15, keputusanK: '', keputusanBK: 15, asesor1: '', asesor2: '', penyelia: '', suratBalasan: false, suratPermohonan: false, spt: false, administrasi: false, administrasiPleno: false, pelaksanaanStatus: false, pembayaran: false, tglPleno: '', noPleno: '', draft: false, cetak: false, dikirim: false, noResi: '', diterima: false, ttSertifikat: false },
-    { id: 8, idUjk: 'UJK-008', pendanaan: 'APBN', hari1: '2026-04-05', hari2: '2026-04-06', tuk: 'LKP Mutiara', bidang: 'Kecantikan', skema: 'Tata Rias', jumlahAsesi: 12, keputusanK: 12, keputusanBK: 0, asesor1: 'Kartika Nova Wahyuni', asesor2: 'Hari Emijuniati', penyelia: 'Miftahul Huda', suratBalasan: true, suratPermohonan: true, spt: true, administrasi: true, administrasiPleno: true, pelaksanaanStatus: true, pembayaran: true, tglPleno: '2026-04-10', noPleno: '008/PLENO/2026', draft: true, cetak: true, dikirim: true, noResi: 'JNE999888', diterima: true, ttSertifikat: false },
-  ]);
+  }, [isInputModalOpen, viewPeserta]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -61,7 +142,7 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
     if (filterBulan !== 'Semua') filtered = filtered.filter(item => item.hari1.split('-')[1] === filterBulan);
     if (filterTuk !== 'Semua') filtered = filtered.filter(item => item.tuk === filterTuk);
     if (filterPendanaan !== 'Semua') filtered = filtered.filter(item => item.pendanaan === filterPendanaan);
-    return filtered.sort((a, b) => new Date(b.hari1) - new Date(a.hari1));
+    return filtered.sort((a, b) => new Date(b.hari1 || '1970-01-01') - new Date(a.hari1 || '1970-01-01'));
   }, [dataPemantauan, filterTahun, filterBulan, filterTuk, filterPendanaan]);
 
   const totalPages = Math.ceil(sortedDataPemantauan.length / itemsPerPage);
@@ -69,13 +150,8 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
 
   const showAlert = (type, title, text, action = null) => {
     setAlertConfig({ 
-      type, 
-      title, 
-      text, 
-      onConfirm: () => {
-        if (action) action();
-        setAlertConfig(null);
-      },
+      type, title, text, 
+      onConfirm: () => { if (action) action(); setAlertConfig(null); },
       onCancel: () => setAlertConfig(null)
     });
   };
@@ -87,13 +163,41 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
       return;
     }
 
+    const currentItem = dataPemantauan.find(x => x.id === id);
+    const currentStatus = currentItem ? currentItem[keyName] : false;
+    const newStatus = !currentStatus;
+    const stringStatusLabel = newStatus ? 'Selesai' : 'Belum Selesai';
+
+    const mapJenisStatus = {
+      pelaksanaanStatus: 'pelaksanaan',
+      pembayaran: 'pembayaran',
+      draft: 'draft',
+      cetak: 'cetak',
+      dikirim: 'dikirim',
+      diterima: 'diterima',
+      ttSertifikat: 'tt_sertifikat'
+    };
+    
+    const targetJenisStatus = mapJenisStatus[keyName];
+
     setAlertConfig({
-      type: 'save', 
-      title: `Selesaikan ${title}?`,
-      text: `Apakah Anda yakin ingin menyelesaikan tahapan "${title}"? Jika sudah dikonfirmasi selesai, status tidak dapat diubah lagi.`,
-      onConfirm: () => {
-        setDataPemantauan(prev => prev.map(item => item.id === id ? { ...item, [keyName]: true } : item));
-        showAlert('success', 'Status Diperbarui', `Tahapan ${title} berhasil diselesaikan.`);
+      type: 'save', title: `Ubah Status ${title}?`,
+      text: `Apakah Anda yakin ingin mengubah status "${title}" menjadi ${stringStatusLabel}?`,
+      onConfirm: async () => {
+        setAlertConfig(null);
+        try {
+          const rolePath = isAdminView ? 'admin-lsp' : 'staf-lsp';
+          await axios.patch(`${baseUrl}/${rolePath}/pemantauan/${id}/status`, {
+            jenis_status: targetJenisStatus,
+            status: stringStatusLabel
+          }, config);
+
+          setDataPemantauan(prev => prev.map(item => item.id === id ? { ...item, [keyName]: newStatus } : item));
+          showAlert('success', 'Status Diperbarui', `Tahapan ${title} telah diperbarui di sistem.`);
+        } catch (error) {
+          console.error(error);
+          showAlert('error', 'Gagal', error.response?.data?.message || 'Terjadi kesalahan saat menyimpan status.');
+        }
       },
       onCancel: () => setAlertConfig(null)
     });
@@ -108,15 +212,11 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
         </button>
       );
     }
-    
-    if (status) {
-      return (
-        <div style={{ background: '#ecfdf5', color: '#10b981', border: '1px solid #10b981', padding: '6px 12px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
-          <i className="fas fa-check-circle"></i> Selesai
-        </div>
-      );
-    }
-    
+    if (status) return (
+      <div style={{ background: '#ecfdf5', color: '#10b981', border: '1px solid #10b981', padding: '6px 12px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
+        <i className="fas fa-check-circle"></i> Selesai
+      </div>
+    );
     return (
       <button onClick={() => handleProgressClick(id, keyName, title)} style={{ background: '#fef2f2', color: '#ef4444', border: '1px dashed #fca5a5', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 'bold', width: '100%', whiteSpace: 'nowrap', transition: '0.2s' }}>
         <i className="fas fa-times-circle"></i> Belum Selesai
@@ -129,7 +229,6 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
       return (
         <button 
           onClick={() => {
-             // DITAMBAH: highlightOnly: true
              navigate('/admin-lsp/penugasan', { state: { openDetailId: item.idUjk, fromDashboard: true, highlightOnly: true } });
              window.scrollTo(0,0);
           }}
@@ -157,11 +256,9 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
           </button>
         );
       }
-      
       return (
         <button 
           onClick={() => {
-              // DITAMBAH: highlightOnly: true untuk Admin dan Staff
               if (isAdminView) navigate('/admin-lsp/penugasan', { state: { openDetailId: item.idUjk, fromDashboard: true, highlightOnly: true } });
               if (isStaffView) navigate('/staff-lsp/surat', { state: { openDetailId: item.idUjk, fromDashboard: true, highlightOnly: true } });
               window.scrollTo(0,0);
@@ -191,18 +288,7 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
         <label style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '5px' }}><i className="far fa-calendar" style={{marginRight: '5px'}}></i>Bulan</label>
         <select value={filterBulan} onChange={(e) => setFilterBulan(e.target.value)} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', outline: 'none', backgroundColor: '#fff', cursor: 'pointer', fontWeight: '600' }}>
           <option value="Semua">Semua Bulan</option>
-          <option value="01">Januari</option>
-          <option value="02">Februari</option>
-          <option value="03">Maret</option>
-          <option value="04">April</option>
-          <option value="05">Mei</option>
-          <option value="06">Juni</option>
-          <option value="07">Juli</option>
-          <option value="08">Agustus</option>
-          <option value="09">September</option>
-          <option value="10">Oktober</option>
-          <option value="11">November</option>
-          <option value="12">Desember</option>
+          {['01','02','03','04','05','06','07','08','09','10','11','12'].map(m => <option key={m} value={m}>{m}</option>)}
         </select>
       </div>
       <div style={{ flex: 1, minWidth: '150px' }}>
@@ -212,9 +298,6 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
           <option value="UPT BLK Surabaya">UPT BLK Surabaya</option>
           <option value="UPT BLK Singosari">UPT BLK Singosari</option>
           <option value="UPT BLK Kediri">UPT BLK Kediri</option>
-          <option value="UPT BLK Madiun">UPT BLK Madiun</option>
-          <option value="UPT BLK Jember">UPT BLK Jember</option>
-          <option value="UPT BLK Malang">UPT BLK Malang</option>
         </select>
       </div>
       <div style={{ flex: 1, minWidth: '150px' }}>
@@ -232,7 +315,6 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
   const tableComponent = (
     <div className="dashboard-card" style={{ padding: '0', overflow: 'hidden' }}>
       
-      {/* --- POPUP INPUT MANUAL (Pleno / Resi) --- */}
       {isInputModalOpen && (
         <div className="modal-overlay" style={{ zIndex: 9999 }}>
            <div className="modal-content" style={{ width: '400px', backgroundColor: '#ffffff', borderRadius: '12px', padding: '0', animation: 'zoomIn 0.2s ease-out' }}>
@@ -241,11 +323,28 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
                <button type="button" style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#94a3b8' }} onClick={() => setIsInputModalOpen(false)}>&times;</button>
              </div>
              <div className="modal-body" style={{ padding: '20px' }}>
-                <form onSubmit={(e) => {
+                <form onSubmit={async (e) => {
                   e.preventDefault();
-                  setDataPemantauan(prev => prev.map(item => item.id === inputModalData.id ? { ...item, [inputModalData.keyName]: inputModalData.value } : item));
-                  setIsInputModalOpen(false);
-                  showAlert('success', 'Berhasil Disimpan', `Data ${inputModalData.title} telah diperbarui.`);
+                  const { id, keyName, value, title } = inputModalData;
+
+                  if (keyName === 'noResi') {
+                    try {
+                      const rolePath = isAdminView ? 'admin-lsp' : 'staf-lsp';
+                      await axios.post(`${baseUrl}/${rolePath}/pemantauan/${id}/resi`, { no_resi: value }, config);
+                      
+                      setDataPemantauan(prev => prev.map(item => item.id === id ? { ...item, [keyName]: value } : item));
+                      setIsInputModalOpen(false);
+                      showAlert('success', 'Berhasil Disimpan', `Nomor Resi berhasil ditambahkan ke sistem.`);
+                    } catch (err) {
+                      console.error(err);
+                      showAlert('error', 'Gagal', err.response?.data?.message || 'Gagal menyimpan Nomor Resi.');
+                    }
+                  } else {
+                    // Update lokal jika selain resi (misal manual tglPleno/noPleno jika tak lewat cetak)
+                    setDataPemantauan(prev => prev.map(item => item.id === id ? { ...item, [keyName]: value } : item));
+                    setIsInputModalOpen(false);
+                    showAlert('success', 'Berhasil Disimpan', `Data ${title} telah diperbarui di UI.`);
+                  }
                 }}>
                   <div style={{ marginBottom: '20px' }}>
                     <label style={{display: 'block', fontWeight:'bold', fontSize:'0.85rem', color:'#475569', marginBottom: '8px'}}>
@@ -266,7 +365,7 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
                 </form>
              </div>
            </div>
-         </div>
+        </div>
       )}
 
       <div className="table-responsive-wrapper">
@@ -311,7 +410,15 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
               </tr>
             </thead>
             <tbody>
-              {paginatedData.length > 0 ? paginatedData.map((item, index) => (
+              {isLoading ? (
+                <tr>
+                  <td colSpan="29" style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
+                    <i className="fas fa-spinner fa-spin" style={{ fontSize: '2rem', display: 'block', marginBottom: '10px', color: '#cbd5e1' }}></i>
+                    Mengambil Data dari Database...
+                  </td>
+                </tr>
+              ) : paginatedData.length > 0 ? (
+                paginatedData.map((item, index) => (
                 <tr key={item.id}>
                   <td className="text-center" style={{ position: 'sticky', left: 0, backgroundColor: '#fff', zIndex: 1, fontWeight: 'bold' }}>{(currentPage - 1) * itemsPerPage + index + 1}</td>
                   <td className="text-center"><span className="badge info">{item.pendanaan}</span></td>
@@ -321,19 +428,16 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
                   <td>{item.bidang}</td>
                   <td><strong>{item.skema}</strong></td>
                   
-                  {/* TOMBOL PINTASAN MENUJU PEMBAGIAN ASESI (PENUGASAN/SURAT) */}
                   <td className="text-center font-bold" style={{ backgroundColor: '#f1f5f9', padding: '10px' }}>
                     <button 
                       onClick={() => {
-                         const targetPath = isAdminView ? '/admin-lsp/penugasan' : '/staff-lsp/surat';
-                         navigate(targetPath, { state: { openDetailId: item.idUjk, openAsesi: true, skemaName: item.skema, fromDashboard: true } });
-                         window.scrollTo(0,0);
+                         setViewPeserta(item);
                       }}
                       style={{ background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold', width: '100%', transition: '0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                       onMouseEnter={(e) => { e.currentTarget.style.background = '#2563eb'; e.currentTarget.style.color = '#fff'; }}
                       onMouseLeave={(e) => { e.currentTarget.style.background = '#eff6ff'; e.currentTarget.style.color = '#2563eb'; }}
                     >
-                      {item.jumlahAsesi} <i className="fas fa-external-link-alt"></i>
+                      {item.jumlahAsesi} <i className="fas fa-users"></i>
                     </button>
                   </td>
                   
@@ -361,11 +465,11 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
                   <td className="text-center">{renderProgressButton(item.diterima, item.id, 'diterima', 'Blanko Diterima')}</td>
                   <td className="text-center">{renderProgressButton(item.ttSertifikat, item.id, 'ttSertifikat', 'Tanda Terima Sertifikat')}</td>
                 </tr>
-              )) : (
+                ))) : (
                 <tr>
                   <td colSpan="29" style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
                     <i className="fas fa-filter" style={{ fontSize: '2rem', display: 'block', marginBottom: '10px', color: '#cbd5e1' }}></i>
-                    Tidak ada data yang sesuai dengan filter.
+                    Tidak ada data yang sesuai.
                   </td>
                 </tr>
               )}
@@ -378,6 +482,34 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
       </div>
     </div>
   );
+
+  if (viewPeserta) {
+    return (
+      <div className="dashboard-content fade-in-content">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '25px' }}>
+          <Button variant="outline" icon="arrow-left" onClick={() => setViewPeserta(null)}>Kembali ke Pemantauan</Button>
+          <div>
+            <h2 style={{ margin: '0 0 5px 0', fontSize: '1.4rem', color: '#0f172a' }}>Data Nominatif Peserta</h2>
+            <p className="text-muted" style={{ margin: 0 }}>Skema: <strong>{viewPeserta.skema}</strong></p>
+          </div>
+        </div>
+        <div className="dashboard-card" style={{ padding: '25px' }}>
+           <TablePeserta 
+             dataPeserta={viewPeserta.pesertaRaw || []} 
+             detail_id={viewPeserta.detailSkemaId}
+             skemaName={viewPeserta.skema} 
+             asesorList={asesorList}
+             isAdmin={isAdminView} 
+             isStaffAsesorActive={false}
+             onSave={() => {
+                 setViewPeserta(null);
+                 loadData();
+             }}
+           />
+        </div>
+      </div>
+    );
+  }
 
   if (isEmbedded) {
     return (

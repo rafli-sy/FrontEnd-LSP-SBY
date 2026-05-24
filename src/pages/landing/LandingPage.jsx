@@ -219,7 +219,7 @@ const LandingPage = () => {
             </ul>
             <div className="nav-login">
               <Link to="/login" className="btn-nav" onClick={closeMenu}>
-                <i className="fas fa-user-circle" style={{ fontSize: '1.1rem' }}></i> Login Sistem
+                <i className="fas fa-user-circle" style={{ fontSize: '1.1rem' }}></i> Login
               </Link>
             </div>
           </div>

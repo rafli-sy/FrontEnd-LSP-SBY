@@ -17,6 +17,10 @@ const GlobalBackButton = () => {
     '/admin-blk',
     '/asesor',
     
+    // --- REVISI: Tambahkan rute global agar tombol kembali tidak muncul di sini ---
+    '/profil',
+    '/pengaturan',
+    
     // Halaman dengan navigasi lokal atau Menu Utama (Sidebar)
     '/staff-lsp/surat',      
     '/admin-blk/pengajuan',   
@@ -25,7 +29,7 @@ const GlobalBackButton = () => {
     '/admin-lsp/penyelia',
     '/admin-lsp/tuk',
     '/admin-lsp/buku-induk',
-    '/admin-lsp/penugasan' // Tambahkan ini jika Penugasan adalah menu utama
+    '/admin-lsp/penugasan' 
   ];
 
   if (hiddenPaths.includes(currentPath)) {
