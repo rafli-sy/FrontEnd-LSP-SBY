@@ -24,14 +24,12 @@ const Sidebar = (props) => {
   };
 
   useEffect(() => {
-    // 1. Cek dari URL terlebih dahulu
     if (currentPath.startsWith('/super-admin')) setPrimaryRole('super-admin');
     else if (currentPath.startsWith('/admin-lsp')) setPrimaryRole('admin-lsp');
     else if (currentPath.startsWith('/staff-lsp')) setPrimaryRole('staff-lsp');
     else if (currentPath.startsWith('/admin-blk')) setPrimaryRole('admin-blk');
     else if (currentPath.startsWith('/asesor')) setPrimaryRole('asesor');
     else {
-      // 2. REVISI PENTING: Jika di halaman /profil, ambil role asli dari session!
       try {
         const storedUser = JSON.parse(sessionStorage.getItem('user'));
         if (storedUser && storedUser.role) {
@@ -42,13 +40,13 @@ const Sidebar = (props) => {
           else if (roleStr === 'adminblk') setPrimaryRole('admin-blk');
           else if (roleStr === 'asesor') setPrimaryRole('asesor');
         } else if (!primaryRole) {
-          setPrimaryRole('admin-lsp'); // Fallback darurat
+          setPrimaryRole('admin-lsp'); 
         }
       } catch (error) {
         console.error("Gagal membaca role dari session", error);
       }
     }
-  }, [currentPath]); // Hapus primaryRole dari array agar tidak infinite loop
+  }, [currentPath]);
 
   const getHomeRoute = () => {
     const routes = {
@@ -130,6 +128,9 @@ const Sidebar = (props) => {
                 <>
                   <p className="menu-label">The Controller</p>
                   <Link to="/admin-lsp" className={getActiveClass('/admin-lsp')} onClick={handleMenuClick}><i className="fas fa-home"></i> Dashboard </Link>
+                  <p className="menu-label">Sertifikasi</p>
+                  {/* PERBAIKAN PATH ADMIN LSP */}
+                  <Link to="/admin-lsp/sertifikat" className={getActiveClass('/admin-lsp/sertifikat')} onClick={handleMenuClick}><i className="fas fa-certificate"></i> Sertifikat</Link>
                   <p className="menu-label">Manajemen UJK</p>
                   <Link to="/admin-lsp/penugasan" className={getActiveClass('/admin-lsp/penugasan')} onClick={handleMenuClick}><i className="fas fa-tasks"></i> Penugasan & Dokumen</Link>
                   <p className="menu-label">Master Data</p>
@@ -145,6 +146,9 @@ const Sidebar = (props) => {
                   <Link to="/staff-lsp" className={getActiveClass('/staff-lsp')} onClick={handleMenuClick}><i className="fas fa-home"></i> Dashboard </Link>
                   <p className="menu-label">Manajemen UJK</p>
                   <Link to="/staff-lsp/surat" className={getActiveClass('/staff-lsp/surat')} onClick={handleMenuClick}><i className="fas fa-envelope-open-text"></i> Dokumen & Administrasi</Link>
+                  <p className="menu-label">Sertifikasi</p>
+                  {/* PERBAIKAN PATH STAFF LSP */}
+                  <Link to="/staff-lsp/sertifikat" className={getActiveClass('/staff-lsp/sertifikat')} onClick={handleMenuClick}><i className="fas fa-certificate"></i> Sertifikat</Link>
                 </>
               )}
               {primaryRole === 'admin-blk' && (
