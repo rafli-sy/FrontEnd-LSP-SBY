@@ -10,10 +10,11 @@ const Sidebar = (props) => {
   const navigate = useNavigate();
   const currentPath = location.pathname;
 
+  const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://untracked-exponent-oboe.ngrok-free.dev';
+
   const { userData } = useUser();
   const [primaryRole, setPrimaryRole] = useState('');
 
-  // FIX SIDEBAR DESKTOP: Menjamin respon prop isOpen dan isDesktopOpen
   const actualIsOpen = isMobileOpen !== undefined ? isMobileOpen : isOpen;
   const isDesktopClosed = isDesktopOpen !== undefined ? !isDesktopOpen : !isOpen;
 
@@ -23,13 +24,31 @@ const Sidebar = (props) => {
   };
 
   useEffect(() => {
+    // 1. Cek dari URL terlebih dahulu
     if (currentPath.startsWith('/super-admin')) setPrimaryRole('super-admin');
     else if (currentPath.startsWith('/admin-lsp')) setPrimaryRole('admin-lsp');
     else if (currentPath.startsWith('/staff-lsp')) setPrimaryRole('staff-lsp');
     else if (currentPath.startsWith('/admin-blk')) setPrimaryRole('admin-blk');
     else if (currentPath.startsWith('/asesor')) setPrimaryRole('asesor');
-    else if (!primaryRole) setPrimaryRole('admin-lsp'); 
-  }, [currentPath, primaryRole]);
+    else {
+      // 2. REVISI PENTING: Jika di halaman /profil, ambil role asli dari session!
+      try {
+        const storedUser = JSON.parse(sessionStorage.getItem('user'));
+        if (storedUser && storedUser.role) {
+          const roleStr = storedUser.role.toLowerCase().replace(/[^a-z0-9]/g, '');
+          if (roleStr === 'superadmin') setPrimaryRole('super-admin');
+          else if (roleStr === 'adminlsp') setPrimaryRole('admin-lsp');
+          else if (roleStr === 'stafflsp' || roleStr === 'staflsp') setPrimaryRole('staff-lsp');
+          else if (roleStr === 'adminblk') setPrimaryRole('admin-blk');
+          else if (roleStr === 'asesor') setPrimaryRole('asesor');
+        } else if (!primaryRole) {
+          setPrimaryRole('admin-lsp'); // Fallback darurat
+        }
+      } catch (error) {
+        console.error("Gagal membaca role dari session", error);
+      }
+    }
+  }, [currentPath]); // Hapus primaryRole dari array agar tidak infinite loop
 
   const getHomeRoute = () => {
     const routes = {
@@ -57,6 +76,30 @@ const Sidebar = (props) => {
     if (!fullName) return 'Pengguna';
     const names = fullName.split(' '); 
     return names.length > 2 ? `${names[0]} ${names[1]}` : fullName; 
+  };
+
+  const handleLogout = async (e) => {
+    e.preventDefault(); 
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      if (token) {
+        await fetch(`${apiUrl}/api/logout`, { 
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${token}`, 
+            'ngrok-skip-browser-warning': '69420'
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Gagal saat menghubungi server untuk logout:', error);
+    } finally {
+      sessionStorage.clear();
+      localStorage.clear(); 
+      window.location.href = '/login';
+    }
   };
 
   return (
@@ -125,12 +168,24 @@ const Sidebar = (props) => {
           <div className="profile-switch-card">
             <div className="user-profile-info" onClick={handleGoToProfile} style={{ cursor: 'pointer' }} title="Buka Profil">
               <div className="user-avatar-wrapper">
-                {userData?.foto ? <img src={userData.foto} alt="Avatar" className="user-avatar-img" /> : <i className="fas fa-user-circle user-avatar-icon"></i>}
+                {userData?.foto ? (
+                  <img 
+                    src={`${apiUrl}/storage/${userData.foto}`} 
+                    alt="Avatar" 
+                    className="user-avatar-img" 
+                    onError={(e) => { e.target.onerror = null; e.target.src = '/default-avatar.png'; }} 
+                  /> 
+                ) : (
+                  <i className="fas fa-user-circle user-avatar-icon"></i>
+                )}
                 <span className="status-indicator"></span>
               </div>
+              
               <div className="user-details">
                 <span className="user-name">{getShortName(userData?.namaLengkap)}</span>
-                <span className="user-role-text">{primaryRole.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</span>
+                <span className="user-role-text">
+                  {primaryRole ? primaryRole.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : 'Loading...'}
+                </span>
               </div>
             </div>
 
@@ -139,7 +194,7 @@ const Sidebar = (props) => {
             </Link>
           </div>
 
-          <Link to="/login" className="logout-btn-premium">
+          <Link to="/login" className="logout-btn-premium" onClick={handleLogout}>
             <i className="fas fa-sign-out-alt"></i> <span>Keluar</span>
           </Link>
         </div>

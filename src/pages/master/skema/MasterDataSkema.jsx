@@ -1,206 +1,182 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import axios from 'axios';
 import Button from '../../../components/ui/Button';
 import Modal from '../../../components/ui/Modal';
 import AlertPopup from '../../../components/ui/AlertPopup';
-import Pagination from '../../../components/ui/Pagination';
 import './MasterDataSkema.css';
 
 const MasterDataSkema = () => {
-  const [skemaList, setSkemaList] = useState([
-    { id: 1, kode: 'SKM-001', nama: 'Pembuatan Roti Dan Kue', jenis: 'Klaster', bidang: 'Pariwisata', status: 'Aktif' },
-    { id: 2, kode: 'SKM-002', nama: 'Practical Office Advance', jenis: 'KKNI', bidang: 'TIK', status: 'Aktif' },
-    { id: 3, kode: 'SKM-003', nama: 'Teknisi Perawatan AC Residential', jenis: 'Klaster', bidang: 'Refrigerasi', status: 'Non-Aktif' },
-    { id: 4, kode: 'SKM-004', nama: 'Barista', jenis: 'Klaster', bidang: 'Pariwisata', status: 'Aktif' },
-    { id: 5, kode: 'SKM-005', nama: 'Desain Grafis Muda', jenis: 'KKNI', bidang: 'TIK', status: 'Aktif' },
-    { id: 6, kode: 'SKM-006', nama: 'Teknisi Kendaraan Ringan', jenis: 'Klaster', bidang: 'Otomotif', status: 'Aktif' },
-    { id: 7, kode: 'SKM-007', nama: 'Budidaya Hidroponik', jenis: 'Klaster', bidang: 'Pertanian', status: 'Aktif' },
-    { id: 8, kode: 'SKM-008', nama: 'Tata Rias Rambut', jenis: 'Klaster', bidang: 'Kecantikan', status: 'Aktif' },
-    { id: 9, kode: 'SKM-009', nama: 'Menjahit Pakaian Sesuai Style', jenis: 'Klaster', bidang: 'Garmen', status: 'Aktif' }
-  ]);
+  const token = sessionStorage.getItem('auth_token') || localStorage.getItem('access_token');
+  const baseUrl = `${import.meta.env.VITE_API_BASE_URL}/api`;
+  const config = useMemo(() => ({
+    headers: { 'ngrok-skip-browser-warning': 'true', 'Authorization': `Bearer ${token}` }
+  }), [token]);
 
+  const [skemaList, setSkemaList] = useState([]);
+  const [listBidang, setListBidang] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState('create');
   const [searchQuery, setSearchQuery] = useState('');
-  
-  // --- FITUR BARU: Filter Status (Default: Aktif) ---
   const [filterStatus, setFilterStatus] = useState('Aktif');
-
-  const [formData, setFormData] = useState({ id: null, kode: '', nama: '', jenis: 'Klaster', bidang: '', status: 'Aktif' });
   const [alertConfig, setAlertConfig] = useState({ type: null, title: '', text: '', action: null });
-
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
-  const showAlert = (type, title, text, action = null) => {
-    setAlertConfig({ type, title, text, action });
-    if (type === 'success' || type === 'warning' || type === 'info') {
-      setTimeout(() => setAlertConfig({ type: null, title: '', text: '', action: null }), 2000);
+  const [formData, setFormData] = useState({ 
+    id: null, kodeSkema: '', namaSkema: '', jenisSkema: 'Klaster', bidang_id: '', profesi: '', status: 'Aktif' 
+  });
+
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      // Fetch Skema (sudah dengan relasi bidang setelah perbaikan backend)
+      const res = await axios.get(`${baseUrl}/master/skema?status=semua`, config);
+      setSkemaList(res.data.data || []);
+      
+      // Fetch Bidang untuk Dropdown
+      const resBidang = await axios.get(`${baseUrl}/master/bidang`, config);
+      setListBidang(resBidang.data.data || []);
+    } catch (error) {
+      console.error("Gagal memuat data:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleConfirmAlert = () => {
-    if (alertConfig.action) alertConfig.action();
-    setAlertConfig({ type: null, title: '', text: '', action: null });
-  };
-  const handleCancelAlert = () => setAlertConfig({ type: null, title: '', text: '', action: null });
+  useEffect(() => { fetchData(); }, []);
 
   const handleInputChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleTambah = () => {
     setModalMode('create');
-    setFormData({ id: null, kode: '', nama: '', jenis: 'Klaster', bidang: '', status: 'Aktif' });
+    setFormData({ id: null, kodeSkema: '', namaSkema: '', jenisSkema: 'Klaster', bidang_id: '', profesi: '', status: 'Aktif' });
     setIsModalOpen(true);
   };
 
   const handleEdit = (data) => {
     setModalMode('edit');
-    setFormData(data);
+    setFormData({
+      id: data.id,
+      kodeSkema: data.kodeSkema,
+      namaSkema: data.namaSkema,
+      jenisSkema: data.jenisSkema,
+      bidang_id: data.bidang_id, // Pastikan ID ini tersimpan dari backend
+      profesi: data.profesi,
+      status: data.status
+    });
     setIsModalOpen(true);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    showAlert('save', 'Simpan Skema', 'Apakah Anda yakin ingin menyimpan perubahan data skema ini?', () => {
+    try {
       if (modalMode === 'create') {
-        const newId = skemaList.length > 0 ? Math.max(...skemaList.map(s => s.id)) + 1 : 1;
-        setSkemaList([...skemaList, { ...formData, id: newId }]);
+        await axios.post(`${baseUrl}/admin-lsp/skema/add`, formData, config);
+        showAlert('success', 'Berhasil!', 'Data skema berhasil ditambahkan.');
       } else {
-        setSkemaList(skemaList.map(item => item.id === formData.id ? formData : item));
+        await axios.put(`${baseUrl}/admin-lsp/skema/${formData.id}/edit`, formData, config);
+        showAlert('success', 'Berhasil!', 'Data skema berhasil diperbarui.');
       }
       setIsModalOpen(false);
-      showAlert('success', 'Berhasil!', 'Data skema berhasil disimpan!');
-    });
+      fetchData();
+    } catch (error) {
+      showAlert('warning', 'Gagal', error.response?.data?.message || 'Terjadi kesalahan.');
+    }
   };
 
-  // --- LOGIKA FILTER: Menggabungkan Search + Filter Aktif/Non-Aktif ---
-  const filteredSkema = skemaList.filter(skema => {
-    const matchSearch = skema.nama.toLowerCase().includes(searchQuery.toLowerCase()) || skema.kode.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchStatus = filterStatus === 'Semua' ? true : skema.status === filterStatus;
+  const handleToggleStatus = async (skema) => {
+    try {
+      await axios.patch(`${baseUrl}/admin-lsp/skema/${skema.id}/status`, {}, config);
+      fetchData();
+    } catch (error) {
+      showAlert('error', 'Gagal', 'Gagal mengubah status.');
+    }
+  };
+
+  const filteredSkema = skemaList.filter(s => {
+    const matchSearch = s.namaSkema?.toLowerCase().includes(searchQuery.toLowerCase()) || s.kodeSkema?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchStatus = filterStatus === 'Semua' ? true : s.status === filterStatus;
     return matchSearch && matchStatus;
   });
-  
-  const totalPages = Math.ceil(filteredSkema.length / itemsPerPage);
+
+  const totalPages = Math.ceil(filteredSkema.length / itemsPerPage) || 1;
   const paginatedSkema = filteredSkema.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const showAlert = (type, title, text, action = null) => {
+    setAlertConfig({ type, title, text, action });
+    if (type === 'success') setTimeout(() => setAlertConfig({ type: null }), 2000);
+  };
 
   return (
     <div className="dashboard-content fade-in-content">
-      {alertConfig.type && (
-        <AlertPopup type={alertConfig.type} title={alertConfig.title} text={alertConfig.text} onConfirm={handleConfirmAlert} onCancel={handleCancelAlert} />
-      )}
-
-      <div className="dashboard-header" style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '15px' }}>
-        <div>
-          <h2>Master Data Skema</h2>
-          <p className="text-muted" style={{ margin: '5px 0 0' }}>Manajemen daftar skema uji kompetensi yang aktif di LSP.</p>
-        </div>
-        
-        {/* --- FITUR BARU: Dropdown Filter & Tombol Tambah --- */}
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          <select 
-            className="form-input" 
-            value={filterStatus} 
-            onChange={(e) => {setFilterStatus(e.target.value); setCurrentPage(1);}} 
-            style={{ width: 'auto', padding: '10px 14px', cursor: 'pointer' }}
-          >
-            <option value="Aktif">Lihat Aktif Saja</option>
-            <option value="Non-Aktif">Lihat Non-Aktif</option>
-            <option value="Semua">Semua Status</option>
+      {alertConfig.type && <AlertPopup {...alertConfig} onCancel={() => setAlertConfig({ type: null })} />}
+      
+      <div className="dashboard-header" style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between' }}>
+        <div><h2>Master Data Skema</h2></div>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <select className="form-input" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+            <option value="Aktif">Lihat Aktif</option>
+            <option value="Non-aktif">Lihat Non-Aktif</option>
+            <option value="Semua">Semua</option>
           </select>
           <Button variant="primary" icon="plus" onClick={handleTambah}>Tambah Skema</Button>
         </div>
       </div>
 
       <div className="dashboard-card" style={{ padding: 0 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '20px', borderBottom: '1px solid #e2e8f0', backgroundColor: '#f8fafc' }}>
-          <h3 style={{ margin: 0, alignSelf: 'center' }}>Daftar Skema Ujian</h3>
-          <input type="text" className="form-input" placeholder="Cari Skema / Kode..." value={searchQuery} onChange={(e) => {setSearchQuery(e.target.value); setCurrentPage(1);}} style={{ width: '300px' }} />
-        </div>
-
         <div className="table-responsive" style={{ padding: '20px' }}>
           <table className="admin-table">
-            <thead style={{ backgroundColor: '#f8fafc' }}>
+            <thead>
               <tr>
-                <th style={{ width: '5%', textAlign: 'center' }}>No</th>
-                <th style={{ width: '15%' }}>Kode Skema</th>
-                <th style={{ width: '35%' }}>Judul Skema Kompetensi</th>
-                <th style={{ width: '10%', textAlign: 'center' }}>Jenis</th>
-                <th style={{ width: '10%' }}>Bidang</th>
-                <th style={{ width: '15%', textAlign: 'center' }}>Status</th>
-                <th style={{ width: '10%', textAlign: 'center' }}>Aksi</th>
+                <th>No</th><th>Kode</th><th>Judul Skema</th><th>Jenis</th><th>Bidang</th><th>Status</th><th>Aksi</th>
               </tr>
             </thead>
             <tbody>
-              {paginatedSkema.map((skema, index) => (
+              {isLoading ? <tr><td colSpan="7">Memuat...</td></tr> : paginatedSkema.map((skema, index) => (
                 <tr key={skema.id}>
-                  <td style={{ textAlign: 'center' }}>{(currentPage - 1) * itemsPerPage + index + 1}</td>
-                  <td><strong>{skema.kode}</strong></td>
-                  <td style={{ fontWeight: '600', color: '#0f172a' }}>{skema.nama}</td>
-                  <td style={{ textAlign: 'center' }}><span className="badge warning" style={{ backgroundColor: skema.jenis === 'KKNI' ? '#dbeafe' : '#fef3c7', color: skema.jenis === 'KKNI' ? '#1e40af' : '#b45309' }}>{skema.jenis}</span></td>
-                  <td>{skema.bidang}</td>
-                  <td style={{ textAlign: 'center' }}>
-                    <span className={`badge ${skema.status === 'Aktif' ? 'success' : 'danger'}`}>
+                  <td>{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                  <td>{skema.kodeSkema}</td>
+                  <td>{skema.namaSkema}</td>
+                  <td>{skema.jenisSkema}</td>
+                  {/* DATA BIDANG SEKARANG AKAN MUNCUL DENGAN BENAR */}
+                  <td>{skema.bidang?.namaBidang || '-'}</td>
+                  <td>
+                    <Button variant={skema.status === 'Aktif' ? 'success' : 'danger'} size="sm" onClick={() => handleToggleStatus(skema)}>
                       {skema.status}
-                    </span>
+                    </Button>
                   </td>
-                  <td style={{ textAlign: 'center' }}>
-                    <div style={{ display: 'flex', gap: '5px', justifyContent: 'center' }}>
-                      <Button variant="outline" icon="edit" onClick={() => handleEdit(skema)} />
-                    </div>
-                  </td>
+                  <td><Button variant="outline" icon="edit" onClick={() => handleEdit(skema)} /></td>
                 </tr>
               ))}
-              {paginatedSkema.length === 0 && <tr><td colSpan="7" style={{ textAlign: 'center', padding: '20px' }}>Tidak ada data Skema untuk status {filterStatus}.</td></tr>}
             </tbody>
           </table>
         </div>
         
-        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalData={filteredSkema.length} itemsPerPage={itemsPerPage} />
+        <div style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{color:'#64748b'}}>Halaman {currentPage} dari {totalPages}</span>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <Button variant="outline" onClick={() => setCurrentPage(p => Math.max(p - 1, 1))} disabled={currentPage === 1}>Sebelumnya</Button>
+            <Button variant="outline" onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))} disabled={currentPage === totalPages}>Selanjutnya</Button>
+          </div>
+        </div>
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={modalMode === 'create' ? 'Tambah Data Skema' : 'Edit Skema'}>
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={modalMode === 'create' ? 'Tambah Skema' : 'Edit Skema'}>
         <form onSubmit={handleSubmit}>
-          <div className="form-group" style={{ marginBottom: '15px' }}>
-            <label>Kode Skema</label>
-            <input type="text" name="kode" className="form-input" placeholder="Misal: SKM-001" value={formData.kode} onChange={handleInputChange} required />
-          </div>
-          <div className="form-group" style={{ marginBottom: '15px' }}>
-            <label>Nama / Judul Skema</label>
-            <input type="text" name="nama" className="form-input" placeholder="Misal: Pembuatan Roti Dan Kue" value={formData.nama} onChange={handleInputChange} required />
-          </div>
-          <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
-             <div className="form-group">
-                <label>Bidang Keahlian</label>
-                <select name="bidang" className="form-select" value={formData.bidang} onChange={handleInputChange} required>
-                  <option value="">-- Pilih --</option>
-                  <option value="Pariwisata">Pariwisata</option>
-                  <option value="TIK">TIK</option>
-                  <option value="Refrigerasi">Refrigerasi</option>
-                  <option value="Otomotif">Otomotif</option>
-                  <option value="Manufaktur">Manufaktur</option>
-                  <option value="Pertanian">Pertanian</option>
-                  <option value="Kecantikan">Kecantikan</option>
-                  <option value="Garmen">Garmen</option>
-                </select>
-             </div>
-             <div className="form-group">
-                <label>Jenis Skema</label>
-                <select name="jenis" className="form-select" value={formData.jenis} onChange={handleInputChange}>
-                  <option value="Klaster">Klaster</option>
-                  <option value="KKNI">KKNI</option>
-                </select>
-             </div>
-          </div>
-          <div className="form-group" style={{ marginBottom: '25px' }}>
-            <label>Status Skema</label>
-            <select name="status" className="form-select" value={formData.status} onChange={handleInputChange}>
-              <option value="Aktif">Aktif</option>
-              <option value="Non-Aktif">Non-Aktif</option>
+          <div className="form-group"><label>Kode Skema</label><input type="text" name="kodeSkema" className="form-input" value={formData.kodeSkema} onChange={handleInputChange} required /></div>
+          <div className="form-group"><label>Judul Skema</label><input type="text" name="namaSkema" className="form-input" value={formData.namaSkema} onChange={handleInputChange} required /></div>
+          <div className="form-group"><label>Profesi</label><input type="text" name="profesi" className="form-input" value={formData.profesi} onChange={handleInputChange} required /></div>
+          <div className="form-group">
+            <label>Bidang</label>
+            <select name="bidang_id" className="form-select" value={formData.bidang_id} onChange={handleInputChange} required>
+              <option value="">-- Pilih Bidang --</option>
+              {listBidang.map(b => <option key={b.id} value={b.id}>{b.namaBidang}</option>)}
             </select>
           </div>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <Button variant="outline" onClick={() => setIsModalOpen(false)} style={{ flex: 1 }} type="button">Batal</Button>
-            <Button type="submit" variant="success" icon="save" style={{ flex: 1 }}>Simpan Data</Button>
-          </div>
+          <div className="form-group"><label>Jenis</label><input type="text" name="jenisSkema" className="form-input" value={formData.jenisSkema} onChange={handleInputChange} required /></div>
+          <Button type="submit" variant="primary" isFullWidth>Simpan</Button>
         </form>
       </Modal>
     </div>

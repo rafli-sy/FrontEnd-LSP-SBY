@@ -1,47 +1,58 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import axios from 'axios';
 import Button from '../../../components/ui/Button';
 import AlertPopup from '../../../components/ui/AlertPopup';
-import Modal from '../../../components/ui/Modal'; 
 import Pagination from '../../../components/ui/Pagination';
+import './MasterDataAsesor.css';
 
 const MasterDataAsesor = () => {
+  // Konfigurasi API
+  const token = sessionStorage.getItem('auth_token') || localStorage.getItem('access_token');
+  const baseUrl = `${import.meta.env.VITE_API_BASE_URL}/api`;
+  const config = useMemo(() => ({
+    headers: { 'ngrok-skip-browser-warning': 'true', 'Authorization': `Bearer ${token}` }
+  }), [token]);
+
+  const [asesorList, setAsesorList] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [alert, setAlert] = useState(null);
   const alertTimer = useRef(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  
-  // --- FITUR BARU: Filter Status (Default: Aktif) ---
   const [filterStatus, setFilterStatus] = useState('Aktif');
-
-  // --- FITUR BARU: Mapping Skema ke Bidang (Otomatisasi) ---
-  const schemaToField = {
-    'Junior Web Developer': 'TIK',
-    'Network Administrator': 'TIK',
-    'Desain Grafis': 'TIK',
-    'Barista': 'Pariwisata',
-    'Pembuatan Roti Dan Kue': 'Pariwisata',
-    'Menjahit Pakaian': 'Garmen',
-    'Refrigerasi Domestik': 'Refrigerasi'
-  };
-  
-  // UPDATE DUMMY DATA: Bidang menjadi Array, ditambahkan Skema (Array), dan Profesi
-  const [asesorList, setAsesorList] = useState([
-    { id: 1, nama: 'Endang Lestari', noReg: 'MET.011411 2019', alamat: 'Jl. Ahmad Yani No.1', hp: '081234567890', skema: ['Menjahit Pakaian'], bidang: ['Garmen'], profesi: 'Instruktur', institusi: 'BLK Surabaya', status: 'Aktif' },
-    { id: 2, nama: 'Ahmad Fauzi', noReg: 'MET.123456 2020', alamat: 'Jl. Merdeka No.45', hp: '082199887766', skema: ['Barista', 'Pembuatan Roti Dan Kue'], bidang: ['Pariwisata'], profesi: 'Praktisi', institusi: 'Universitas Brawijaya', status: 'Aktif' },
-    { id: 3, nama: 'Kartika Nova Wahyuni', noReg: 'MET.005313 2018', alamat: 'Jl. Pemuda No. 10', hp: '081234567111', skema: ['Pembuatan Roti Dan Kue'], bidang: ['Pariwisata'], profesi: 'Guru Kejuruan', institusi: 'BLK Madiun', status: 'Aktif' },
-    { id: 4, nama: 'Risna Amalia', noReg: 'MET.003697 2013', alamat: 'Jl. Sudirman No. 99', hp: '081234567222', skema: ['Junior Web Developer'], bidang: ['TIK'], profesi: 'Dosen', institusi: 'BLK Singosari', status: 'Aktif' },
-    { id: 5, nama: 'Budi Santoso', noReg: 'MET.999888 2021', alamat: 'Jl. Diponegoro No. 8', hp: '081234567333', skema: ['Barista'], bidang: ['Pariwisata'], profesi: 'Instruktur', institusi: 'BLK Jember', status: 'Aktif' },
-    { id: 6, nama: 'Hari Emijuniati', noReg: 'MET.000123 2015', alamat: 'Jl. Pahlawan No. 4', hp: '081234567444', skema: ['Barista'], bidang: ['Pariwisata'], profesi: 'Praktisi', institusi: 'LKP Mutiara', status: 'Aktif' },
-    { id: 7, nama: 'Johan Wahyudi', noReg: 'MET.000456 2016', alamat: 'Jl. Veteran No. 2', hp: '081234567555', skema: ['Barista'], bidang: ['Pariwisata'], profesi: 'Instruktur', institusi: 'BLK Wonojati', status: 'Aktif' },
-    { id: 8, nama: 'Onie Meiyanto', noReg: 'MET.000789 2017', alamat: 'Jl. Gajah Mada No. 7', hp: '081234567666', skema: ['Refrigerasi Domestik'], bidang: ['Refrigerasi'], profesi: 'Instruktur', institusi: 'BLK Kediri', status: 'Non-Aktif' }
-  ]);
-
-  const [formData, setFormData] = useState({
-    id: null, nama: '', noReg: '', alamat: '', hp: '', skema: [], bidang: [], profesi: '', institusi: '', status: 'Aktif'
-  });
-
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
+
+  // Fetch Data dari API
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      // Mengambil data dari backend
+      const res = await axios.get(`${baseUrl}/admin-lsp/asesor?status=semua`, config);
+      
+      // Mapping respons backend ke struktur UI
+      // Catatan: Jika data hanya muncul 3, berarti backend memang mengirimkan 3 data.
+      const mapped = res.data.data.map(item => ({
+        id: item.id,
+        nama: item.user?.namaLengkap || 'Nama Tidak Ditemukan',
+        noReg: item.noRegistrasi || '-',
+        alamat: item.alamat || '-',
+        hp: item.user?.nomorTelpon || '-',
+        skema: item.skema ? item.skema.map(s => s.namaSkema) : [],
+        bidang: item.skema ? [...new Set(item.skema.map(s => s.bidang?.namaBidang).filter(Boolean))] : [],
+        profesi: item.profesi || '-',
+        institusi: item.user?.asalInstansi || '-',
+        status: item.user?.status || 'Non-aktif'
+      }));
+      
+      setAsesorList(mapped);
+    } catch (error) {
+      console.error("Gagal mengambil data asesor:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchData(); }, []);
 
   const closeAlert = () => {
     setAlert(null);
@@ -54,74 +65,36 @@ const MasterDataAsesor = () => {
     alertTimer.current = setTimeout(() => closeAlert(), 2500);
   };
 
-  const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  // --- FITUR BARU: Handle Penambahan Skema & Auto-Bidang ---
-  const handleAddSkema = (e) => {
-    const selectedSkema = e.target.value;
-    if (selectedSkema && !formData.skema.includes(selectedSkema)) {
-      const associatedBidang = schemaToField[selectedSkema];
-      setFormData({
-        ...formData,
-        skema: [...formData.skema, selectedSkema],
-        bidang: formData.bidang.includes(associatedBidang) ? formData.bidang : [...formData.bidang, associatedBidang]
-      });
-    }
-  };
-
-  const removeSkema = (skm) => {
-    setFormData({ ...formData, skema: formData.skema.filter(s => s !== skm) });
-  };
-
-  const handleTambah = () => {
-    setFormData({ id: null, nama: '', noReg: '', alamat: '', hp: '', skema: [], bidang: [], profesi: '', institusi: '', status: 'Aktif' });
-    setIsModalOpen(true);
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (formData.skema.length === 0) {
-      setAlert({ type: 'warning', title: 'Data Kurang', text: 'Pilih minimal 1 Skema untuk asesor ini.', onCancel: closeAlert });
-      return;
-    }
-
-    setAlert({
-      type: 'save', title: 'Simpan Asesor Baru?', text: 'Pastikan seluruh informasi Asesor sudah valid.',
-      onConfirm: () => {
-        const newId = asesorList.length > 0 ? Math.max(...asesorList.map(a => a.id)) + 1 : 1;
-        setAsesorList([...asesorList, { ...formData, id: newId }]);
-        setIsModalOpen(false);
-        showSuccess('Tersimpan!', 'Asesor baru berhasil ditambahkan.');
-      },
-      onCancel: closeAlert
-    });
-  };
-
-  // TETAP ADA: Fitur Toggle Klik Status di Tabel
-  const handleToggleStatus = (asesor) => {
+  const handleToggleStatus = async (asesor) => {
     const aksiText = asesor.status === 'Aktif' ? 'menon-aktifkan' : 'mengaktifkan';
     setAlert({
       type: 'confirm',
       title: 'Konfirmasi Status',
       text: `Apakah Anda yakin untuk ${aksiText} asesor ${asesor.nama} berikut?`,
-      onConfirm: () => {
-        setAsesorList(asesorList.map(item => item.id === asesor.id ? { ...item, status: asesor.status === 'Aktif' ? 'Non-Aktif' : 'Aktif' } : item));
-        showSuccess('Berhasil!', `Status asesor ${asesor.nama} telah diperbarui.`);
+      onConfirm: async () => {
+        try {
+          await axios.patch(`${baseUrl}/admin-lsp/asesor/${asesor.id}/status`, {}, config);
+          showSuccess('Berhasil!', `Status asesor ${asesor.nama} telah diperbarui.`);
+          fetchData(); // Refresh data
+        } catch (error) {
+          showAlert('error', 'Gagal', 'Terjadi kesalahan sistem.');
+        }
       },
       onCancel: closeAlert
     });
   };
 
-  // --- LOGIKA FILTER: Menggabungkan Search + Filter Aktif/Non-Aktif ---
+  const showAlert = (type, title, text) => {
+    setAlert({ type, title, text, onCancel: closeAlert });
+  };
+
   const filteredAsesor = asesorList.filter(a => {
     const matchSearch = a.nama.toLowerCase().includes(searchQuery.toLowerCase()) || a.noReg.toLowerCase().includes(searchQuery.toLowerCase());
     const matchStatus = filterStatus === 'Semua' ? true : a.status === filterStatus;
     return matchSearch && matchStatus;
   });
 
-  const totalPages = Math.ceil(filteredAsesor.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredAsesor.length / itemsPerPage) || 1;
   const paginatedAsesor = filteredAsesor.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
@@ -132,19 +105,12 @@ const MasterDataAsesor = () => {
           <p className="text-muted" style={{ margin: 0 }}>Manajemen data detail Asesor tersertifikasi.</p>
         </div>
         
-        {/* --- FITUR BARU: Tambahan Filter Dropdown di Header --- */}
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          <select 
-            className="form-input" 
-            value={filterStatus} 
-            onChange={(e) => {setFilterStatus(e.target.value); setCurrentPage(1);}} 
-            style={{ width: 'auto', padding: '10px 14px', cursor: 'pointer' }}
-          >
+          <select className="form-input" value={filterStatus} onChange={(e) => {setFilterStatus(e.target.value); setCurrentPage(1);}} style={{ width: 'auto', padding: '10px 14px', cursor: 'pointer' }}>
             <option value="Aktif">Lihat Aktif Saja</option>
-            <option value="Non-Aktif">Lihat Non-Aktif</option>
+            <option value="Non-aktif">Lihat Non-Aktif</option>
             <option value="Semua">Semua Status</option>
           </select>
-          <Button variant="primary" icon="plus" onClick={handleTambah}>Tambah Asesor</Button>
         </div>
       </div>
 
@@ -166,13 +132,12 @@ const MasterDataAsesor = () => {
               </tr>
             </thead>
             <tbody>
-              {paginatedAsesor.map((asesor, index) => (
+              {isLoading ? <tr><td colSpan="6" style={{textAlign: 'center', padding: '20px'}}>Memuat Data...</td></tr> : paginatedAsesor.map((asesor, index) => (
                 <tr key={asesor.id}>
                   <td style={{ textAlign: 'center', color: '#64748b' }}>{(currentPage - 1) * itemsPerPage + index + 1}</td>
                   <td>
                     <strong style={{ color: '#0f172a', display: 'block', fontSize: '1rem' }}>{asesor.nama}</strong>
                     <small className="text-muted"><i className="fas fa-building"></i> {asesor.institusi}</small><br/>
-                    {/* Tampil Profesi */}
                     <small style={{ color: '#3b82f6', fontWeight: '600' }}><i className="fas fa-user-tie"></i> {asesor.profesi}</small>
                   </td>
                   <td>
@@ -188,109 +153,29 @@ const MasterDataAsesor = () => {
                       {asesor.skema.map(s => <span key={s} style={{ background: '#f1f5f9', color: '#475569', fontSize: '0.75rem', padding: '2px 6px', borderRadius: '4px', border: '1px solid #cbd5e1' }}>{s}</span>)}
                     </div>
                   </td>
-                  
-                  {/* STATUS BADGE BISA DIKLIK (Fitur asli dipertahankan) */}
                   <td style={{ textAlign: 'center' }}>
                     <button 
                       onClick={() => handleToggleStatus(asesor)}
                       className={`badge ${asesor.status === 'Aktif' ? 'success' : 'danger'}`}
                       style={{ border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '5px', transition: '0.2s', padding: '6px 12px' }}
-                      title={`Klik untuk ${asesor.status === 'Aktif' ? 'Non-Aktifkan' : 'Aktifkan'}`}
-                      onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-                      onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                     >
                       {asesor.status} <i className="fas fa-exchange-alt" style={{fontSize: '0.7rem', opacity: 0.7}}></i>
                     </button>
                   </td>
                 </tr>
               ))}
-              {paginatedAsesor.length === 0 && <tr><td colSpan="6" style={{ textAlign: 'center', padding: '20px', color: '#94a3b8' }}>Tidak ada data Asesor untuk status {filterStatus}.</td></tr>}
             </tbody>
           </table>
         </div>
         
-        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalData={filteredAsesor.length} itemsPerPage={itemsPerPage} />
-      </div>
-
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Tambah Data Asesor">
-        <form onSubmit={handleSubmit}>
-          <div className="form-group" style={{ marginBottom: '15px' }}>
-            <label>Nama Lengkap</label>
-            <input type="text" name="nama" className="form-input" value={formData.nama} onChange={handleInputChange} required />
-          </div>
-          <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
-            <div className="form-group">
-              <label>No. Registrasi (MET)</label>
-              <input type="text" name="noReg" className="form-input" placeholder="MET.XXXXX" value={formData.noReg} onChange={handleInputChange} required />
-            </div>
-            <div className="form-group">
-              <label>Asal Institusi</label>
-              <input type="text" name="institusi" className="form-input" placeholder="Contoh: BLK Surabaya" value={formData.institusi} onChange={handleInputChange} required />
-            </div>
-          </div>
-          <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
-            {/* UPDATE: Input Bidang diubah menjadi Profesi (Karena bidang terisi otomatis) */}
-            <div className="form-group">
-              <label>Data Profesi (Untuk Sertifikat)</label>
-              <input type="text" name="profesi" className="form-input" placeholder="Contoh: Instruktur" value={formData.profesi} onChange={handleInputChange} required />
-            </div>
-            <div className="form-group">
-              <label>Nomor Handphone</label>
-              <input type="text" name="hp" className="form-input" placeholder="08XXXXXXXXXX" value={formData.hp} onChange={handleInputChange} required />
-            </div>
-          </div>
-
-          {/* --- FITUR BARU: Pemilihan Skema (Bisa multi-select seperti tag) --- */}
-          <div className="form-group" style={{ marginBottom: '15px', background: '#f8fafc', padding: '15px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-            <label style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>Pilih Skema Uji</span>
-            </label>
-            <select className="form-input" onChange={handleAddSkema} value="">
-              <option value="" disabled>-- Klik untuk menambah skema --</option>
-              {Object.keys(schemaToField).map(s => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-            
-            {/* Area Daftar Skema Terpilih */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '10px' }}>
-              {formData.skema.map(s => (
-                <span key={s} style={{ background: '#dbeafe', color: '#1e40af', padding: '6px 10px', borderRadius: '6px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  {s} 
-                  <i className="fas fa-times" style={{ cursor: 'pointer', color: '#ef4444' }} onClick={() => removeSkema(s)}></i>
-                </span>
-              ))}
-            </div>
-
-            {/* Menampilkan Bidang Otomatis (Read-Only) */}
-            {formData.bidang.length > 0 && (
-              <div style={{ marginTop: '10px', fontSize: '0.8rem', color: '#475569' }}>
-                <strong>Bidang Terdeteksi: </strong>
-                {formData.bidang.map(b => <span key={b} className="badge primary" style={{marginLeft: '4px'}}>{b}</span>)}
-              </div>
-            )}
-          </div>
-
-          <div className="form-group" style={{ marginBottom: '15px' }}>
-            <label>Alamat Lengkap</label>
-            <textarea name="alamat" className="form-input" rows="2" value={formData.alamat} onChange={handleInputChange} required style={{resize: 'vertical'}}></textarea>
-          </div>
-          
-          <div className="form-group" style={{ marginBottom: '25px' }}>
-            <label>Status Asesor</label>
-            <select name="status" className="form-select" value={formData.status} onChange={handleInputChange}>
-              <option value="Aktif">Aktif</option>
-              <option value="Non-Aktif">Non-Aktif</option>
-            </select>
-          </div>
-          
+        <div style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{color:'#64748b'}}>Halaman {currentPage} dari {totalPages}</span>
           <div style={{ display: 'flex', gap: '10px' }}>
-            <Button variant="outline" type="button" isFullWidth onClick={() => setIsModalOpen(false)}>Batal</Button>
-            <Button type="submit" variant="primary" isFullWidth icon="save">Simpan Data</Button>
+            <Button variant="outline" onClick={() => setCurrentPage(p => Math.max(p - 1, 1))} disabled={currentPage === 1}>Sebelumnya</Button>
+            <Button variant="outline" onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))} disabled={currentPage === totalPages}>Selanjutnya</Button>
           </div>
-        </form>
-      </Modal>
-
+        </div>
+      </div>
       {alert && <AlertPopup {...alert} />}
     </div>
   );

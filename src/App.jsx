@@ -1,4 +1,5 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { UserProvider } from './context/UserContext';
 import Layout from './components/layout/Layout';
 
@@ -35,6 +36,54 @@ import FormPengajuanUJK from './pages/pengajuan/FormPengajuanUJK';
 import ProfilPage from './pages/profil/ProfilPage';
 import PengaturanPage from './pages/pengaturan/PengaturanPage';
 
+// ==========================================
+// KOMPONEN SATPAM (PROTECTED ROUTE)
+// ==========================================
+const ProtectedRoute = ({ allowedRoles }) => {
+  const storedUser = sessionStorage.getItem('user');
+  
+  // Jika belum login, lempar ke halaman login
+  if (!storedUser) {
+    return <Navigate to="/login" replace />;
+  }
+
+  try {
+    const user = JSON.parse(storedUser);
+    
+    // Normalisasi string role (hilangkan spasi, garis bawah, jadikan huruf kecil semua)
+    const userRole = user.role ? user.role.toLowerCase().replace(/[^a-z0-9]/g, '') : '';
+    
+    // Normalisasi juga role yang diizinkan agar format pengecekannya sama
+    const normalizedAllowedRoles = allowedRoles.map(r => r.toLowerCase().replace(/[^a-z0-9]/g, ''));
+
+    // 2. Jika role user TIDAK ADA di daftar yang diizinkan untuk halaman ini
+    if (!normalizedAllowedRoles.includes(userRole)) {
+      // Lempar kembali ke dashboard masing-masing sesuai role aslinya
+      if (userRole === 'superadmin') return <Navigate to="/super-admin" replace />;
+      if (userRole === 'adminlsp') return <Navigate to="/admin-lsp" replace />;
+      
+      // REVISI: Mengakomodasi 1 F (staf) dan 2 F (staff)
+      if (userRole === 'stafflsp' || userRole === 'staflsp') return <Navigate to="/staff-lsp" replace />;
+      
+      if (userRole === 'adminblk') return <Navigate to="/admin-blk" replace />;
+      if (userRole === 'asesor') return <Navigate to="/asesor" replace />;
+      
+      // Fallback jika role tidak dikenali
+      return <Navigate to="/login" replace />;
+    }
+
+    // 3. Jika aman, izinkan masuk ke komponen (rute) di dalamnya
+    return <Outlet />;
+
+  } catch (error) {
+    // 4. Bersihkan sessionStorage jika data korup
+    sessionStorage.removeItem('user');
+    sessionStorage.removeItem('auth_token'); 
+    return <Navigate to="/login" replace />;
+  }
+};
+
+
 function App() {
   return (
     <UserProvider>
@@ -48,36 +97,51 @@ function App() {
 
           {/* Halaman Ber-Layout (Login Required) */}
           <Route element={<Layout />}>
-            <Route path="/profil" element={<ProfilPage />} />
-            <Route path="/pengaturan" element={<PengaturanPage />} />
-            <Route path="/table-peserta" element={<TablePeserta />} />
+            
+            {/* Rute Global: Bisa diakses SEMUA role asal sudah login */}
+            {/* REVISI: Menambahkan 'staflsp' ke allowedRoles global */}
+            <Route element={<ProtectedRoute allowedRoles={['superadmin', 'adminlsp', 'stafflsp', 'staflsp', 'adminblk', 'asesor']} />}>
+              <Route path="/profil" element={<ProfilPage />} />
+              <Route path="/pengaturan" element={<PengaturanPage />} />
+              <Route path="/table-peserta" element={<TablePeserta />} />
+            </Route>
 
             {/* Role: Super Admin */}
-            <Route path="/super-admin" element={<DashboardSuperAdmin />} />
+            <Route element={<ProtectedRoute allowedRoles={['superadmin']} />}>
+              <Route path="/super-admin" element={<DashboardSuperAdmin />} />
+            </Route>
 
             {/* Role: Admin LSP */}
-            <Route path="/admin-lsp" element={<DashboardAdminLSP />} />
-            <Route path="/admin-lsp/skema" element={<MasterDataSkema />} />
-            <Route path="/admin-lsp/asesor" element={<MasterDataAsesor />} />
-            <Route path="/admin-lsp/penyelia" element={<MasterDataPenyelia />} />
-            <Route path="/admin-lsp/tuk" element={<DataTUK />} />
-            <Route path="/admin-lsp/penugasan" element={<PenugasanPage />} />
-            <Route path="/admin-lsp/buku-induk" element={<BukuIndukPage />} />
+            <Route element={<ProtectedRoute allowedRoles={['adminlsp']} />}>
+              <Route path="/admin-lsp" element={<DashboardAdminLSP />} />
+              <Route path="/admin-lsp/skema" element={<MasterDataSkema />} />
+              <Route path="/admin-lsp/asesor" element={<MasterDataAsesor />} />
+              <Route path="/admin-lsp/penyelia" element={<MasterDataPenyelia />} />
+              <Route path="/admin-lsp/tuk" element={<DataTUK />} />
+              <Route path="/admin-lsp/penugasan" element={<PenugasanPage />} />
+              <Route path="/admin-lsp/buku-induk" element={<BukuIndukPage />} />
+            </Route>
 
             {/* Role: Staff LSP */}
-            <Route path="/staff-lsp" element={<DashboardStaffLSP />} />
-            <Route path="/staff-lsp/surat" element={<SuratMenyurat />} />
-            
-            {/* INI KUNCINYA: Akses Buku Induk buat Staff */}
-            <Route path="/staff-lsp/buku-induk" element={<BukuIndukPage role="staff-lsp" />} />
-            
+            {/* REVISI: Menambahkan 'staflsp' ke allowedRoles khusus staf */}
+            <Route element={<ProtectedRoute allowedRoles={['stafflsp', 'staflsp']} />}>
+              <Route path="/staff-lsp" element={<DashboardStaffLSP />} />
+              <Route path="/staff-lsp/surat" element={<SuratMenyurat />} />
+              <Route path="/staff-lsp/buku-induk" element={<BukuIndukPage role="staff-lsp" />} />
+            </Route>
+
             {/* Role: Admin BLK */}
-            <Route path="/admin-blk" element={<DashboardAdminBLK />} />
-            <Route path="/admin-blk/pengajuan" element={<FormPengajuanUJK />} />
-            
+            <Route element={<ProtectedRoute allowedRoles={['adminblk']} />}>
+              <Route path="/admin-blk" element={<DashboardAdminBLK />} />
+              <Route path="/admin-blk/pengajuan" element={<FormPengajuanUJK />} />
+            </Route>
+
             {/* Role: Asesor */}
-            <Route path="/asesor" element={<DashboardAsesor />} />
-            <Route path="/asesor/data-asesor" element={<ManajemenAkunAsesor />} />
+            <Route element={<ProtectedRoute allowedRoles={['asesor']} />}>
+              <Route path="/asesor" element={<DashboardAsesor />} />
+              <Route path="/asesor/data-asesor" element={<ManajemenAkunAsesor />} />
+            </Route>
+
           </Route>
         </Routes>
       </Router>
