@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import BukuIndukPage from '../buku-induk/BukuIndukPage'; 
-import './DashboardStaffLSP.css';
+
 
 const DashboardStaffLSP = () => {
   const navigate = useNavigate();

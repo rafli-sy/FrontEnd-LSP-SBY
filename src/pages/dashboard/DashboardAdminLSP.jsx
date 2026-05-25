@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import BukuIndukPage from '../buku-induk/BukuIndukPage'; 
-import './DashboardAdminLSP.css';
+
 
 const DashboardAdminLSP = () => {
   const navigate = useNavigate();

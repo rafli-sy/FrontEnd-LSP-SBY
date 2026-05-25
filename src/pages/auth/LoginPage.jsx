@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import './LoginPage.css';
 import logoLSP from '../../assets/logo.png';
@@ -10,6 +10,12 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  // PENTING: Memaksa input form bener-bener kosong/clear setiap halaman dibuka kembali
+  useEffect(() => {
+    setUsername('');
+    setPassword('');
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -49,7 +55,6 @@ const LoginPage = () => {
       if (userRole === 'super admin' || userRole === 'super_admin' || userRole === 'superadmin') {
         window.location.href = '/super-admin';
       } 
-      // REVISI: Pengecekan variasi role Staf LSP (1 F atau 2 F, pakai spasi atau tidak)
       else if (['staff', 'staff lsp', 'stafflsp', 'staf', 'staf lsp', 'staflsp'].includes(userRole)) {
         window.location.href = '/staff-lsp'; 
       } 
@@ -86,7 +91,8 @@ const LoginPage = () => {
 
         {errorMsg && <div className="error-message" style={{color: 'red', marginBottom: '10px', textAlign: 'center'}}>{errorMsg}</div>}
 
-        <form className="login-form" onSubmit={handleLogin}>
+        {/* Tambah atribut amankan autocomplete */}
+        <form className="login-form" onSubmit={handleLogin} autoComplete="off">
           <div className="form-group">
             <label htmlFor="username">Username</label>
             <div className="input-with-icon">
@@ -99,6 +105,7 @@ const LoginPage = () => {
                 onChange={(e) => setUsername(e.target.value)}
                 required 
                 disabled={loading}
+                autoComplete="one-time-code" /* Mengunci browser agar tidak menaruh cache saran teks */
               />
             </div>
           </div>
@@ -115,6 +122,7 @@ const LoginPage = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required 
                 disabled={loading}
+                autoComplete="new-password" /* Memaksa browser mereset kolom sandi tersimpan */
               />
             </div>
           </div>

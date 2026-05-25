@@ -4,7 +4,7 @@ import Button from '../../../components/ui/Button';
 import Modal from '../../../components/ui/Modal'; 
 import AlertPopup from '../../../components/ui/AlertPopup'; 
 import Pagination from '../../../components/ui/Pagination';
-import './DataTUK.css';
+
 
 const DataTUK = () => {
   // Konfigurasi API
