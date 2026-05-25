@@ -12,7 +12,6 @@ import LoginPage from './pages/auth/LoginPage';
 // Dashboard Utama
 import DashboardSuperAdmin from './pages/dashboard/DashboardSuperAdmin';
 import DashboardAdminLSP from './pages/dashboard/DashboardAdminLSP';
-import ProfilAdminLSP from './pages/dashboard/ProfilAdminLSP'; // TAMBAHAN: Import file Profil Admin LSP
 import DashboardStaffLSP from './pages/dashboard/DashboardStaffLSP';
 import DashboardAdminBLK from './pages/dashboard/DashboardAdminBLK';
 import DashboardAsesor from './pages/dashboard/DashboardAsesor';

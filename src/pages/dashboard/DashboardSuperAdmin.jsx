@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Button from '../../components/ui/Button';
 import AlertPopup from '../../components/ui/AlertPopup';
 import Pagination from '../../components/ui/Pagination';
-import './DashboardSuperAdmin.css';
+
 
 const DashboardSuperAdmin = () => {
   const [searchTerm, setSearchTerm] = useState('');

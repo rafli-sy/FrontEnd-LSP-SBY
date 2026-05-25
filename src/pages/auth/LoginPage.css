@@ -85,9 +85,10 @@
   left: 15px;
   color: #6c757d;
   font-size: 1rem;
+  z-index: 5;
 }
 
-.input-with-icon input {
+/* FIX FIX: Duplikasi syntax error dibersihkan & box-sizing ditambahkan */
 .input-with-icon input {
   width: 100%;
   padding: 12px 15px 12px 45px;
@@ -99,6 +100,7 @@
   transition: all 0.3s ease;
   background-color: #f8f9fa;
   outline: none;
+  box-sizing: border-box;
 }
 
 .input-with-icon input:focus {
@@ -107,7 +109,7 @@
   box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.1);
 }
 
-/* Tombol Login */
+/* Tombol Login Kembali Bekerja */
 .login-submit-btn {
   background-color: #0056b3;
   color: #ffffff;
@@ -121,10 +123,9 @@
   justify-content: center;
   align-items: center;
   gap: 10px;
-  transition:
-    background-color 0.3s,
-    transform 0.2s;
+  transition: background-color 0.3s, transform 0.2s;
   margin-top: 10px;
+  width: 100%;
 }
 
 .login-submit-btn:hover {
@@ -157,9 +158,9 @@
 /* --- RESPONSIVE LAYAR HP --- */
 @media (max-width: 480px) {
   .login-card {
-    padding: 30px 20px; /* Padding dikurangi agar tidak mentok di layar kecil */
+    padding: 30px 20px;
   }
   .login-header h2 {
-    font-size: 1.4rem; /* Judul sedikit dikecilkan di HP */
+    font-size: 1.4rem;
   }
 }
