@@ -146,9 +146,6 @@ const Sidebar = (props) => {
                   <Link to="/staff-lsp" className={getActiveClass('/staff-lsp')} onClick={handleMenuClick}><i className="fas fa-home"></i> Dashboard </Link>
                   <p className="menu-label">Manajemen UJK</p>
                   <Link to="/staff-lsp/surat" className={getActiveClass('/staff-lsp/surat')} onClick={handleMenuClick}><i className="fas fa-envelope-open-text"></i> Dokumen & Administrasi</Link>
-                  <p className="menu-label">Sertifikasi</p>
-                  {/* PERBAIKAN PATH STAFF LSP */}
-                  <Link to="/staff-lsp/sertifikat" className={getActiveClass('/staff-lsp/sertifikat')} onClick={handleMenuClick}><i className="fas fa-certificate"></i> Sertifikat</Link>
                 </>
               )}
               {primaryRole === 'admin-blk' && (

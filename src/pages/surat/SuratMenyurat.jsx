@@ -95,19 +95,27 @@ const SuratMenyurat = () => {
   const docsWithForm = ['SPT.01', 'SPT.02', 'SPM.01', 'SPM.02', 'SPM.03', 'balasan', 'DOC.02', 'DOC.06', 'DOC.07', 'DOC.08', 'DOC.10', 'DOC.11', 'DOC.13', 'PLN.01', 'PLN.04'];
   const docsWithTtd = ['balasan', 'SPT.01', 'SPT.02', 'SPM.01', 'SPM.02'];
 
-  const handleKirimBalasanFile = (idUjk) => {
+  const showAlert = (type, title, text, action = null) => {
+    setAlertConfig({ type, title, text, onConfirm: () => { if(action) action(); setAlertConfig(null); }, onCancel: () => setAlertConfig(null) });
+  };
+  const handleConfirmAlert = () => { if (alertConfig?.onConfirm) alertConfig.onConfirm(); else setAlertConfig(null); };
+  const handleCancelAlert = () => { if (alertConfig?.onCancel) alertConfig.onCancel(); else setAlertConfig(null); };
+
+
+  const handleKirimBalasanFile = (idUjk, pengajuanId) => {
     if (!uploadBalasan[idUjk]) return;
     showAlert('save', 'Kirim Surat Balasan', 'Apakah Anda yakin ingin mengirim berkas surat balasan ini ke Page Admin BLK?', async () => {
       try {
         const formDataObj = new FormData();
         formDataObj.append('surat_balasan', uploadBalasan[idUjk]);
-        await axios.post(`${baseUrl}/staf-lsp/upload-balasan-blk/${idUjk}`, formDataObj, {
+        // Sesuai route: Route::post('/staf-lsp/upload-balasan-blk/{pengajuan_id}'
+        await axios.post(`${baseUrl}/staf-lsp/upload-balasan-blk/${pengajuanId}`, formDataObj, {
           headers: { ...config.headers, 'Content-Type': 'multipart/form-data' }
         });
         showAlert('success', 'Pengiriman Berhasil', 'Surat balasan sukses dikirimkan ke Admin BLK!');
         setSentBalasan(prev => ({ ...prev, [idUjk]: true }));
       } catch (error) {
-        showAlert('error', 'Gagal Mengirim', error.response?.data?.message || 'Terjadi kesalahan sistem pengiriman berkas.');
+        showAlert('error', 'Gagal Mengirim', error.response?.data?.message || 'Terjadi kesalahan sistem.');
       }
     });
   };
@@ -115,10 +123,11 @@ const SuratMenyurat = () => {
   const handleKirimSptAsesorFile = (idSkema, roleIdx) => {
     const fileKey = `${idSkema}_${roleIdx}`;
     if (!uploadSptAsesor[fileKey]) return;
-    showAlert('save', 'Kirim Surat Tugas', 'Apakah Anda yakin ingin mengirim dokumen Surat Tugas langsung ke Asesor?', async () => {
+    showAlert('save', 'Kirim Surat Tugas', 'Apakah Anda yakin ingin mengirim dokumen Surat Tugas ke Asesor?', async () => {
       try {
         const formDataObj = new FormData();
         formDataObj.append('surat_tugas', uploadSptAsesor[fileKey]);
+        // Sesuai route: Route::post('/staf-lsp/upload-spt-asesor/{detail_id}/{role_idx}'
         await axios.post(`${baseUrl}/staf-lsp/upload-spt-asesor/${idSkema}/${roleIdx}`, formDataObj, {
           headers: { ...config.headers, 'Content-Type': 'multipart/form-data' }
         });
@@ -133,10 +142,11 @@ const SuratMenyurat = () => {
   const handleKirimBaAsesorFile = (idSkema, roleIdx) => {
     const fileKey = `${idSkema}_${roleIdx}`;
     if (!uploadBaAsesor[fileKey]) return;
-    showAlert('save', 'Kirim Berita Acara', 'Apakah Anda yakin ingin mengirim dokumen Berita Acara langsung ke Asesor?', async () => {
+    showAlert('save', 'Kirim Berita Acara', 'Apakah Anda yakin ingin mengirim dokumen Berita Acara ke Asesor?', async () => {
       try {
         const formDataObj = new FormData();
         formDataObj.append('berita_acara', uploadBaAsesor[fileKey]);
+        // Sesuai route: Route::post('/staf-lsp/upload-ba-asesor/{detail_id}/{role_idx}'
         await axios.post(`${baseUrl}/staf-lsp/upload-ba-asesor/${idSkema}/${roleIdx}`, formDataObj, {
           headers: { ...config.headers, 'Content-Type': 'multipart/form-data' }
         });
@@ -293,6 +303,10 @@ const SuratMenyurat = () => {
   const paginatedUsulan = sortedUsulan.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleInputChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+
+  const handleGoToPeserta = (skema) => {
+    setViewPesertaUjk(skema);
+  };
 
   const handleDocClick = (jenisSurat, suratItem, skemaItem, docKey) => {
     if (!suratItem || !suratItem.pengajuan_id) {
@@ -569,7 +583,7 @@ const SuratMenyurat = () => {
           </div>
 
       ) : selectedPenugasan ? (
-        /* VIEW 5: DETAIL MATRIKS SKEMA - KHUSUS VERSI STAFF LSP (READ-ONLY VIEW DENGAN PANEL FILE UPLOAD SAMA SEPERTI PENUGASANPAGE) */
+        /* VIEW 5: DETAIL MATRIKS SKEMA - KHUSUS VERSI STAFF LSP */
         (() => {
           const activeSurat = antreanSurat.find(item => item.idUjk === selectedPenugasan.idUjk);
           if (!activeSurat) return null;
@@ -628,7 +642,7 @@ const SuratMenyurat = () => {
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
-                      {/* FILE UPLOAD PANEL SAMA PERSIS DENGAN PENUGASANPAGE */}
+                      {/* FILE UPLOAD PANEL */}
                       <div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                           
@@ -741,7 +755,7 @@ const SuratMenyurat = () => {
         })()
 
       ) : (
-        /* VIEW 6: TABEL UTAMA INDEX (VISUAL KEMBAR IDENTIK DENGAN PENUGASANPAGE) */
+        /* VIEW 6: TABEL UTAMA INDEX */
         <div className="fade-in-content">
           {isFromDashboard && (<div style={{ marginBottom: '20px' }}><Button variant="outline" icon="arrow-left" onClick={() => navigate(-1)} style={{borderColor: '#2563eb', color: '#2563eb'}}>Kembali ke Pemantauan</Button></div>)}
           <div className="dashboard-header" style={{ marginBottom: '25px' }}>
@@ -795,7 +809,7 @@ const SuratMenyurat = () => {
                       <td style={{ textAlign: 'center', verticalAlign: 'top', paddingTop: '15px' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
                           
-                          {/* PANEL UPLOAD SURAT BALASAN TABEL UTAMA SAMA PERSIS DENGAN PENUGASANPAGE */}
+                          {/* PANEL UPLOAD SURAT BALASAN TABEL UTAMA */}
                           <div style={{ border: '1px solid #cbd5e1', padding: '10px', borderRadius: '8px', background: '#ffffff', width: '100%', display: 'flex', flexDirection: 'column', gap: '6px', textAlign: 'left', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
                             <span style={{ fontSize: '0.7rem', fontWeight: '800', color: '#475569', textAlign: 'center' }}><i className="fas fa-envelope-open-text text-amber-500"></i> Upload Balasan</span>
                             <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: '#f8fafc', border: '1px dashed #94a3b8', borderRadius: '6px', padding: '8px', cursor: 'pointer', transition: 'all 0.2s ease' }} onMouseOver={(e) => e.currentTarget.style.borderColor = '#f59e0b'} onMouseOut={(e) => e.currentTarget.style.borderColor = '#94a3b8'}>
@@ -804,7 +818,7 @@ const SuratMenyurat = () => {
                               <input type="file" style={{ display: 'none' }} accept=".pdf" onChange={(e) => setUploadBalasan(prev => ({ ...prev, [item.idUjk]: e.target.files[0] }))} />
                             </label>
                             {uploadBalasan[item.idUjk] && !sentBalasan[item.idUjk] && (
-                              <button onClick={() => handleKirimBalasanFile(item.idUjk)} style={{ background: '#10b981', color: '#ffffff', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 'bold', width:'100%', display:'flex', justifyContent:'center', alignItems:'center', gap:'4px' }}><i className="fas fa-paper-plane"></i> Kirim ke BLK</button>
+                              <button onClick={() => handleKirimBalasanFile(item.idUjk, item.pengajuan_id)} style={{ background: '#10b981', color: '#ffffff', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 'bold', width:'100%', display:'flex', justifyContent:'center', alignItems:'center', gap:'4px' }}><i className="fas fa-paper-plane"></i> Kirim ke BLK</button>
                             )}
                           </div>
                           

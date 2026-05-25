@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import axios from 'axios'; // ---> KITA AKTIFKAN LAGI DOSENNYA, BROK!
+import axios from 'axios';
 import Button from '../../components/ui/Button';
 import AlertPopup from '../../components/ui/AlertPopup';
 import Pagination from '../../components/ui/Pagination';
@@ -30,7 +30,7 @@ const Sertifikat = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // ─── CONFIG API UTAMA + JAMU ANTI CORS NGROK ──────────────────────────────────
+  // ─── CONFIG API UTAMA ────────────────────────────────────────────────────────
   const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://untracked-exponent-oboe.ngrok-free.dev';
   const token = sessionStorage.getItem('auth_token') || localStorage.getItem('access_token');
   
@@ -38,13 +38,18 @@ const Sertifikat = () => {
     headers: { 
       'Authorization': `Bearer ${token}`,
       'Accept': 'application/json',
-      // KUNCI UTAMA: Biar Ngrok gak nge-block request axios di browser
       'ngrok-skip-browser-warning': 'true' 
     } 
   }), [token]);
 
   const showAlert = (type, title, text, action = null) => {
-    setAlertConfig({ type, title, text, onConfirm: () => { if (action) action(); setAlertConfig(null); }, onCancel: () => setAlertConfig(null) });
+    setAlertConfig({ 
+      type, 
+      title, 
+      text, 
+      onConfirm: () => { if (action) action(); setAlertConfig(null); }, 
+      onCancel: () => setAlertConfig(null) 
+    });
   };
 
   // ─── KALKULASI STATUS OTOMATIS BERDASARKAN TANGGAL ───────────────────────────
@@ -74,11 +79,12 @@ const Sertifikat = () => {
     setFormData(prev => ({ ...prev, status: calculatedStatus }));
   }, [formData.tanggal_penerbitan, formData.masa_berlaku]);
 
-  // ─── FETCH UTAMA TABEL SERTIFIKAT ─────────────────────────────────────────────
+  // ─── FETCH UTAMA TABEL SERTIFIKAT ───────────────────────────────────────────
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.get(`${baseUrl}/api/sertifikat`, config);
+      // Langsung point ke admin-lsp
+      const response = await axios.get(`${baseUrl}/api/admin-lsp/sertifikat`, config);
       setData(response.data?.data || []);
     } catch (error) {
       console.error('Error fetching sertifikat:', error);
@@ -92,7 +98,7 @@ const Sertifikat = () => {
     fetchData();
   }, []);
 
-  // ─── LIVE SEARCH PESERTA KE BACKEND ───────────────────────────────────────────
+  // ─── LIVE SEARCH PESERTA KE BACKEND ─────────────────────────────────────────
   const handleSearchPeserta = async (keyword) => {
     setSearchPesertaKeyword(keyword);
     
@@ -107,7 +113,6 @@ const Sertifikat = () => {
     }
 
     try {
-      // Disesuaikan dengan endpoint baru laravel kamu: /api/admin-lsp/peserta-kompeten
       const response = await axios.get(`${baseUrl}/api/admin-lsp/peserta-kompeten?keyword=${keyword}`, config);
       setPesertaSuggestions(response.data?.data || []);
     } catch (error) {
@@ -131,13 +136,13 @@ const Sertifikat = () => {
     setSelectedPesertaData(null);
   };
 
-  // ─── SUBMIT DATA ASLI KE DATABASE ─────────────────────────────────────────────
+  // ─── SUBMIT DATA ASLI KE DATABASE ───────────────────────────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      const response = await axios.post(`${baseUrl}/api/sertifikat`, formData, config);
+      const response = await axios.post(`${baseUrl}/api/admin-lsp/tambah-data-sertifikat`, formData, config);
       showAlert('success', 'Berhasil', response.data?.message || 'Sertifikat berhasil disimpan!');
       fetchData();
       closeModal();
