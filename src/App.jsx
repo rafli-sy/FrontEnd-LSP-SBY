@@ -12,7 +12,6 @@ import LoginPage from './pages/auth/LoginPage';
 // Dashboard Utama
 import DashboardSuperAdmin from './pages/dashboard/DashboardSuperAdmin';
 import DashboardAdminLSP from './pages/dashboard/DashboardAdminLSP';
-import ProfilAdminLSP from './pages/dashboard/ProfilAdminLSP'; // TAMBAHAN: Import file Profil Admin LSP
 import DashboardStaffLSP from './pages/dashboard/DashboardStaffLSP';
 import DashboardAdminBLK from './pages/dashboard/DashboardAdminBLK';
 import DashboardAsesor from './pages/dashboard/DashboardAsesor';
@@ -25,6 +24,7 @@ import MasterDataSkema from './pages/master/skema/MasterDataSkema';
 import MasterDataAsesor from './pages/master/asesor/MasterDataAsesor';
 import MasterDataPenyelia from './pages/master/penyelia/MasterDataPenyelia';
 import DataTUK from './pages/master/tuk/DataTUK';
+import Sertifikat from './pages/sertifikat/Sertifikat';
 
 // Operasional
 import PenugasanPage from './pages/penugasan/PenugasanPage';
@@ -121,14 +121,15 @@ function App() {
               <Route path="/admin-lsp/tuk" element={<DataTUK />} />
               <Route path="/admin-lsp/penugasan" element={<PenugasanPage />} />
               <Route path="/admin-lsp/buku-induk" element={<BukuIndukPage />} />
+              <Route path="/admin-lsp/sertifikat" element={<Sertifikat />} />
             </Route>
 
             {/* Role: Staff LSP */}
-            {/* REVISI: Menambahkan 'staflsp' ke allowedRoles khusus staf */}
             <Route element={<ProtectedRoute allowedRoles={['stafflsp', 'staflsp']} />}>
               <Route path="/staff-lsp" element={<DashboardStaffLSP />} />
               <Route path="/staff-lsp/surat" element={<SuratMenyurat />} />
               <Route path="/staff-lsp/buku-induk" element={<BukuIndukPage role="staff-lsp" />} />
+              <Route path="/staff-lsp/sertifikat" element={<Sertifikat />} />
             </Route>
 
             {/* Role: Admin BLK */}

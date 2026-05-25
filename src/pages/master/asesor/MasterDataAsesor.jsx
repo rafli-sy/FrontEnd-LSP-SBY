@@ -3,7 +3,7 @@ import axios from 'axios';
 import Button from '../../../components/ui/Button';
 import AlertPopup from '../../../components/ui/AlertPopup';
 import Pagination from '../../../components/ui/Pagination';
-import './MasterDataAsesor.css';
+
 
 const MasterDataAsesor = () => {
   // Konfigurasi API

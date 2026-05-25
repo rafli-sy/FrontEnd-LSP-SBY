@@ -3,7 +3,7 @@ import axios from 'axios';
 import Button from '../../../components/ui/Button';
 import Modal from '../../../components/ui/Modal';
 import AlertPopup from '../../../components/ui/AlertPopup';
-import './MasterDataSkema.css';
+
 
 const MasterDataSkema = () => {
   const token = sessionStorage.getItem('auth_token') || localStorage.getItem('access_token');

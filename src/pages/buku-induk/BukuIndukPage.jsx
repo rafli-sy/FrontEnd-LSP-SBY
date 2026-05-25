@@ -6,7 +6,7 @@ import AlertPopup from '../../components/ui/AlertPopup';
 import Pagination from '../../components/ui/Pagination'; 
 import TablePeserta from '../TablePeserta/TablePeserta';
 
-import './BukuIndukPage.css';
+
 
 const formatTgl = (tgl) => {
   if (!tgl) return '-';

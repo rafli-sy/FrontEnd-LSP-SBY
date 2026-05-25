@@ -4,7 +4,7 @@ import { useUser } from '../../context/UserContext';
 import Button from '../../components/ui/Button'; 
 import AlertPopup from '../../components/ui/AlertPopup';
 import Pagination from '../../components/ui/Pagination';
-import TablePeserta from '../TablePeserta/TablePeserta'; // PERBAIKAN: Import komponen tabel
+import TablePeserta from '../TablePeserta/TablePeserta'; 
 
 const FormPengajuanUJK = () => {
   const navigate = useNavigate();
