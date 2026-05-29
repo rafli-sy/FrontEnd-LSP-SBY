@@ -199,24 +199,21 @@
   position: absolute;
   top: 15px;
   right: 15px;
-  background: #f1f5f9;
-  border: none;
-  width: 36px;
-  height: 36px;
+  width: 35px;
+  height: 35px;
   border-radius: 50%;
+  background: #f1f5f9; /* Warna dasar abu muda */
+  border: none;
   color: #64748b;
-  font-size: 1.2rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  z-index: 10;
+  font-size: 1.2rem;
 }
 
 .modal-close:hover {
-  background: #ef4444;
-  color: white;
-  transform: rotate(90deg);
+  background: #ffffff; /* Bulet merah pas di-hover */
+  color: #ffffff;      /* X-nya jadi PUTIH biar kelihatan jelas! */
+  transform: rotate(90deg); /* Kasih efek putar dikit biar keren */
 }
 
 .modal-header {
