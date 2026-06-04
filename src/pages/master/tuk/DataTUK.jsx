@@ -5,9 +5,7 @@ import Modal from '../../../components/ui/Modal';
 import AlertPopup from '../../../components/ui/AlertPopup'; 
 import Pagination from '../../../components/ui/Pagination';
 
-
 const DataTUK = () => {
-  // Konfigurasi API
   const token = sessionStorage.getItem('auth_token') || localStorage.getItem('access_token');
   const baseUrl = `${import.meta.env.VITE_API_BASE_URL}/api`;
   const config = useMemo(() => ({
@@ -25,11 +23,9 @@ const DataTUK = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
-  // FETCH DATA DARI BACKEND
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      // Backend menggunakan endpoint /master/jejaring
       const statusParam = filterStatus === 'Semua' ? 'semua' : filterStatus.toLowerCase();
       const res = await axios.get(`${baseUrl}/master/jejaring?status=${statusParam}`, config);
       setTukList(res.data.data || []);
@@ -79,7 +75,7 @@ const DataTUK = () => {
         showAlert('success', 'Berhasil!', 'Data TUK berhasil diperbarui.');
       }
       setIsModalOpen(false);
-      fetchData(); // Refresh tabel
+      fetchData(); 
     } catch (error) {
       showAlert('error', 'Gagal', error.response?.data?.message || 'Terjadi kesalahan sistem.');
     }
@@ -108,30 +104,36 @@ const DataTUK = () => {
         <AlertPopup type={alertConfig.type} title={alertConfig.title} text={alertConfig.text} onConfirm={() => { if(alertConfig.action) alertConfig.action(); setAlertConfig({type:null})}} onCancel={() => setAlertConfig({type:null})} />
       )}
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
+      {/* HEADER UTAMA */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '25px', flexWrap: 'wrap', gap: '15px' }}>
         <div>
-          <h2>Data Tempat Uji Kompetensi (TUK)</h2>
+          <h2 style={{ margin: 0, color: '#0f172a' }}>Data Tempat Uji Kompetensi (TUK)</h2>
           <p className="text-muted" style={{ margin: '5px 0 0' }}>Manajemen daftar lokasi penyelenggaraan ujian kompetensi.</p>
         </div>
-        
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          <select className="form-input" value={filterStatus} onChange={(e) => {setFilterStatus(e.target.value); setCurrentPage(1);}} style={{ width: 'auto', padding: '10px 14px', cursor: 'pointer' }}>
-            <option value="Aktif">Lihat Aktif</option>
-            <option value="Non-aktif">Lihat Non-Aktif</option>
-            <option value="Semua">Semua</option>
-          </select>
-          <Button variant="primary" icon="map-marker-alt" onClick={handleTambah}>Tambah TUK</Button>
-        </div>
+        <Button variant="primary" icon="map-marker-alt" onClick={handleTambah}>Tambah TUK</Button>
       </div>
 
-      <div className="dashboard-card" style={{ padding: 0 }}>
-        <div style={{ padding: '20px', borderBottom: '1px solid #e2e8f0', backgroundColor: '#f8fafc' }}>
-          <input type="text" className="form-input" placeholder="Cari Institusi TUK / Kode..." value={searchQuery} onChange={(e) => {setSearchQuery(e.target.value); setCurrentPage(1);}} style={{ width: '300px' }} />
+      <div className="dashboard-card" style={{ padding: 0, overflow: 'hidden', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+        
+        {/* TOOLBAR PENCARIAN & FILTER MODERN */}
+        <div style={{ padding: '20px', borderBottom: '1px solid #e2e8f0', backgroundColor: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+          <div style={{ flex: '1', minWidth: '250px', position: 'relative', maxWidth: '400px' }}>
+            <i className="fas fa-search" style={{ position: 'absolute', left: '12px', top: '12px', color: '#94a3b8' }}></i>
+            <input type="text" placeholder="Cari Institusi TUK / Kode..." value={searchQuery} onChange={(e) => {setSearchQuery(e.target.value); setCurrentPage(1);}} style={{ width: '100%', padding: '10px 10px 10px 35px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', fontSize: '0.9rem' }} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <label style={{ fontSize: '0.85rem', fontWeight: '600', color: '#475569' }}><i className="fas fa-filter"></i> Filter:</label>
+            <select value={filterStatus} onChange={(e) => {setFilterStatus(e.target.value); setCurrentPage(1);}} style={{ padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', background: '#fff', fontSize: '0.9rem', cursor: 'pointer' }}>
+              <option value="Aktif">Lihat Aktif</option>
+              <option value="Non-aktif">Lihat Non-Aktif</option>
+              <option value="Semua">Semua Status</option>
+            </select>
+          </div>
         </div>
 
         <div className="table-responsive" style={{ padding: '20px' }}>
           <table className="admin-table">
-            <thead style={{ backgroundColor: '#f8fafc' }}>
+            <thead>
               <tr>
                 <th style={{ width: '5%', textAlign: 'center' }}>No</th>
                 <th style={{ width: '15%' }}>Kode TUK</th>
@@ -142,7 +144,7 @@ const DataTUK = () => {
               </tr>
             </thead>
             <tbody>
-              {isLoading ? <tr><td colSpan="6" style={{textAlign:'center', padding:'20px'}}>Memuat Data...</td></tr> : paginatedTUK.map((tuk, index) => (
+              {isLoading ? <tr><td colSpan="6" style={{textAlign:'center', padding:'30px', color:'#94a3b8'}}><i className="fas fa-spinner fa-spin fa-2x"></i><br/>Memuat Data...</td></tr> : paginatedTUK.length > 0 ? paginatedTUK.map((tuk, index) => (
                 <tr key={tuk.id}>
                   <td style={{ textAlign: 'center', color: '#64748b' }}>{(currentPage - 1) * itemsPerPage + index + 1}</td>
                   <td><strong>{tuk.kodeInstitusi}</strong></td>
@@ -160,18 +162,12 @@ const DataTUK = () => {
                     <Button variant="outline" icon="edit" onClick={() => handleEdit(tuk)} />
                   </td>
                 </tr>
-              ))}
+              )) : <tr><td colSpan="6" style={{textAlign:'center', padding:'30px', color:'#94a3b8'}}>Data tidak ditemukan.</td></tr>}
             </tbody>
           </table>
         </div>
         
-        <div style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{color:'#64748b'}}>Halaman {currentPage} dari {totalPages}</span>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <Button variant="outline" onClick={() => setCurrentPage(p => Math.max(p - 1, 1))} disabled={currentPage === 1}>Sebelumnya</Button>
-            <Button variant="outline" onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))} disabled={currentPage === totalPages}>Selanjutnya</Button>
-          </div>
-        </div>
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalData={filteredTUK.length} itemsPerPage={itemsPerPage} />
       </div>
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={modalMode === 'create' ? 'Tambah Data TUK' : 'Edit Data TUK'}>

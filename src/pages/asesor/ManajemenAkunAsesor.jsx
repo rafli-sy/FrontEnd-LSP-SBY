@@ -4,7 +4,6 @@ import Button from '../../components/ui/Button';
 import AlertPopup from '../../components/ui/AlertPopup';
 import Modal from '../../components/ui/Modal';
 
-
 const ManajemenAkunAsesor = () => {
   const { userData } = useUser();
 
@@ -32,7 +31,37 @@ const ManajemenAkunAsesor = () => {
   const getBidangName = (b) => b?.namaBidang || b?.nama_bidang || b?.nama || 'Tanpa Nama';
   const getSkemaName = (s) => s?.namaSkema || s?.nama_skema || s?.nama || 'Tanpa Nama';
 
+  // Helper untuk format tanggal yang cantik
+  const formatTanggalIndo = (tgl) => {
+    if (!tgl || tgl.trim() === '') return '-'; 
+    try {
+      const date = new Date(tgl);
+      if (isNaN(date.getTime())) return tgl; // Jika Invalid Date, tampilkan string aslinya saja
+      return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    } catch (e) {
+      return tgl;
+    }
+  };
+
   // --- FETCH MASTER DATA & ASESOR DATA ---
+  const fetchAsesorData = async (token) => {
+      try {
+        const resAsesor = await fetch(`${apiUrl}/api/asesor/data`, { 
+            headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': '69420' } 
+        });
+        if (resAsesor.ok) {
+          const resultAsesor = await resAsesor.json();
+          if (resultAsesor.data) {
+            setAsesorData(resultAsesor.data);
+          } else {
+             setAsesorData(resultAsesor);
+          }
+        }
+      } catch (error) {
+        console.error("Gagal mengambil data asesor:", error);
+      }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       setIsLoadingMaster(true);
@@ -40,13 +69,11 @@ const ManajemenAkunAsesor = () => {
       const headers = { 'Accept': 'application/json', 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': '69420' };
 
       try {
-        // PERBAIKAN: Menambahkan ?status=semua agar backend mengirim seluruh data
         const resBidang = await fetch(`${apiUrl}/api/master/bidang?status=semua`, { headers });
         const resSkema = await fetch(`${apiUrl}/api/master/skema?status=semua`, { headers });
         
         if (resBidang.ok) { 
             const result = await resBidang.json(); 
-            // Ambil array dari data, mengatasi segala bentuk format pagination
             const arr = Array.isArray(result) ? result : (Array.isArray(result.data) ? result.data : []);
             setMasterBidang(arr); 
         }
@@ -56,21 +83,17 @@ const ManajemenAkunAsesor = () => {
             setMasterSkema(arr); 
         }
 
-        // Ambil Data Asesor Login
-        const resAsesor = await fetch(`${apiUrl}/api/asesor/data`, { headers });
-        if (resAsesor.ok) {
-          const resultAsesor = await resAsesor.json();
-          if (resultAsesor.data) {
-            setAsesorData(resultAsesor.data);
-          }
-        }
+        // Fetch data asesor awal
+        await fetchAsesorData(token);
+
       } catch (error) {
-        console.error("Gagal mengambil data:", error);
+        console.error("Gagal mengambil data master:", error);
       } finally {
         setIsLoadingMaster(false);
       }
     };
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiUrl]);
 
   const showAlert = (type, title, text, action = null) => {
@@ -88,8 +111,9 @@ const ManajemenAkunAsesor = () => {
       const currentSkemaNamas = asesorData.skema ? asesorData.skema.map(s => getSkemaName(s)) : [];
 
       setEditData({
-        noRegistrasi: asesorData.noRegistrasi || '',
-        masaBerlaku: asesorData.masa_berlaku || '', 
+        noRegistrasi: asesorData.noRegistrasi || asesorData.no_registrasi || '',
+        // PERBAIKAN 1: Tambahkan masa_berlaku_sertifikat sebagai properti yang dibaca saat mode edit
+        masaBerlaku: asesorData.masa_berlaku_sertifikat || asesorData.masa_berlaku || asesorData.masaBerlaku || '', 
         bidang_id: currentBidangId,
         kejuruanNama: currentBidangNama,
         skema_id: currentSkemaIds,
@@ -154,8 +178,14 @@ const ManajemenAkunAsesor = () => {
       try {
         const token = sessionStorage.getItem('auth_token');
         const formData = new FormData();
+        
         formData.append('noRegistrasi', editData.noRegistrasi);
-        formData.append('masaBerlaku', editData.masaBerlaku);
+        
+        // PERBAIKAN 2: Kirim data dengan nama kolom persis seperti di backend (masa_berlaku_sertifikat)
+        if (editData.masaBerlaku) {
+          formData.append('masa_berlaku_sertifikat', editData.masaBerlaku);
+        }
+        
         formData.append('bidang_id[]', editData.bidang_id); 
         
         editData.skema_id.forEach(id => {
@@ -179,7 +209,7 @@ const ManajemenAkunAsesor = () => {
         
         if (response.ok) {
           showAlert('success', 'Berhasil Disimpan', 'Data Lisensi dan Skema telah diperbarui.');
-          setAsesorData(result.data); 
+          await fetchAsesorData(token);
           setIsEditing(false);
         } else {
           throw new Error(result.message || 'Gagal menyimpan data.');
@@ -241,10 +271,20 @@ const ManajemenAkunAsesor = () => {
                   <span style={{ fontSize: '0.85rem', padding: '4px 10px', backgroundColor: '#d1fae5', color: '#065f46', borderRadius: '20px', fontWeight: 'bold' }}>Asesor Aktif</span>
                </div>
             </div>
+            
             <div style={{ borderTop: '1px dashed #cbd5e1', paddingTop: '15px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div><small style={{ color: '#64748b', display: 'block' }}>Nomor Induk Kependudukan (NIK)</small><strong style={{ color: '#334155' }}>{userData?.nik || '-'}</strong></div>
-              <div><small style={{ color: '#64748b', display: 'block' }}>Alamat Email</small><strong style={{ color: '#334155' }}>{userData?.email || '-'}</strong></div>
-              <div><small style={{ color: '#64748b', display: 'block' }}>No. Handphone / WhatsApp</small><strong style={{ color: '#334155' }}>{userData?.noTelp || '-'}</strong></div>
+              <div>
+                <small style={{ color: '#64748b', display: 'block' }}>Alamat Email</small>
+                <strong style={{ color: '#334155' }}>{userData?.email || '-'}</strong>
+              </div>
+              <div>
+                <small style={{ color: '#64748b', display: 'block' }}>No. Handphone / WhatsApp</small>
+                <strong style={{ color: '#334155' }}>{userData?.nomorTelpon || userData?.nomor_telpon || userData?.no_telp || '-'}</strong>
+              </div>
+              <div>
+                <small style={{ color: '#64748b', display: 'block' }}>Alamat Domisili</small>
+                <strong style={{ color: '#334155' }}>{userData?.alamatDomisili || userData?.alamat_domisili || userData?.alamat || '-'}</strong>
+              </div>
             </div>
           </div>
         </div>
@@ -259,7 +299,7 @@ const ManajemenAkunAsesor = () => {
           </div>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-            <div><small style={{ color: '#64748b', display: 'block' }}>Nomor Registrasi MET</small><strong style={{ color: '#0f172a', fontSize: '1.1rem' }}>{asesorData?.noRegistrasi || '-'}</strong></div>
+            <div><small style={{ color: '#64748b', display: 'block' }}>Nomor Registrasi MET</small><strong style={{ color: '#0f172a', fontSize: '1.1rem' }}>{asesorData?.noRegistrasi || asesorData?.no_registrasi || '-'}</strong></div>
             <div>
               <small style={{ color: '#64748b', display: 'block', marginBottom: '4px' }}>Sertifikat Asesor</small>
               {asesorData?.sertifikat ? (
@@ -271,7 +311,8 @@ const ManajemenAkunAsesor = () => {
               )}
             </div>
             <div style={{ display: 'flex', gap: '20px' }}>
-              <div><small style={{ color: '#64748b', display: 'block' }}>Masa Berlaku</small><strong style={{ color: '#334155' }}>{asesorData?.masa_berlaku || '-'}</strong></div>
+              {/* PERBAIKAN 3: Gunakan masa_berlaku_sertifikat untuk rendering UI */}
+              <div><small style={{ color: '#64748b', display: 'block' }}>Masa Berlaku</small><strong style={{ color: '#334155' }}>{formatTanggalIndo(asesorData?.masa_berlaku_sertifikat)}</strong></div>
               <div><small style={{ color: '#64748b', display: 'block' }}>Bidang Keahlian</small><strong style={{ color: '#3b82f6' }}>{namaBidangTampil}</strong></div>
             </div>
           </div>

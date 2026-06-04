@@ -1,15 +1,102 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import BukuIndukPage from '../buku-induk/BukuIndukPage'; 
-
 
 const DashboardStaffLSP = () => {
   const navigate = useNavigate();
 
-  // --- DATA STATISTIK PINTASAN KHUSUS STAFF LSP (NYAMBUNG 100% SAMPAI APP.JSX) ---
+  // STATE UNTUK MENAMPUNG ANGKA STATISTIK REAL-TIME
+  const [statsData, setStatsData] = useState({ menunggu: 0, terbit: 0 });
+
+  // Konfigurasi Axios
+  const token = sessionStorage.getItem('auth_token') || localStorage.getItem('access_token');
+  const baseUrl = `${import.meta.env.VITE_API_BASE_URL}/api`;
+  const config = useMemo(() => ({
+    headers: {
+      'ngrok-skip-browser-warning': 'true',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  }), [token]);
+
+  // FETCHING DATA UNTUK MENGHITUNG STATISTIK
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        // Ambil data pengajuan
+        const res = await axios.get(`${baseUrl}/staf-lsp/semua-pengajuan`, config).catch(() => 
+          axios.get(`${baseUrl}/admin-lsp/semua-pengajuan`, config)
+        );
+        const rawData = res.data.data || [];
+        const grouped = {};
+        
+        // Kelompokkan berdasarkan nomor pengajuan (mirip logika di SuratMenyurat.jsx)
+        rawData.forEach(item => {
+          if (item.status_pengajuan === 'Dibatalkan') return;
+          const validPengajuanId = item.pengajuan_ujk_id || item.pengajuan?.id || item.pengajuan_id;
+          const ujkId = item.pengajuan?.nomor_surat_pengajuan || `UJK-${validPengajuanId}`;
+          
+          if (!grouped[ujkId]) {
+            grouped[ujkId] = { skemaList: [] };
+          }
+
+          const jadwal = item.jadwal_asesmen || item.jadwalAsesmen;
+          const isPlotted = !!jadwal; // Jika ada jadwal, berarti sudah di-plot oleh Admin LSP
+
+          grouped[ujkId].skemaList.push({
+            isPlotted: isPlotted,
+            status: isPlotted ? 'Selesai Diplot' : 'Sedang Diproses'
+          });
+        });
+
+        // Hitung total status
+        let menungguCount = 0;
+        let terbitCount = 0;
+
+        Object.values(grouped).forEach(item => {
+          // Jika semua skema dalam 1 surat sudah di-plot, maka "Surat Diterbitkan"
+          const isSemuaDiplot = item.skemaList.every(s => s.isPlotted || s.status === 'Ditolak');
+          
+          if (isSemuaDiplot) {
+            terbitCount++;
+          } else {
+            menungguCount++;
+          }
+        });
+
+        // Simpan ke state
+        setStatsData({ menunggu: menungguCount, terbit: terbitCount });
+
+      } catch (error) {
+        console.error('Error fetching dashboard stats:', error);
+      }
+    };
+
+    if (token) {
+      fetchStats();
+    }
+  }, [baseUrl, config, token]);
+
+
+  // --- DATA STATISTIK TERHUBUNG KE STATE ---
   const staffStats = [
-    { title: 'Menunggu Dokumen', count: '3', icon: 'fa-file-invoice', color: '#ea580c', bg: '#fff7ed', path: '/staff-lsp/surat' },
-    { title: 'Surat Tugas Terbit', count: '18', icon: 'fa-mail-bulk', color: '#2563eb', bg: '#eff6ff', path: '/staff-lsp/surat' },
+    { 
+      title: 'Menunggu Dokumen', 
+      count: statsData.menunggu, 
+      icon: 'fa-file-invoice', 
+      color: '#ea580c', 
+      bg: '#fff7ed', 
+      path: '/staff-lsp/surat' 
+    },
+    { 
+      title: 'Surat Tugas Terbit', 
+      count: statsData.terbit, 
+      icon: 'fa-mail-bulk', 
+      color: '#2563eb', 
+      bg: '#eff6ff', 
+      path: '/staff-lsp/surat' 
+    },
   ];
 
   const handleNavigate = (path) => {
@@ -47,7 +134,10 @@ const DashboardStaffLSP = () => {
               <i className={`fas ${stat.icon}`}></i>
             </div>
             <div>
-              <h3 style={{ margin: '0 0 4px 0', fontSize: '1.75rem', color: '#0f172a', fontWeight: '800' }}>{stat.count}</h3>
+              {/* TAMPILKAN ANGKA DARI STATE */}
+              <h3 style={{ margin: '0 0 4px 0', fontSize: '1.75rem', color: '#0f172a', fontWeight: '800' }}>
+                {stat.count}
+              </h3>
               <p style={{ margin: 0, color: '#64748b', fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase' }}>{stat.title}</p>
             </div>
           </div>

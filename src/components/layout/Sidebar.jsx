@@ -14,6 +14,9 @@ const Sidebar = (props) => {
 
   const { userData } = useUser();
   const [primaryRole, setPrimaryRole] = useState('');
+  
+  // State baru untuk menampung URL foto hasil fetch biner di Sidebar
+  const [sidebarPhotoUrl, setSidebarPhotoUrl] = useState('');
 
   const actualIsOpen = isMobileOpen !== undefined ? isMobileOpen : isOpen;
   const isDesktopClosed = isDesktopOpen !== undefined ? !isDesktopOpen : !isOpen;
@@ -22,6 +25,57 @@ const Sidebar = (props) => {
     if (setIsMobileOpen) setIsMobileOpen(false);
     if (closeSidebar) closeSidebar();
   };
+
+  // SINKRONISASI: Fungsi Fetching Foto Profil Biner untuk Komponen Sidebar
+  const fetchSidebarPhoto = async () => {
+    const token = sessionStorage.getItem('auth_token');
+    if (!token) {
+      setSidebarPhotoUrl('');
+      return;
+    }
+
+    try {
+      // PERBAIKAN 1: Tambahkan Cache-Busting (timestamp) agar selalu ambil foto terbaru dari backend
+      const timestamp = new Date().getTime();
+      const imgResponse = await fetch(`${apiUrl}/api/getFotoProfile?t=${timestamp}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'ngrok-skip-browser-warning': '69420' // Bypass warning page Ngrok
+        }
+      });
+      
+      if (imgResponse.ok) {
+        const imageBlob = await imgResponse.blob();
+        
+        // PERBAIKAN 2: Bersihkan URL Blob lama dari memori sebelum memasang yang baru
+        setSidebarPhotoUrl((prevUrl) => {
+          if (prevUrl && prevUrl.startsWith('blob:')) {
+            URL.revokeObjectURL(prevUrl);
+          }
+          return URL.createObjectURL(imageBlob);
+        });
+      } else {
+        setSidebarPhotoUrl(''); // Kosongkan jika backend merespon selain 200 OK
+      }
+    } catch (error) {
+      console.error("Gagal load foto profil di sidebar:", error);
+      setSidebarPhotoUrl('');
+    }
+  };
+
+  // Jalankan ulang fungsi pemanggilan foto ketika data user berubah
+  useEffect(() => {
+    fetchSidebarPhoto();
+
+    // PERBAIKAN 3: Cleanup function untuk mencegah memory leak saat komponen unmount
+    return () => {
+      if (sidebarPhotoUrl && sidebarPhotoUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(sidebarPhotoUrl);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userData, apiUrl]);
 
   useEffect(() => {
     if (currentPath.startsWith('/super-admin')) setPrimaryRole('super-admin');
@@ -100,6 +154,9 @@ const Sidebar = (props) => {
     }
   };
 
+  // URL Cadangan otomatis berbasis inisial nama jika foto belum diatur di database
+  const fallbackAvatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(userData?.namaLengkap || 'User')}&background=random&color=fff&size=150`;
+
   return (
     <>
       {actualIsOpen && window.innerWidth <= 992 && (
@@ -115,7 +172,7 @@ const Sidebar = (props) => {
             </Link>
           </div>
 
-          <nav className="sidebar-nav" style={{ overflowY: 'auto' }}>
+          <nav className="sidebar-nav" style={{ overflowY: 'auto', overflowX: 'hidden' }}>
               {primaryRole === 'super-admin' && (
                 <>
                   <div className="menu-label">SISTEM KONTROL</div>
@@ -129,7 +186,6 @@ const Sidebar = (props) => {
                   <p className="menu-label">The Controller</p>
                   <Link to="/admin-lsp" className={getActiveClass('/admin-lsp')} onClick={handleMenuClick}><i className="fas fa-home"></i> Dashboard </Link>
                   <p className="menu-label">Sertifikasi</p>
-                  {/* PERBAIKAN PATH ADMIN LSP */}
                   <Link to="/admin-lsp/sertifikat" className={getActiveClass('/admin-lsp/sertifikat')} onClick={handleMenuClick}><i className="fas fa-certificate"></i> Sertifikat</Link>
                   <p className="menu-label">Manajemen UJK</p>
                   <Link to="/admin-lsp/penugasan" className={getActiveClass('/admin-lsp/penugasan')} onClick={handleMenuClick}><i className="fas fa-tasks"></i> Penugasan & Dokumen</Link>
@@ -169,16 +225,18 @@ const Sidebar = (props) => {
           <div className="profile-switch-card">
             <div className="user-profile-info" onClick={handleGoToProfile} style={{ cursor: 'pointer' }} title="Buka Profil">
               <div className="user-avatar-wrapper">
-                {userData?.foto ? (
-                  <img 
-                    src={`${apiUrl}/storage/${userData.foto}`} 
-                    alt="Avatar" 
-                    className="user-avatar-img" 
-                    onError={(e) => { e.target.onerror = null; e.target.src = '/default-avatar.png'; }} 
-                  /> 
-                ) : (
-                  <i className="fas fa-user-circle user-avatar-icon"></i>
-                )}
+                
+                {/* SINKRONISASI UTAMA: Mengganti pemanggilan URL mentah ke Blob URL yang bersih */}
+                <img 
+                  src={sidebarPhotoUrl || fallbackAvatarUrl} 
+                  alt="Avatar" 
+                  className="user-avatar-img" 
+                  onError={(e) => { 
+                    e.target.onerror = null; // Menahan agar tidak terjadi infinite loop request
+                    e.target.src = fallbackAvatarUrl; 
+                  }} 
+                /> 
+                
                 <span className="status-indicator"></span>
               </div>
               

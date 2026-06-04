@@ -4,9 +4,7 @@ import Button from '../../../components/ui/Button';
 import AlertPopup from '../../../components/ui/AlertPopup';
 import Pagination from '../../../components/ui/Pagination';
 
-
 const MasterDataAsesor = () => {
-  // Konfigurasi API
   const token = sessionStorage.getItem('auth_token') || localStorage.getItem('access_token');
   const baseUrl = `${import.meta.env.VITE_API_BASE_URL}/api`;
   const config = useMemo(() => ({
@@ -22,15 +20,10 @@ const MasterDataAsesor = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
-  // Fetch Data dari API
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      // Mengambil data dari backend
       const res = await axios.get(`${baseUrl}/admin-lsp/asesor?status=semua`, config);
-      
-      // Mapping respons backend ke struktur UI
-      // Catatan: Jika data hanya muncul 3, berarti backend memang mengirimkan 3 data.
       const mapped = res.data.data.map(item => ({
         id: item.id,
         nama: item.user?.namaLengkap || 'Nama Tidak Ditemukan',
@@ -43,7 +36,6 @@ const MasterDataAsesor = () => {
         institusi: item.user?.asalInstansi || '-',
         status: item.user?.status || 'Non-aktif'
       }));
-      
       setAsesorList(mapped);
     } catch (error) {
       console.error("Gagal mengambil data asesor:", error);
@@ -75,7 +67,7 @@ const MasterDataAsesor = () => {
         try {
           await axios.patch(`${baseUrl}/admin-lsp/asesor/${asesor.id}/status`, {}, config);
           showSuccess('Berhasil!', `Status asesor ${asesor.nama} telah diperbarui.`);
-          fetchData(); // Refresh data
+          fetchData(); 
         } catch (error) {
           showAlert('error', 'Gagal', 'Terjadi kesalahan sistem.');
         }
@@ -99,29 +91,36 @@ const MasterDataAsesor = () => {
 
   return (
     <div className="dashboard-content fade-in-content">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px', flexWrap: 'wrap', gap: '15px' }}>
+      
+      {/* HEADER UTAMA */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '25px', flexWrap: 'wrap', gap: '15px' }}>
         <div>
           <h2 style={{ margin: 0, color: '#0f172a' }}>Master Data Asesor</h2>
-          <p className="text-muted" style={{ margin: 0 }}>Manajemen data detail Asesor tersertifikasi.</p>
-        </div>
-        
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          <select className="form-input" value={filterStatus} onChange={(e) => {setFilterStatus(e.target.value); setCurrentPage(1);}} style={{ width: 'auto', padding: '10px 14px', cursor: 'pointer' }}>
-            <option value="Aktif">Lihat Aktif Saja</option>
-            <option value="Non-aktif">Lihat Non-Aktif</option>
-            <option value="Semua">Semua Status</option>
-          </select>
+          <p className="text-muted" style={{ margin: '5px 0 0' }}>Manajemen data detail Asesor tersertifikasi.</p>
         </div>
       </div>
 
-      <div className="dashboard-card" style={{ padding: 0, overflow: 'hidden' }}>
-        <div style={{ padding: '20px', borderBottom: '1px solid #e2e8f0', backgroundColor: '#f8fafc' }}>
-          <input type="text" className="form-input" placeholder="Cari Nama / No Registrasi..." value={searchQuery} onChange={(e) => {setSearchQuery(e.target.value); setCurrentPage(1);}} style={{ width: '300px' }} />
+      <div className="dashboard-card" style={{ padding: 0, overflow: 'hidden', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+        
+        {/* TOOLBAR PENCARIAN & FILTER MODERN */}
+        <div style={{ padding: '20px', borderBottom: '1px solid #e2e8f0', backgroundColor: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+          <div style={{ flex: '1', minWidth: '250px', position: 'relative', maxWidth: '400px' }}>
+            <i className="fas fa-search" style={{ position: 'absolute', left: '12px', top: '12px', color: '#94a3b8' }}></i>
+            <input type="text" placeholder="Cari Nama / No Registrasi..." value={searchQuery} onChange={(e) => {setSearchQuery(e.target.value); setCurrentPage(1);}} style={{ width: '100%', padding: '10px 10px 10px 35px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', fontSize: '0.9rem' }} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <label style={{ fontSize: '0.85rem', fontWeight: '600', color: '#475569' }}><i className="fas fa-filter"></i> Filter:</label>
+            <select value={filterStatus} onChange={(e) => {setFilterStatus(e.target.value); setCurrentPage(1);}} style={{ padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', background: '#fff', fontSize: '0.9rem', cursor: 'pointer' }}>
+              <option value="Aktif">Lihat Aktif</option>
+              <option value="Non-aktif">Lihat Non-Aktif</option>
+              <option value="Semua">Semua Status</option>
+            </select>
+          </div>
         </div>
 
         <div className="table-responsive" style={{ padding: '20px' }}>
           <table className="admin-table">
-            <thead style={{ backgroundColor: '#f8fafc' }}>
+            <thead>
               <tr>
                 <th style={{ width: '5%', textAlign: 'center' }}>No.</th>
                 <th>Profil & Institusi</th>
@@ -132,7 +131,7 @@ const MasterDataAsesor = () => {
               </tr>
             </thead>
             <tbody>
-              {isLoading ? <tr><td colSpan="6" style={{textAlign: 'center', padding: '20px'}}>Memuat Data...</td></tr> : paginatedAsesor.map((asesor, index) => (
+              {isLoading ? <tr><td colSpan="6" style={{textAlign: 'center', padding: '30px', color:'#94a3b8'}}><i className="fas fa-spinner fa-spin fa-2x"></i><br/>Memuat Data...</td></tr> : paginatedAsesor.length > 0 ? paginatedAsesor.map((asesor, index) => (
                 <tr key={asesor.id}>
                   <td style={{ textAlign: 'center', color: '#64748b' }}>{(currentPage - 1) * itemsPerPage + index + 1}</td>
                   <td>
@@ -145,14 +144,46 @@ const MasterDataAsesor = () => {
                     <div style={{ fontSize: '0.85rem', color: '#64748b' }}><i className="fas fa-map-marker-alt"></i> {asesor.alamat}</div>
                   </td>
                   <td style={{ textAlign: 'center' }}><span className="badge info">{asesor.noReg}</span></td>
-                  <td>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '4px' }}>
-                      {asesor.bidang.map(b => <span key={b} className="badge primary" style={{fontSize: '0.7rem', padding: '2px 6px'}}>{b}</span>)}
-                    </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                      {asesor.skema.map(s => <span key={s} style={{ background: '#f1f5f9', color: '#475569', fontSize: '0.75rem', padding: '2px 6px', borderRadius: '4px', border: '1px solid #cbd5e1' }}>{s}</span>)}
+                  
+                  {/* REVISI HANYA PADA KOLOM INI (BIDANG & SKEMA UJI) */}
+                  <td style={{ padding: '12px 10px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      {/* Sub-Kelompok: Bidang */}
+                      {asesor.bidang && asesor.bidang.length > 0 && (
+                        <div>
+                          <div style={{ fontSize: '0.65rem', fontWeight: '800', color: '#94a3b8', letterSpacing: '0.5px', marginBottom: '6px', textTransform: 'uppercase' }}>Bidang Asesmen</div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                            {asesor.bidang.map((b, i) => (
+                              <span key={`bidang-${i}`} style={{ backgroundColor: '#e0e7ff', color: '#4338ca', fontSize: '0.75rem', fontWeight: '700', padding: '4px 10px', borderRadius: '6px', border: '1px solid #c7d2fe', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                <i className="fas fa-layer-group" style={{ opacity: 0.7, fontSize: '0.7rem' }}></i> {b}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Sub-Kelompok: Skema */}
+                      {asesor.skema && asesor.skema.length > 0 && (
+                        <div>
+                          <div style={{ fontSize: '0.65rem', fontWeight: '800', color: '#94a3b8', letterSpacing: '0.5px', marginBottom: '6px', textTransform: 'uppercase' }}>Skema Sertifikasi</div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                            {asesor.skema.map((s, i) => (
+                              <span key={`skema-${i}`} style={{ backgroundColor: '#f8fafc', color: '#475569', fontSize: '0.75rem', fontWeight: '600', padding: '5px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', display: 'inline-flex', alignItems: 'center', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                                {s}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Tampilan jika kosong */}
+                      {(!asesor.bidang?.length && !asesor.skema?.length) && (
+                        <span style={{ color: '#94a3b8', fontStyle: 'italic', fontSize: '0.85rem' }}>Belum ada data skema/bidang</span>
+                      )}
                     </div>
                   </td>
+                  {/* SELESAI REVISI KOLOM */}
+
                   <td style={{ textAlign: 'center' }}>
                     <button 
                       onClick={() => handleToggleStatus(asesor)}
@@ -163,18 +194,12 @@ const MasterDataAsesor = () => {
                     </button>
                   </td>
                 </tr>
-              ))}
+              )) : <tr><td colSpan="6" style={{textAlign:'center', padding:'30px', color:'#94a3b8'}}>Data tidak ditemukan.</td></tr>}
             </tbody>
           </table>
         </div>
         
-        <div style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{color:'#64748b'}}>Halaman {currentPage} dari {totalPages}</span>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <Button variant="outline" onClick={() => setCurrentPage(p => Math.max(p - 1, 1))} disabled={currentPage === 1}>Sebelumnya</Button>
-            <Button variant="outline" onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))} disabled={currentPage === totalPages}>Selanjutnya</Button>
-          </div>
-        </div>
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalData={filteredAsesor.length} itemsPerPage={itemsPerPage} />
       </div>
       {alert && <AlertPopup {...alert} />}
     </div>

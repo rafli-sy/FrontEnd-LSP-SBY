@@ -86,8 +86,10 @@ const DashboardAdminBLK = () => {
     }
   };
 
+  // --- REVISI: PENYELESAIAN TRAGEDI NGROK DI ADMIN BLK ---
   const handleViewBalasan = async (id) => {
     try {
+      // 1. Ambil URL dokumen dari backend
       const response = await fetch(`${apiUrl}/api/admin-blk/surat-balasan/${id}`, {
         headers: { 
           'Authorization': `Bearer ${token}`,
@@ -98,12 +100,38 @@ const DashboardAdminBLK = () => {
       const res = await response.json();
       
       if (res.status === 'success' && res.data) {
-        window.open(res.data.url_download, '_blank');
+        let fileUrl = res.data.url_download;
+        
+        // Jaga-jaga jika backend me-return localhost
+        fileUrl = fileUrl.replace(/http:\/\/127\.0\.0\.1:\d+/g, apiUrl.replace(/\/api$/, ''));
+
+        // 2. FETCH BLOB DENGAN HEADER PENEMBUS NGROK
+        const pdfResponse = await fetch(fileUrl, {
+          method: 'GET',
+          headers: {
+            'ngrok-skip-browser-warning': '69420',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!pdfResponse.ok) throw new Error("Gagal mengunduh file fisik PDF.");
+
+        // 3. Konversi ke wujud Blob
+        const blob = await pdfResponse.blob();
+        const localBlobUrl = URL.createObjectURL(blob);
+
+        // 4. Buka Blob lokal di tab baru (Ngrok tidak akan bisa mencegat ini)
+        window.open(localBlobUrl, '_blank');
+        
+        // Membersihkan cache memori setelah beberapa detik
+        setTimeout(() => URL.revokeObjectURL(localBlobUrl), 5000);
+
       } else {
         alert(res.message || "Surat balasan belum tersedia.");
       }
     } catch (error) {
       console.error("Gagal memuat surat balasan:", error);
+      alert("Terjadi kesalahan atau file diblokir oleh CORS Server.");
     }
   };
 
