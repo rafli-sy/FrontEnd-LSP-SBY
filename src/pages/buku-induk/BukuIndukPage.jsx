@@ -6,8 +6,6 @@ import AlertPopup from '../../components/ui/AlertPopup';
 import Pagination from '../../components/ui/Pagination'; 
 import TablePeserta from '../TablePeserta/TablePeserta';
 
-
-
 const formatTgl = (tgl) => {
   if (!tgl) return '-';
   const parts = tgl.split('-');
@@ -35,6 +33,10 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
 
   const [viewPeserta, setViewPeserta] = useState(null);
   const [asesorList, setAsesorList] = useState([]);
+
+  // State untuk master data filter
+  const [masterTuk, setMasterTuk] = useState([]);
+  const [masterPendanaan, setMasterPendanaan] = useState([]);
 
   // --- INTEGRASI LOGIKA DATA ---
   const token = sessionStorage.getItem('auth_token') || localStorage.getItem('access_token');
@@ -90,7 +92,6 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
           spt: !!jadwal,
           administrasi: false,
           administrasiPleno: false,
-          // FETCHING: Data otomatis dari backend berdasarkan tabel detail pengajuan ujk
           pelaksanaanStatus: item.status_pelaksanaan === 'Selesai',
           pembayaran: item.status_pembayaran === 'Selesai',
           tglPleno: item.tanggal_pleno || '',
@@ -120,6 +121,23 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
     }
   }, [isAdminView]);
 
+  // Fetch Master Data untuk Filter TUK & Pendanaan
+  useEffect(() => {
+    const fetchMasterFilters = async () => {
+      try {
+        const [resTuk, resDana] = await Promise.all([
+          axios.get(`${baseUrl}/master/jejaring`, config),
+          axios.get(`${baseUrl}/master/sumber-anggaran`, config)
+        ]);
+        setMasterTuk(resTuk.data.data || resTuk.data || []);
+        setMasterPendanaan(resDana.data.data || resDana.data || []);
+      } catch (err) {
+        console.error("Gagal memuat master data untuk filter:", err);
+      }
+    };
+    fetchMasterFilters();
+  }, [baseUrl, config]);
+
   useEffect(() => {
     const handleGlobalBack = (e) => {
       if (isInputModalOpen) { setIsInputModalOpen(false); e.preventDefault(); }
@@ -135,6 +153,20 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
   useEffect(() => {
     setCurrentPage(1);
   }, [filterTahun, filterBulan, filterTuk, filterPendanaan]);
+
+  // Ekstrak hanya Opsi Tahun dari tabel karena Tahun bersifat dinamis
+  const filterOptionsTahun = useMemo(() => {
+    const tahunSet = new Set();
+    dataPemantauan.forEach(item => {
+      if (item.hari1) {
+        const parts = item.hari1.split('-');
+        if (parts.length >= 2) {
+          tahunSet.add(parts[0]);
+        }
+      }
+    });
+    return [...tahunSet].sort((a, b) => b - a);
+  }, [dataPemantauan]);
 
   const sortedDataPemantauan = useMemo(() => {
     let filtered = [...dataPemantauan];
@@ -157,8 +189,8 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
   };
 
   const handleProgressClick = (id, keyName, title) => {
-    if (['tglPleno', 'noPleno', 'noResi'].includes(keyName)) {
-      setInputModalData({ id, keyName, title, value: '', type: keyName === 'tglPleno' ? 'date' : 'text' });
+    if (['noResi'].includes(keyName)) {
+      setInputModalData({ id, keyName, title, value: '', type: 'text' });
       setIsInputModalOpen(true);
       return;
     }
@@ -206,6 +238,15 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
   const renderProgressButton = (status, id, keyName, title) => {
     if (typeof status === 'string') {
       if (status !== '') return <span style={{ fontWeight: 700, color: '#0f172a', whiteSpace: 'nowrap' }}>{keyName === 'tglPleno' ? formatTgl(status) : status}</span>;
+      
+      if (keyName === 'tglPleno' || keyName === 'noPleno') {
+        return (
+          <span style={{ color: '#94a3b8', fontSize: '0.75rem', fontStyle: 'italic', display: 'inline-block', padding: '6px 12px', background: '#f8fafc', borderRadius: '6px', border: '1px dashed #e2e8f0', whiteSpace: 'nowrap' }}>
+            <i className="fas fa-magic" style={{marginRight: '4px'}}></i> Setting di Dokumen
+          </span>
+        );
+      }
+
       return (
         <button onClick={() => handleProgressClick(id, keyName, title)} style={{ background: '#f8fafc', color: '#94a3b8', border: '1px dashed #cbd5e1', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 'bold', width: '100%', whiteSpace: 'nowrap', transition: '0.2s' }}>
           <i className="fas fa-plus"></i> Atur
@@ -276,39 +317,63 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
 
   const filterUI = (
     <div style={{ display: 'flex', gap: '15px', marginBottom: '20px', flexWrap: 'wrap', background: '#f8fafc', padding: '15px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+      
+      {/* FILTER TAHUN */}
       <div style={{ flex: 1, minWidth: '150px' }}>
-        <label style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '5px' }}><i className="far fa-calendar-alt" style={{marginRight: '5px'}}></i>Tahun</label>
+        <label style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '5px' }}>
+          <i className="far fa-calendar-alt" style={{marginRight: '5px'}}></i>Tahun
+        </label>
         <select value={filterTahun} onChange={(e) => setFilterTahun(e.target.value)} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', outline: 'none', backgroundColor: '#fff', cursor: 'pointer', fontWeight: '600' }}>
           <option value="Semua">Semua Tahun</option>
-          <option value="2026">2026</option>
-          <option value="2025">2025</option>
+          {filterOptionsTahun.map(t => (
+            <option key={t} value={t}>{t}</option>
+          ))}
         </select>
       </div>
+
+      {/* FILTER BULAN */}
       <div style={{ flex: 1, minWidth: '150px' }}>
-        <label style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '5px' }}><i className="far fa-calendar" style={{marginRight: '5px'}}></i>Bulan</label>
+        <label style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '5px' }}>
+          <i className="far fa-calendar" style={{marginRight: '5px'}}></i>Bulan
+        </label>
         <select value={filterBulan} onChange={(e) => setFilterBulan(e.target.value)} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', outline: 'none', backgroundColor: '#fff', cursor: 'pointer', fontWeight: '600' }}>
           <option value="Semua">Semua Bulan</option>
-          {['01','02','03','04','05','06','07','08','09','10','11','12'].map(m => <option key={m} value={m}>{m}</option>)}
+          {['01','02','03','04','05','06','07','08','09','10','11','12'].map(m => (
+            <option key={m} value={m}>{m}</option>
+          ))}
         </select>
       </div>
+
+      {/* FILTER TUK */}
       <div style={{ flex: 1, minWidth: '150px' }}>
-        <label style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '5px' }}><i className="fas fa-map-marker-alt" style={{marginRight: '5px'}}></i>Nama TUK</label>
+        <label style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '5px' }}>
+          <i className="fas fa-map-marker-alt" style={{marginRight: '5px'}}></i>Nama TUK
+        </label>
         <select value={filterTuk} onChange={(e) => setFilterTuk(e.target.value)} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', outline: 'none', backgroundColor: '#fff', cursor: 'pointer', fontWeight: '600' }}>
           <option value="Semua">Semua TUK</option>
-          <option value="UPT BLK Surabaya">UPT BLK Surabaya</option>
-          <option value="UPT BLK Singosari">UPT BLK Singosari</option>
-          <option value="UPT BLK Kediri">UPT BLK Kediri</option>
+          {masterTuk.map((t, idx) => {
+            const namaTuk = t.namaInstitusi || t.nama_lembaga || t.nama;
+            if(!namaTuk) return null;
+            return <option key={idx} value={namaTuk}>{namaTuk}</option>
+          })}
         </select>
       </div>
+
+      {/* FILTER PENDANAAN */}
       <div style={{ flex: 1, minWidth: '150px' }}>
-        <label style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '5px' }}><i className="fas fa-wallet" style={{marginRight: '5px'}}></i>Pendanaan</label>
+        <label style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '5px' }}>
+          <i className="fas fa-wallet" style={{marginRight: '5px'}}></i>Pendanaan
+        </label>
         <select value={filterPendanaan} onChange={(e) => setFilterPendanaan(e.target.value)} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', outline: 'none', backgroundColor: '#fff', cursor: 'pointer', fontWeight: '600' }}>
           <option value="Semua">Semua Pendanaan</option>
-          <option value="APBD">APBD</option>
-          <option value="APBN">APBN</option>
-          <option value="Mandiri">Mandiri</option>
+          {masterPendanaan.map((p, idx) => {
+            const namaDana = p.namaAnggaran || p.nama_anggaran || p.nama;
+            if(!namaDana) return null;
+            return <option key={idx} value={namaDana}>{namaDana}</option>
+          })}
         </select>
       </div>
+      
     </div>
   );
 
@@ -340,7 +405,6 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
                       showAlert('error', 'Gagal', err.response?.data?.message || 'Gagal menyimpan Nomor Resi.');
                     }
                   } else {
-                    // Update lokal jika selain resi (misal manual tglPleno/noPleno jika tak lewat cetak)
                     setDataPemantauan(prev => prev.map(item => item.id === id ? { ...item, [keyName]: value } : item));
                     setIsInputModalOpen(false);
                     showAlert('success', 'Berhasil Disimpan', `Data ${title} telah diperbarui di UI.`);

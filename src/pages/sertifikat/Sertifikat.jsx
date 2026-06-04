@@ -4,10 +4,11 @@ import Button from '../../components/ui/Button';
 import AlertPopup from '../../components/ui/AlertPopup';
 import Pagination from '../../components/ui/Pagination';
 
-// ─── NILAI AWAL FORM ───────────────────────────────────────────────────────────
+// ─── NILAI AWAL FORM ──────────────────────────────────
 const INITIAL_FORM = {
   peserta_pengajuan_ujk_id: '',
   no_sertifikat: '',
+  no_registrasi: '',
   tanggal_penerbitan: '',
   masa_berlaku: '',
   status: 'Aktif',
@@ -79,12 +80,11 @@ const Sertifikat = () => {
     setFormData(prev => ({ ...prev, status: calculatedStatus }));
   }, [formData.tanggal_penerbitan, formData.masa_berlaku]);
 
-  // ─── FETCH UTAMA TABEL SERTIFIKAT ───────────────────────────────────────────
+  // ─── FETCH UTAMA TABEL SERTIFIKAT ───────────────────
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      // Langsung point ke admin-lsp
-      const response = await axios.get(`${baseUrl}/api/admin-lsp/sertifikat`, config);
+      const response = await axios.get(`${baseUrl}/api/admin-lsp/list-sertifikat`, config);
       setData(response.data?.data || []);
     } catch (error) {
       console.error('Error fetching sertifikat:', error);
@@ -136,7 +136,7 @@ const Sertifikat = () => {
     setSelectedPesertaData(null);
   };
 
-  // ─── SUBMIT DATA ASLI KE DATABASE ───────────────────────────────────────────
+  // ─── SUBMIT DATA ASLI KE DATABASE (REVISI ERROR HANDLING) ────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -147,8 +147,19 @@ const Sertifikat = () => {
       fetchData();
       closeModal();
     } catch (error) {
-      const errorMsg = error.response?.data?.message || 'Terjadi kesalahan sistem.';
-      showAlert('error', 'Gagal', errorMsg);
+      const errData = error.response?.data;
+      let errorMsg = errData?.message || 'Terjadi kesalahan sistem saat menghubungi backend.';
+
+      // 🔥 MENANGKAP ERROR VALIDASI (422) DARI LARAVEL
+      if (error.response?.status === 422 && errData?.errors) {
+        const firstErrorKey = Object.keys(errData.errors)[0];
+        errorMsg = errData.errors[firstErrorKey][0];
+      } else if (errData?.error_detail) {
+        errorMsg = errData.error_detail;
+      }
+
+      showAlert('error', 'Gagal Disimpan', errorMsg);
+      console.error("Detail Error Submit Sertifikat:", errData);
     } finally {
       setIsSubmitting(false);
     }
@@ -159,19 +170,13 @@ const Sertifikat = () => {
     const q = searchTerm.toLowerCase();
     return (
       (item.no_sertifikat || '').toLowerCase().includes(q) ||
-      (item.peserta?.namaPeserta || '').toLowerCase().includes(q)
+      (item.no_registrasi || '').toLowerCase().includes(q) ||
+      (item.nama_peserta || '').toLowerCase().includes(q)
     );
   });
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
   const paginatedData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
-  const formatTgl = (tgl) => {
-    if (!tgl) return '-';
-    const parts = tgl.split('-');
-    if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
-    return tgl;
-  };
 
   const badgeClass = (status) => {
     switch (status) {
@@ -200,7 +205,7 @@ const Sertifikat = () => {
         <div style={{ padding: '20px', borderBottom: '1px solid #e2e8f0', backgroundColor: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
           <div style={{ flex: '1', minWidth: '250px', position: 'relative', maxWidth: '400px' }}>
             <i className="fas fa-search" style={{ position: 'absolute', left: '12px', top: '12px', color: '#94a3b8' }}></i>
-            <input type="text" placeholder="Cari No. Sertifikat atau Nama Peserta..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }} style={{ width: '100%', padding: '10px 10px 10px 35px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} />
+            <input type="text" placeholder="Cari No. Sertifikat / Registrasi / Nama..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }} style={{ width: '100%', padding: '10px 10px 10px 35px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} />
           </div>
           <Button variant="primary" icon="plus" onClick={() => setShowModal(true)}>Tambah Sertifikat</Button>
         </div>
@@ -210,7 +215,7 @@ const Sertifikat = () => {
             <thead>
               <tr>
                 <th style={{ width: '5%',  textAlign: 'center' }}>No.</th>
-                <th style={{ width: '25%' }}>No. Sertifikat</th>
+                <th style={{ width: '25%' }}>No. Dokumen</th>
                 <th style={{ width: '25%' }}>Nama Peserta</th>
                 <th style={{ width: '15%', textAlign: 'center' }}>Tgl. Penerbitan</th>
                 <th style={{ width: '15%', textAlign: 'center' }}>Masa Berlaku</th>
@@ -229,10 +234,16 @@ const Sertifikat = () => {
                 paginatedData.map((item, index) => (
                   <tr key={item.id}>
                     <td style={{ textAlign: 'center', color: '#94a3b8' }}>{(currentPage - 1) * itemsPerPage + index + 1}</td>
-                    <td><strong style={{ color: '#0f172a' }}>{item.no_sertifikat}</strong></td>
-                    <td>{item.peserta?.namaPeserta || 'Peserta Tidak Diketahui'}</td>
-                    <td style={{ textAlign: 'center', color: '#475569' }}>{formatTgl(item.tanggal_penerbitan)}</td>
-                    <td style={{ textAlign: 'center', color: '#475569' }}>{formatTgl(item.masa_berlaku)}</td>
+                    <td>
+                      <strong style={{ color: '#0f172a', display: 'block' }}>{item.no_sertifikat}</strong>
+                      <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Reg: {item.no_registrasi}</span>
+                    </td>
+                    <td>
+                      <strong style={{ color: '#334155', display: 'block' }}>{item.nama_peserta}</strong>
+                      <span style={{ fontSize: '0.75rem', color: '#3b82f6' }}>{item.skema_sertifikasi}</span>
+                    </td>
+                    <td style={{ textAlign: 'center', color: '#475569', fontSize: '0.85rem' }}>{item.tanggal_penerbitan}</td>
+                    <td style={{ textAlign: 'center', color: '#475569', fontSize: '0.85rem' }}>{item.masa_berlaku}</td>
                     <td style={{ textAlign: 'center' }}><span className={badgeClass(item.status)}>{item.status || 'Aktif'}</span></td>
                   </tr>
                 ))
@@ -249,7 +260,7 @@ const Sertifikat = () => {
       {/* ── MODAL TAMBAH SERTIFIKAT ──────────────────────────────────────────────── */}
       {showModal && (
         <div className="modal-overlay" style={{ zIndex: 9999 }}>
-          <div className="modal-content" style={{ width: '100%', maxWidth: '500px', backgroundColor: '#ffffff', borderRadius: '12px', padding: '0' }}>
+          <div className="modal-content" style={{ width: '100%', maxWidth: '550px', backgroundColor: '#ffffff', borderRadius: '12px', padding: '0' }}>
             
             <div className="modal-header" style={{ padding: '20px', borderBottom: '1px solid #e2e8f0', backgroundColor: '#f8fafc', borderRadius: '12px 12px 0 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3 style={{ margin: 0, color: '#0f172a', fontSize: '1.15rem' }}><i className="fas fa-plus-circle" style={{ marginRight: '8px', color: '#3b82f6' }}></i>Tambah Sertifikat Baru</h3>
@@ -301,10 +312,16 @@ const Sertifikat = () => {
                   )}
                 </div>
 
-                {/* 2. Nomor Sertifikat */}
-                <div style={{ marginBottom: '15px' }}>
-                  <label style={labelStyle}>Nomor Sertifikat <span style={{ color: 'red' }}>*</span></label>
-                  <input type="text" placeholder="Masukkan Nomor Sertifikat" style={inputStyle} value={formData.no_sertifikat} onChange={(e) => setFormData({ ...formData, no_sertifikat: e.target.value })} required />
+                {/* 2. Nomor Sertifikat & Registrasi */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+                  <div>
+                    <label style={labelStyle}>Nomor Sertifikat <span style={{ color: 'red' }}>*</span></label>
+                    <input type="text" placeholder="Masukkan No. Sertifikat" style={inputStyle} value={formData.no_sertifikat} onChange={(e) => setFormData({ ...formData, no_sertifikat: e.target.value })} required />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Nomor Registrasi <span style={{ color: 'red' }}>*</span></label>
+                    <input type="text" placeholder="Masukkan No. Registrasi" style={inputStyle} value={formData.no_registrasi} onChange={(e) => setFormData({ ...formData, no_registrasi: e.target.value })} required />
+                  </div>
                 </div>
 
                 {/* 3. Tanggal Penerbitan & Masa Berlaku */}

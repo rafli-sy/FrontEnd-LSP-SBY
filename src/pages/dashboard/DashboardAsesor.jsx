@@ -11,11 +11,8 @@ const DashboardAsesor = () => {
   const [previewDokumen, setPreviewDokumen] = useState(null);
   const [alertConfig, setAlertConfig] = useState(null); 
   
-  // --- STATE PAGINATION ---
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
-
-  // --- STATE DATA DARI BACKEND ---
   const [agendaPenugasan, setAgendaPenugasan] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -46,15 +43,11 @@ const DashboardAsesor = () => {
         setIsLoading(false);
       }
     };
-
     fetchAgenda();
   }, [apiUrl]);
 
-  // --- LOGIKA PROSES DATA ---
   const processedAgenda = useMemo(() => {
-    // Mengurutkan data berdasarkan tanggal saja
     return [...agendaPenugasan].sort((a, b) => {
-      // Pastikan menangani jika rawDate bernilai null
       const dateA = a.rawDate ? new Date(a.rawDate) : new Date(a.tanggal);
       const dateB = b.rawDate ? new Date(b.rawDate) : new Date(b.tanggal);
       return dateA - dateB;
@@ -64,19 +57,31 @@ const DashboardAsesor = () => {
   const paginatedData = processedAgenda.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   const totalPages = Math.ceil(processedAgenda.length / itemsPerPage) || 1;
 
+  // Membersihkan memori cache Blob
   useEffect(() => {
     const handleGlobalBack = (e) => {
-      if (previewDokumen) { setPreviewDokumen(null); e.preventDefault(); }
+      if (previewDokumen) { 
+        if (previewDokumen.fileUrl) {
+          URL.revokeObjectURL(previewDokumen.fileUrl); 
+        }
+        setPreviewDokumen(null); 
+        e.preventDefault(); 
+      }
     };
     window.addEventListener('globalBackRequested', handleGlobalBack);
     return () => window.removeEventListener('globalBackRequested', handleGlobalBack);
   }, [previewDokumen]);
 
-  // --- FUNGSI PREVIEW DOKUMEN DARI BACKEND ---
+// --- FUNGSI PREVIEW DOKUMEN (SINKRONISASI DENGAN PROXY API BACKEND) ---
   const handlePreviewDokumen = async (jenis, item) => {
     try {
+      setAlertConfig({ type: 'info', title: 'Memuat Dokumen...', text: 'Sedang mengunduh dokumen dari server...' });
+
       const token = sessionStorage.getItem('auth_token');
-      const res = await fetch(`${apiUrl}/api/asesor/dokumen/${item.id_penugasan}`, { 
+      const idTarget = item.pengajuan_ujk_detail_id || item.detail_id || item.id_skema || item.id_penugasan; 
+
+      // 1. Ambil data informasi dokumen dari API
+      const res = await fetch(`${apiUrl}/api/asesor/dokumen/${idTarget}`, { 
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -85,27 +90,51 @@ const DashboardAsesor = () => {
         }
       });
 
-      if (!res.ok) throw new Error("Gagal mengambil dokumen.");
+      if (!res.ok) throw new Error("Gagal mengambil daftar dokumen dari server.");
 
       const responseData = await res.json();
       const dokumenList = responseData.data || [];
       
-      const jenisTarget = jenis === 'SPT' ? 'spt_asesor' : 'berita_acara';
-      const dokDitemukan = dokumenList.find(d => d.jenis_dokumen === jenisTarget);
+      const dokDitemukan = dokumenList.find(d => {
+        const jenisDok = d.jenis_dokumen || '';
+        if (jenis === 'SPT') return jenisDok.includes('spt_asesor');
+        if (jenis === 'BA') return jenisDok.includes('berita_acara');
+        return false;
+      });
 
-      if (dokDitemukan && dokDitemukan.url_download) {
+      if (dokDitemukan) {
+        
+        // 🔥 JURUS PAMUNGKAS: Kita tembak API Proxy yang dibuat Backend, BUKAN url_download/storage
+        const proxyApiUrl = `${apiUrl}/api/asesor/download-file/${dokDitemukan.id}`;
+
+        const pdfResponse = await fetch(proxyApiUrl, {
+          method: 'GET',
+          headers: {
+            'ngrok-skip-browser-warning': '69420', // Tembus Ngrok
+            'Authorization': `Bearer ${token}` // Tembus Auth & CORS
+          }
+        });
+
+        if (!pdfResponse.ok) throw new Error("Gagal mengunduh file fisik PDF. Pastikan Backend sudah membuat route /download-file/{id}.");
+
+        const blob = await pdfResponse.blob();
+        const localBlobUrl = URL.createObjectURL(blob);
+
         setPreviewDokumen({
           jenis: jenis,
-          fileUrl: dokDitemukan.url_download,
+          fileUrl: localBlobUrl,
           namaSkema: item.skema_judul
         });
-      } else {
-        setAlertConfig({ type: 'warning', title: 'Belum Tersedia', text: `Dokumen ${jenis} untuk jadwal ini belum diterbitkan / diunggah oleh Admin.` });
+        
+        setAlertConfig(null); 
+        return; 
       }
 
+      setAlertConfig({ type: 'warning', title: 'Belum Tersedia', text: `Dokumen ${jenis} untuk jadwal ini belum diterbitkan / diunggah oleh Admin.` });
+
     } catch (error) {
-      console.error(error);
-      setAlertConfig({ type: 'error', title: 'Error', text: 'Terjadi kesalahan saat memuat dokumen dari server.' });
+      console.error("Error preview dokumen:", error);
+      setAlertConfig({ type: 'error', title: 'Gagal Memuat', text: error.message });
     }
   };
 
@@ -118,7 +147,10 @@ const DashboardAsesor = () => {
             <p className="text-muted" style={{ margin: 0, fontSize: '0.9rem' }}>Skema: {previewDokumen.namaSkema}</p>
           </div>
           <div style={{ display: 'flex', gap: '10px' }}>
-            <Button variant="outline" icon="arrow-left" onClick={() => setPreviewDokumen(null)}>Kembali</Button>
+            <Button variant="outline" icon="arrow-left" onClick={() => {
+               if (previewDokumen.fileUrl) URL.revokeObjectURL(previewDokumen.fileUrl);
+               setPreviewDokumen(null);
+            }}>Kembali</Button>
             <a 
               href={previewDokumen.fileUrl} 
               download={`${previewDokumen.jenis}_Asesor.pdf`}
@@ -130,13 +162,7 @@ const DashboardAsesor = () => {
           </div>
         </div>
         <div style={{ width: '100%', height: '80vh', borderRadius: '8px', overflow: 'hidden', border: '1px solid #cbd5e1' }}>
-          <iframe 
-             src={previewDokumen.fileUrl} 
-             width="100%" 
-             height="100%" 
-             style={{ border: 'none' }} 
-             title="Preview Dokumen" 
-          />
+          <iframe src={previewDokumen.fileUrl} width="100%" height="100%" style={{ border: 'none' }} title="Preview Dokumen" />
         </div>
       </div>
     );
@@ -153,9 +179,7 @@ const DashboardAsesor = () => {
 
       <div className="dashboard-card" style={{ padding: '0' }}>
         <div style={{ padding: '20px', borderBottom: '1px solid #e2e8f0' }}>
-            <h3 style={{ fontSize: '1.25rem', color: '#1e293b', fontWeight: '600', margin: '0' }}>
-               Daftar Penugasan
-            </h3>
+            <h3 style={{ fontSize: '1.25rem', color: '#1e293b', fontWeight: '600', margin: '0' }}>Daftar Penugasan</h3>
         </div>
 
         <div className="table-responsive" style={{ padding: '20px' }}>
@@ -177,20 +201,12 @@ const DashboardAsesor = () => {
                 <tr key={item.id_penugasan}>
                   <td style={{ textAlign: 'center', color: '#94a3b8' }}>{(currentPage - 1) * itemsPerPage + index + 1}</td>
                   <td style={{ textAlign: 'center', fontWeight: '600', color: '#334155' }}><i className="far fa-calendar-alt text-muted" style={{marginRight:'6px'}}></i>{item.tanggal}</td>
-                  <td style={{ textAlign: 'center' }}>
-                    <strong style={{ color: '#0f172a' }}>{item.skema_judul}</strong>
-                  </td>
+                  <td style={{ textAlign: 'center' }}><strong style={{ color: '#0f172a' }}>{item.skema_judul}</strong></td>
                   <td style={{ textAlign: 'center', color: '#475569', fontSize: '0.9rem' }}>{item.lokasi_tuk}</td>
                   <td style={{ textAlign: 'center' }}>
                     <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                      <button 
-                        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '6px 10px', borderRadius: '8px', fontSize: '0.7rem', fontWeight: '600', cursor: 'pointer', backgroundColor: '#eff6ff', color: '#2563eb', border: '1px solid #dbeafe', minWidth: '80px', gap: '4px' }} 
-                        onClick={() => handlePreviewDokumen('SPT', item)}
-                      ><i className="fas fa-file-signature" style={{ fontSize: '1.2rem' }}></i><span>Surat Tugas</span></button>
-                      <button 
-                        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '6px 10px', borderRadius: '8px', fontSize: '0.7rem', fontWeight: '600', cursor: 'pointer', backgroundColor: '#eff6ff', color: '#2563eb', border: '1px solid #dbeafe', minWidth: '80px', gap: '4px' }} 
-                        onClick={() => handlePreviewDokumen('BA', item)}
-                      ><i className="fas fa-file-contract" style={{ fontSize: '1.2rem' }}></i><span>Berita Acara</span></button>
+                      <button style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '6px 10px', borderRadius: '8px', fontSize: '0.7rem', fontWeight: '600', cursor: 'pointer', backgroundColor: '#eff6ff', color: '#2563eb', border: '1px solid #dbeafe', minWidth: '80px', gap: '4px' }} onClick={() => handlePreviewDokumen('SPT', item)}><i className="fas fa-file-signature" style={{ fontSize: '1.2rem' }}></i><span>Surat Tugas</span></button>
+                      <button style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '6px 10px', borderRadius: '8px', fontSize: '0.7rem', fontWeight: '600', cursor: 'pointer', backgroundColor: '#eff6ff', color: '#2563eb', border: '1px solid #dbeafe', minWidth: '80px', gap: '4px' }} onClick={() => handlePreviewDokumen('BA', item)}><i className="fas fa-file-contract" style={{ fontSize: '1.2rem' }}></i><span>Berita Acara</span></button>
                     </div>
                   </td>
                 </tr>

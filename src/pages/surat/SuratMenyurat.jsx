@@ -102,39 +102,34 @@ const SuratMenyurat = () => {
   const handleCancelAlert = () => { if (alertConfig?.onCancel) alertConfig.onCancel(); else setAlertConfig(null); };
 
 
-  const handleKirimBalasanFile = (idUjk, pengajuanId) => {
-    if (!uploadBalasan[idUjk]) return;
-    showAlert('save', 'Kirim Surat Balasan', 'Apakah Anda yakin ingin mengirim berkas surat balasan ini ke Page Admin BLK?', async () => {
-      try {
-        const formDataObj = new FormData();
-        formDataObj.append('surat_balasan', uploadBalasan[idUjk]);
-        // Sesuai route: Route::post('/staf-lsp/upload-balasan-blk/{pengajuan_id}'
-        await axios.post(`${baseUrl}/staf-lsp/upload-balasan-blk/${pengajuanId}`, formDataObj, {
-          headers: { ...config.headers, 'Content-Type': 'multipart/form-data' }
-        });
-        showAlert('success', 'Pengiriman Berhasil', 'Surat balasan sukses dikirimkan ke Admin BLK!');
-        setSentBalasan(prev => ({ ...prev, [idUjk]: true }));
-      } catch (error) {
-        showAlert('error', 'Gagal Mengirim', error.response?.data?.message || 'Terjadi kesalahan sistem.');
-      }
-    });
-  };
-
-  const handleKirimSptAsesorFile = (idSkema, roleIdx) => {
+const handleKirimSptAsesorFile = (idSkema, roleIdx) => {
     const fileKey = `${idSkema}_${roleIdx}`;
     if (!uploadSptAsesor[fileKey]) return;
     showAlert('save', 'Kirim Surat Tugas', 'Apakah Anda yakin ingin mengirim dokumen Surat Tugas ke Asesor?', async () => {
       try {
         const formDataObj = new FormData();
-        formDataObj.append('surat_tugas', uploadSptAsesor[fileKey]);
-        // Sesuai route: Route::post('/staf-lsp/upload-spt-asesor/{detail_id}/{role_idx}'
-        await axios.post(`${baseUrl}/staf-lsp/upload-spt-asesor/${idSkema}/${roleIdx}`, formDataObj, {
+        
+        // KEMBALIKAN VARIABEL roleIdx AGAR MENJADI spt_asesor_1 ATAU spt_asesor_2
+        formDataObj.append('jenis_dokumen', `spt_asesor_${roleIdx}`); 
+        formDataObj.append('file_dokumen', uploadSptAsesor[fileKey]);
+        
+        await axios.post(`${baseUrl}/staf-lsp/upload-dokumen/${idSkema}`, formDataObj, {
           headers: { ...config.headers, 'Content-Type': 'multipart/form-data' }
         });
         showAlert('success', 'Pengiriman Berhasil', 'Surat Tugas berhasil diteruskan ke asesor.');
         setSentSptAsesor(prev => ({ ...prev, [fileKey]: true }));
       } catch (error) {
-        showAlert('error', 'Gagal Mengirim', error.response?.data?.message || 'Gagal mengirimkan berkas.');
+        const errData = error.response?.data;
+        let errorMsg = errData?.message || 'Terjadi kesalahan sistem.';
+
+        if (error.response?.status === 422 && errData?.errors) {
+          const firstErrorKey = Object.keys(errData.errors)[0];
+          errorMsg = errData.errors[firstErrorKey][0];
+        } else if (errData?.error_detail) {
+          errorMsg = errData.error_detail;
+        }
+
+        showAlert('error', 'Gagal Upload', errorMsg);
       }
     });
   };
@@ -145,15 +140,28 @@ const SuratMenyurat = () => {
     showAlert('save', 'Kirim Berita Acara', 'Apakah Anda yakin ingin mengirim dokumen Berita Acara ke Asesor?', async () => {
       try {
         const formDataObj = new FormData();
-        formDataObj.append('berita_acara', uploadBaAsesor[fileKey]);
-        // Sesuai route: Route::post('/staf-lsp/upload-ba-asesor/{detail_id}/{role_idx}'
-        await axios.post(`${baseUrl}/staf-lsp/upload-ba-asesor/${idSkema}/${roleIdx}`, formDataObj, {
+        
+        // KEMBALIKAN VARIABEL roleIdx AGAR MENJADI berita_acara_1 ATAU berita_acara_2
+        formDataObj.append('jenis_dokumen', `berita_acara_${roleIdx}`); 
+        formDataObj.append('file_dokumen', uploadBaAsesor[fileKey]);
+        
+        await axios.post(`${baseUrl}/staf-lsp/upload-dokumen/${idSkema}`, formDataObj, {
           headers: { ...config.headers, 'Content-Type': 'multipart/form-data' }
         });
         showAlert('success', 'Pengiriman Berhasil', 'Berita Acara berhasil diteruskan ke asesor.');
         setSentBaAsesor(prev => ({ ...prev, [fileKey]: true }));
       } catch (error) {
-        showAlert('error', 'Gagal Mengirim', error.response?.data?.message || 'Gagal mengirimkan berkas.');
+        const errData = error.response?.data;
+        let errorMsg = errData?.message || 'Terjadi kesalahan sistem.';
+
+        if (error.response?.status === 422 && errData?.errors) {
+          const firstErrorKey = Object.keys(errData.errors)[0];
+          errorMsg = errData.errors[firstErrorKey][0];
+        } else if (errData?.error_detail) {
+          errorMsg = errData.error_detail;
+        }
+
+        showAlert('error', 'Gagal Upload', errorMsg);
       }
     });
   };
@@ -378,7 +386,7 @@ const SuratMenyurat = () => {
       'SPM.03': `/staf-lsp/cetak-surat-permohonan-penyilia/${skemaId}`, 
       'DOC.01': `/staf-lsp/cetak-surat-laporan-penyilia/${skemaId}`,
       'DOC.02': `/staf-lsp/cetak-surat-berita-acara/${skemaId}`,
-      'DOC.03': `/staf-lsp/cetak-surat-penerapan-TUK/${skemaId}`,
+      'DOC.03': `/staf-lsp/cetak-surat-penetapan-TUK/${skemaId}`,
       'DOC.04': `/staf-lsp/cetak-surat-SK-penyelanggara/${skemaId}`,
       'DOC.05': `/staf-lsp/cetak-surat-lampiran-SK/${skemaId}`,
       'DOC.06': `/staf-lsp/cetak-surat-daftar-hadir-pra-asesmen/${skemaId}`,
@@ -818,7 +826,7 @@ const SuratMenyurat = () => {
                               <input type="file" style={{ display: 'none' }} accept=".pdf" onChange={(e) => setUploadBalasan(prev => ({ ...prev, [item.idUjk]: e.target.files[0] }))} />
                             </label>
                             {uploadBalasan[item.idUjk] && !sentBalasan[item.idUjk] && (
-                              <button onClick={() => handleKirimBalasanFile(item.idUjk, item.pengajuan_id)} style={{ background: '#10b981', color: '#ffffff', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 'bold', width:'100%', display:'flex', justifyContent:'center', alignItems:'center', gap:'4px' }}><i className="fas fa-paper-plane"></i> Kirim ke BLK</button>
+                              <button onClick={() => handleKirimBalasanFile(item.idUjk, item.pengajuan_id, item.skemaList[0]?.idSkema)} style={{ background: '#10b981', color: '#ffffff', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 'bold', width:'100%', display:'flex', justifyContent:'center', alignItems:'center', gap:'4px' }}><i className="fas fa-paper-plane"></i> Kirim ke BLK</button>
                             )}
                           </div>
                           

@@ -30,6 +30,11 @@ const PenugasanPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Deteksi role
+  const isStaffView = location.pathname.includes('/staff-lsp');
+  const isAdminView = location.pathname.includes('/admin-lsp');
+  const rolePath = isAdminView ? 'admin-lsp' : 'staf-lsp';
+
   // Konfigurasi Axios Sentral (Inline)
   const token = sessionStorage.getItem('auth_token') || localStorage.getItem('access_token');
   const baseUrl = `${import.meta.env.VITE_API_BASE_URL}/api`;
@@ -113,21 +118,34 @@ const PenugasanPage = () => {
   const handleConfirmAlert = () => { if (alertConfig?.onConfirm) alertConfig.onConfirm(); else setAlertConfig(null); };
   const handleCancelAlert = () => { if (alertConfig?.onCancel) alertConfig.onCancel(); else setAlertConfig(null); };
 
-
-  const handleKirimBalasanFile = (idUjk, pengajuanId) => {
+ // --- REVISI: FUNGSI UPLOAD SESUAI VALIDASI BACKEND ---
+  const handleKirimBalasanFile = (idUjk, pengajuanId, idSkema) => {
     if (!uploadBalasan[idUjk]) return;
     showAlert('save', 'Kirim Surat Balasan', 'Apakah Anda yakin ingin mengirim berkas surat balasan ini ke Page Admin BLK?', async () => {
       try {
         const formDataObj = new FormData();
-        formDataObj.append('surat_balasan', uploadBalasan[idUjk]);
-        // Sesuai route: Route::post('/admin-lsp/upload-balasan-blk/{pengajuan_id}'
-        await axios.post(`${baseUrl}/admin-lsp/upload-balasan-blk/${pengajuanId}`, formDataObj, {
+        
+        formDataObj.append('jenis_dokumen', 'surat_balasan'); // Balasan tidak pakai index
+        formDataObj.append('file_dokumen', uploadBalasan[idUjk]);
+        
+        await axios.post(`${baseUrl}/${rolePath}/upload-dokumen/${idSkema}`, formDataObj, {
           headers: { ...config.headers, 'Content-Type': 'multipart/form-data' }
         });
         showAlert('success', 'Pengiriman Berhasil', 'Surat balasan sukses dikirimkan ke Admin BLK!');
         setSentBalasan(prev => ({ ...prev, [idUjk]: true }));
       } catch (error) {
-        showAlert('error', 'Gagal Mengirim', error.response?.data?.message || 'Terjadi kesalahan sistem.');
+        const errData = error.response?.data;
+        let errorMsg = errData?.message || 'Terjadi kesalahan sistem.';
+
+        if (error.response?.status === 422 && errData?.errors) {
+          const firstErrorKey = Object.keys(errData.errors)[0];
+          errorMsg = errData.errors[firstErrorKey][0];
+        } else if (errData?.error_detail) {
+          errorMsg = errData.error_detail;
+        }
+
+        showAlert('error', 'Gagal Mengirim', errorMsg);
+        console.error("Detail Validasi Error:", errData);
       }
     });
   };
@@ -138,15 +156,29 @@ const PenugasanPage = () => {
     showAlert('save', 'Kirim Surat Tugas', 'Apakah Anda yakin ingin mengirim dokumen Surat Tugas ke Asesor?', async () => {
       try {
         const formDataObj = new FormData();
-        formDataObj.append('surat_tugas', uploadSptAsesor[fileKey]);
-        // Sesuai route: Route::post('/admin-lsp/upload-spt-asesor/{detail_id}/{role_idx}'
-        await axios.post(`${baseUrl}/admin-lsp/upload-spt-asesor/${idSkema}/${roleIdx}`, formDataObj, {
+        
+        // REVISI: Tambahkan ${roleIdx} agar menjadi spt_asesor_1 atau spt_asesor_2
+        formDataObj.append('jenis_dokumen', `spt_asesor_${roleIdx}`); 
+        formDataObj.append('file_dokumen', uploadSptAsesor[fileKey]);
+        
+        await axios.post(`${baseUrl}/${rolePath}/upload-dokumen/${idSkema}`, formDataObj, {
           headers: { ...config.headers, 'Content-Type': 'multipart/form-data' }
         });
         showAlert('success', 'Pengiriman Berhasil', 'Surat Tugas berhasil diteruskan ke asesor.');
         setSentSptAsesor(prev => ({ ...prev, [fileKey]: true }));
       } catch (error) {
-        showAlert('error', 'Gagal Mengirim', error.response?.data?.message || 'Gagal mengirimkan berkas.');
+        const errData = error.response?.data;
+        let errorMsg = errData?.message || 'Terjadi kesalahan sistem.';
+
+        if (error.response?.status === 422 && errData?.errors) {
+          const firstErrorKey = Object.keys(errData.errors)[0];
+          errorMsg = errData.errors[firstErrorKey][0];
+        } else if (errData?.error_detail) {
+          errorMsg = errData.error_detail;
+        }
+
+        showAlert('error', 'Gagal Mengirim', errorMsg);
+        console.error("Detail Validasi Error:", errData);
       }
     });
   };
@@ -157,24 +189,37 @@ const PenugasanPage = () => {
     showAlert('save', 'Kirim Berita Acara', 'Apakah Anda yakin ingin mengirim dokumen Berita Acara ke Asesor?', async () => {
       try {
         const formDataObj = new FormData();
-        formDataObj.append('berita_acara', uploadBaAsesor[fileKey]);
-        // Sesuai route: Route::post('/admin-lsp/upload-ba-asesor/{detail_id}/{role_idx}'
-        await axios.post(`${baseUrl}/admin-lsp/upload-ba-asesor/${idSkema}/${roleIdx}`, formDataObj, {
+        
+        // REVISI: Tambahkan ${roleIdx} agar menjadi berita_acara_1 atau berita_acara_2
+        formDataObj.append('jenis_dokumen', `berita_acara_${roleIdx}`); 
+        formDataObj.append('file_dokumen', uploadBaAsesor[fileKey]);
+        
+        await axios.post(`${baseUrl}/${rolePath}/upload-dokumen/${idSkema}`, formDataObj, {
           headers: { ...config.headers, 'Content-Type': 'multipart/form-data' }
         });
         showAlert('success', 'Pengiriman Berhasil', 'Berita Acara berhasil diteruskan ke asesor.');
         setSentBaAsesor(prev => ({ ...prev, [fileKey]: true }));
       } catch (error) {
-        showAlert('error', 'Gagal Mengirim', error.response?.data?.message || 'Gagal mengirimkan berkas.');
+        const errData = error.response?.data;
+        let errorMsg = errData?.message || 'Terjadi kesalahan sistem.';
+
+        if (error.response?.status === 422 && errData?.errors) {
+          const firstErrorKey = Object.keys(errData.errors)[0];
+          errorMsg = errData.errors[firstErrorKey][0];
+        } else if (errData?.error_detail) {
+          errorMsg = errData.error_detail;
+        }
+
+        showAlert('error', 'Gagal Mengirim', errorMsg);
+        console.error("Detail Validasi Error:", errData);
       }
     });
   };
 
-
   const fetchPengajuan = async () => {
     setIsLoading(true);
     try {
-      const res = await axios.get(`${baseUrl}/admin-lsp/semua-pengajuan`, config);
+      const res = await axios.get(`${baseUrl}/${rolePath}/semua-pengajuan`, config);
       const rawData = res.data.data || [];
       const grouped = {};
       
@@ -324,18 +369,18 @@ const PenugasanPage = () => {
 
     try {
       if (role === 'penyelia') {
-        const res = await axios.get(`${baseUrl}/master/penyelia`, config);
-        setDaftarPenyelia(res.data.data?.filter(p => p.status === 'Aktif') || []);
+        const res = await axios.get(`${baseUrl}/master/penyilia`, config);
+        const dataMaster = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+        setDaftarPenyelia(dataMaster.filter(p => p.status === 'Aktif'));
       } else {
-        const tglMulai = editData.hari1 || '';
-        const tglSelesai = editData.hari2 || '';
-        const endpoint = `${baseUrl}/admin-lsp/asesor-by-skema/${idSkemaDb}?tanggal_mulai=${tglMulai}&tanggal_selesai=${tglSelesai}`;
+        const endpoint = `${baseUrl}/${rolePath}/asesor`;
         const res = await axios.get(endpoint, config);
         setMasterAsesor(res.data.data || []);
       }
     } catch (error) {
       console.error('Error fetching asesor/penyelia', error);
       if(role !== 'penyelia') setMasterAsesor([]);
+      else setDaftarPenyelia([]); 
     } finally {
       setIsLoadingModal(false);
     }
@@ -353,6 +398,7 @@ const PenugasanPage = () => {
       setIsAsesorModalOpen(false);
       return;
     }
+    
     if (person.is_available === false) { 
       showAlert('warning', 'Akses Ditolak', 'Asesor sedang bertugas di rentang tanggal tersebut!'); 
       return; 
@@ -386,17 +432,23 @@ const PenugasanPage = () => {
       try {
         const payload = {
           penyelia_id: editData.penyelia_id,
+          penyilia_id: editData.penyelia_id, 
           tanggal_mulai_asesmen: editData.hari1,
           tanggal_selesai_asesmen: editData.hari2,
           asesor_ids: [editData.asesor1_id, editData.asesor2_id].filter(Boolean)
         };
-        await axios.post(`${baseUrl}/admin-lsp/ploting-jadwal/${editingId}`, payload, config);
+        await axios.post(`${baseUrl}/${rolePath}/ploting-jadwal/${editingId}`, payload, config);
         
         showAlert('success', 'Plotting Berhasil', 'Jadwal dan Asesor telah ditetapkan di sistem!');
         setEditingId(null); 
         fetchPengajuan(); 
       } catch (error) {
-        showAlert('error', 'Gagal Plotting', error.response?.data?.message || 'Terjadi kesalahan sistem');
+        let errorMsg = error.response?.data?.message || 'Terjadi kesalahan sistem';
+        if (error.response?.status === 422 && error.response?.data?.errors) {
+          const firstErrorKey = Object.keys(error.response.data.errors)[0];
+          errorMsg = error.response.data.errors[firstErrorKey][0]; 
+        }
+        showAlert('error', 'Gagal Plotting', errorMsg);
       }
     });
   };
@@ -406,7 +458,7 @@ const PenugasanPage = () => {
        type: 'delete', title: 'Batalkan Pengajuan?', text: 'Apakah Anda yakin membatalkan pengajuan untuk skema ini?',
        onConfirm: async () => {
          try {
-           await axios.put(`${baseUrl}/admin-lsp/${idSkema}/batalkan-pengajuan`, {}, config);
+           await axios.put(`${baseUrl}/${rolePath}/${idSkema}/batalkan-pengajuan`, {}, config);
            showAlert('success', 'Berhasil', 'Skema telah dibatalkan.');
            fetchPengajuan(); 
          } catch (error) {
@@ -479,30 +531,30 @@ const PenugasanPage = () => {
     const ttdSuffix = isTtd ? '-ttd' : '';
     
     const map = {
-      'balasan': `/admin-lsp/cetak-surat-balasan${ttdSuffix}/${pengajuanId}`,
-      'SPT.01': `/admin-lsp/cetak-surat-spt-asesor${ttdSuffix}/${skemaId}`,
-      'SPT.02': `/admin-lsp/cetak-surat-spt-penyilia${ttdSuffix}/${skemaId}`,
-      'SPM.01': `/admin-lsp/cetak-surat-permohonan-asesor1${ttdSuffix}/${skemaId}`,
-      'SPM.02': `/admin-lsp/cetak-surat-permohonan-asesor2${ttdSuffix}/${skemaId}`,
-      'SPM.03': `/admin-lsp/cetak-surat-permohonan-penyilia/${skemaId}`, 
-      'DOC.01': `/admin-lsp/cetak-surat-laporan-penyilia/${skemaId}`,
-      'DOC.02': `/admin-lsp/cetak-surat-berita-acara/${skemaId}`,
-      'DOC.03': `/admin-lsp/cetak-surat-penetapan-TUK/${skemaId}`,
-      'DOC.04': `/admin-lsp/cetak-surat-SK-penyelanggara/${skemaId}`,
-      'DOC.05': `/admin-lsp/cetak-surat-lampiran-SK/${skemaId}`,
-      'DOC.06': `/admin-lsp/cetak-surat-daftar-hadir-pra-asesmen/${skemaId}`,
-      'DOC.07': `/admin-lsp/cetak-surat-daftar-hadir-asesmen-h1/${skemaId}`,
-      'DOC.08': `/admin-lsp/cetak-surat-daftar-hadir-asesmen-h2/${skemaId}`,
-      'DOC.09': `/admin-lsp/cetak-surat-tanda-terima-dokumen/${skemaId}`,
-      'DOC.10': `/admin-lsp/cetak-surat-pernyataan-asesor-1/${skemaId}`,
-      'DOC.11': `/admin-lsp/cetak-surat-pernyataan-asesor-2/${skemaId}`,
-      'DOC.12': `/admin-lsp/cetak-surat-pengembalian-dokumen/${skemaId}`,
-      'DOC.13': `/admin-lsp/cetak-surat-rencana-verif-TUK/${skemaId}`,
-      'PLN.01': `/admin-lsp/cetak-surat-sk-pleno/${skemaId}`,
-      'PLN.02': `/admin-lsp/cetak-surat-berita-acara-pleno/${skemaId}`,
-      'PLN.03': `/admin-lsp/cetak-surat-hasil-sidang-pleno/${skemaId}`,
-      'PLN.04': `/admin-lsp/cetak-surat-sk-penetapan-hasil/${skemaId}`,
-      'PLN.05': `/admin-lsp/cetak-surat-hasil-final-pleno/${skemaId}`,
+      'balasan': `/${rolePath}/cetak-surat-balasan${ttdSuffix}/${pengajuanId}`,
+      'SPT.01': `/${rolePath}/cetak-surat-spt-asesor${ttdSuffix}/${skemaId}`,
+      'SPT.02': `/${rolePath}/cetak-surat-spt-penyilia${ttdSuffix}/${skemaId}`,
+      'SPM.01': `/${rolePath}/cetak-surat-permohonan-asesor1${ttdSuffix}/${skemaId}`,
+      'SPM.02': `/${rolePath}/cetak-surat-permohonan-asesor2${ttdSuffix}/${skemaId}`,
+      'SPM.03': `/${rolePath}/cetak-surat-permohonan-penyilia/${skemaId}`, 
+      'DOC.01': `/${rolePath}/cetak-surat-laporan-penyilia/${skemaId}`,
+      'DOC.02': `/${rolePath}/cetak-surat-berita-acara/${skemaId}`,
+      'DOC.03': `/${rolePath}/cetak-surat-penetapan-TUK/${skemaId}`,
+      'DOC.04': `/${rolePath}/cetak-surat-SK-penyelanggara/${skemaId}`,
+      'DOC.05': `/${rolePath}/cetak-surat-lampiran-SK/${skemaId}`,
+      'DOC.06': `/${rolePath}/cetak-surat-daftar-hadir-pra-asesmen/${skemaId}`,
+      'DOC.07': `/${rolePath}/cetak-surat-daftar-hadir-asesmen-h1/${skemaId}`,
+      'DOC.08': `/${rolePath}/cetak-surat-daftar-hadir-asesmen-h2/${skemaId}`,
+      'DOC.09': `/${rolePath}/cetak-surat-tanda-terima-dokumen/${skemaId}`,
+      'DOC.10': `/${rolePath}/cetak-surat-pernyataan-asesor-1/${skemaId}`,
+      'DOC.11': `/${rolePath}/cetak-surat-pernyataan-asesor-2/${skemaId}`,
+      'DOC.12': `/${rolePath}/cetak-surat-pengembalian-dokumen/${skemaId}`,
+      'DOC.13': `/${rolePath}/cetak-surat-rencana-verif-TUK/${skemaId}`,
+      'PLN.01': `/${rolePath}/cetak-surat-sk-pleno/${skemaId}`,
+      'PLN.02': `/${rolePath}/cetak-surat-berita-acara-pleno/${skemaId}`,
+      'PLN.03': `/${rolePath}/cetak-surat-hasil-sidang-pleno/${skemaId}`,
+      'PLN.04': `/${rolePath}/cetak-surat-sk-penetapan-hasil/${skemaId}`,
+      'PLN.05': `/${rolePath}/cetak-surat-hasil-final-pleno/${skemaId}`,
     };
     return map[docKey];
   };
@@ -807,9 +859,63 @@ const PenugasanPage = () => {
                             
                             <h5 style={{ margin: '0 0 15px 0', fontSize: '0.9rem', color: '#1e3a8a', fontWeight: '800' }}><i className="fas fa-users-cog"></i> Plotting Tim</h5>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                              <div><label style={{ fontSize: '0.75rem', fontWeight: '800', color: '#475569', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Asesor 1</label><Button variant="outline" icon="user-tie" isFullWidth onClick={(e) => { e.preventDefault(); handleOpenAsesorModal('asesor1', editData.bidang || editData.kejuruan, editData.judul, skema.skema_id_db); }} style={{ justifyContent: 'flex-start', backgroundColor: '#fff', textAlign: 'left' }}>{editData.asesor1 || 'Pilih Asesor 1...'}</Button></div>
-                              <div><label style={{ fontSize: '0.75rem', fontWeight: '800', color: '#475569', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Asesor 2</label><Button variant="outline" icon="user-tie" isFullWidth onClick={(e) => { e.preventDefault(); handleOpenAsesorModal('asesor2', editData.bidang || editData.kejuruan, editData.judul, skema.skema_id_db); }} style={{ justifyContent: 'flex-start', backgroundColor: '#fff', textAlign: 'left' }}>{editData.asesor2 || 'Pilih Asesor 2...'}</Button></div>
-                              <div><label style={{ fontSize: '0.75rem', fontWeight: '800', color: '#475569', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Penyelia LSP</label><Button variant="outline" icon="user-shield" isFullWidth onClick={(e) => { e.preventDefault(); handleOpenAsesorModal('penyelia'); }} style={{ justifyContent: 'flex-start', backgroundColor: '#fff', textAlign: 'left' }}>{editData.penyelia || 'Pilih Penyelia...'}</Button></div>
+                              <div>
+                                <label style={{ fontSize: '0.75rem', fontWeight: '800', color: '#475569', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Asesor 1</label>
+                                <Button 
+                                  variant="outline" 
+                                  icon="user-tie" 
+                                  isFullWidth 
+                                  onClick={(e) => { 
+                                    e.preventDefault(); 
+                                    if (!editData.hari1 || !editData.hari2) {
+                                       showAlert('warning', 'Tanggal Belum Diatur', 'Silakan isi Mulai dan Selesai Asesmen terlebih dahulu untuk mengecek ketersediaan Asesor.');
+                                       return;
+                                    }
+                                    handleOpenAsesorModal('asesor1', editData.bidang || editData.kejuruan, editData.judul, skema.skema_id_db); 
+                                  }} 
+                                  style={{ justifyContent: 'flex-start', backgroundColor: '#fff', textAlign: 'left' }}
+                                >
+                                  {editData.asesor1 || 'Pilih Asesor 1...'}
+                                </Button>
+                              </div>
+                              <div>
+                                <label style={{ fontSize: '0.75rem', fontWeight: '800', color: '#475569', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Asesor 2</label>
+                                <Button 
+                                  variant="outline" 
+                                  icon="user-tie" 
+                                  isFullWidth 
+                                  onClick={(e) => { 
+                                    e.preventDefault(); 
+                                    if (!editData.hari1 || !editData.hari2) {
+                                       showAlert('warning', 'Tanggal Belum Diatur', 'Silakan isi Mulai dan Selesai Asesmen terlebih dahulu untuk mengecek ketersediaan Asesor.');
+                                       return;
+                                    }
+                                    handleOpenAsesorModal('asesor2', editData.bidang || editData.kejuruan, editData.judul, skema.skema_id_db); 
+                                  }} 
+                                  style={{ justifyContent: 'flex-start', backgroundColor: '#fff', textAlign: 'left' }}
+                                >
+                                  {editData.asesor2 || 'Pilih Asesor 2...'}
+                                </Button>
+                              </div>
+                              <div>
+                                <label style={{ fontSize: '0.75rem', fontWeight: '800', color: '#475569', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Penyelia LSP</label>
+                                <Button 
+                                  variant="outline" 
+                                  icon="user-shield" 
+                                  isFullWidth 
+                                  onClick={(e) => { 
+                                    e.preventDefault(); 
+                                    if (!editData.hari1 || !editData.hari2) {
+                                       showAlert('warning', 'Tanggal Belum Diatur', 'Silakan isi Mulai dan Selesai Asesmen terlebih dahulu.');
+                                       return;
+                                    }
+                                    handleOpenAsesorModal('penyelia'); 
+                                  }} 
+                                  style={{ justifyContent: 'flex-start', backgroundColor: '#fff', textAlign: 'left' }}
+                                >
+                                  {editData.penyelia || 'Pilih Penyelia...'}
+                                </Button>
+                              </div>
                             </div>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '20px' }}>
                               <Button variant="outline" icon="times" style={{flex: 1}} onClick={handleBatalEdit}>Batal</Button>
@@ -1003,7 +1109,7 @@ const PenugasanPage = () => {
                               <input type="file" style={{ display: 'none' }} accept=".pdf" onChange={(e) => setUploadBalasan(prev => ({ ...prev, [item.idUjk]: e.target.files[0] }))} />
                             </label>
                             {uploadBalasan[item.idUjk] && !sentBalasan[item.idUjk] && (
-                              <button onClick={() => handleKirimBalasanFile(item.idUjk, item.pengajuan_id)} style={{ background: '#10b981', color: '#ffffff', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 'bold', width:'100%', display:'flex', justifyContent:'center', alignItems:'center', gap:'4px' }}><i className="fas fa-paper-plane"></i> Kirim ke BLK</button>
+                              <button onClick={() => handleKirimBalasanFile(item.idUjk, item.pengajuan_id, item.skemaList[0]?.idSkema)} style={{ background: '#10b981', color: '#ffffff', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 'bold', width:'100%', display:'flex', justifyContent:'center', alignItems:'center', gap:'4px' }}><i className="fas fa-paper-plane"></i> Kirim ke BLK</button>
                             )}
                           </div>
                           
@@ -1114,7 +1220,7 @@ const PenugasanPage = () => {
                             </tr>
                           );
                         }) : masterAsesor.map(asesor => {
-                          const isBentrok = !asesor.is_available;
+                          const isBentrok = asesor.is_available === false; 
                           const isChecked = editData[`${asesorTargetRole}_id`] === asesor.id;
                           return (
                             <tr key={asesor.id} style={{ backgroundColor: isBentrok ? '#fee2e2' : isChecked ? '#f0fdf4' : 'inherit' }}>

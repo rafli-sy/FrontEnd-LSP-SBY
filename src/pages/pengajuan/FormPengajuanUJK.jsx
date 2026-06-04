@@ -18,21 +18,20 @@ const FormPengajuanUJK = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [alert, setAlert] = useState(null);
+  
   const [viewPdf, setViewPdf] = useState(null); 
   const alertTimer = useRef(null);
 
-  // STATE BARU: Untuk menampilkan tabel peserta
   const [viewPeserta, setViewPeserta] = useState(null);
-
-  // STATE UNTUK POP-UP PEMILIHAN SKEMA & TUK
   const [activeModal, setActiveModal] = useState({ type: null, targetId: null });
   const [modalSearch, setModalSearch] = useState('');
 
-  // Fallback Token (Session atau Local)
   const token = sessionStorage.getItem('auth_token') || localStorage.getItem('token') || sessionStorage.getItem('token'); 
   const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://untracked-exponent-oboe.ngrok-free.dev';
 
-  // --- INISIALISASI FORM STATE ---
+  const labelStyle = { display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: '700', color: '#475569' };
+  const inputStyle = { width: '100%', padding: '10px 14px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '0.95rem', color: '#334155', outline: 'none', transition: 'border-color 0.2s', boxSizing: 'border-box', backgroundColor: '#fff' };
+
   const initialForm = { sumber_anggaran_id: '', nomorSurat: '', fileSurat: null };
   const initialSkema = { id: Date.now(), skema_id: '', namaSkema: '', jejaring_id: '', namaTuk: '', tglMulai: '', tglSelesai: '', fileNominatif: null, fileKurikulum: null, jumlahAsesi: 0 };
   
@@ -41,7 +40,6 @@ const FormPengajuanUJK = () => {
 
   const closeAlert = () => { setAlert(null); if (alertTimer.current) clearTimeout(alertTimer.current); };
 
-  // --- SENSOR GLOBAL BACK BUTTON ---
   useEffect(() => {
     const handleGlobalBack = (e) => {
       if (activeModal.type) { setActiveModal({ type: null, targetId: null }); e.preventDefault(); }
@@ -53,7 +51,6 @@ const FormPengajuanUJK = () => {
     return () => window.removeEventListener('globalBackRequested', handleGlobalBack);
   }, [showForm, activeModal, viewPdf, viewPeserta]);
 
-  // --- FETCH MASTER DATA & DRAFTS ---
   useEffect(() => {
     if (token) {
       fetchMasterData();
@@ -77,10 +74,7 @@ const FormPengajuanUJK = () => {
         fetch(`${apiUrl}/api/master/sumber-anggaran`, { headers })
       ]);
 
-      if(resSkema.status === 401 || resTuk.status === 401 || resAnggaran.status === 401) {
-         console.error("Akses ditolak (401). Token invalid/expired.");
-         return;
-      }
+      if(resSkema.status === 401 || resTuk.status === 401 || resAnggaran.status === 401) return;
 
       const [dataSkema, dataTuk, dataAnggaran] = await Promise.all([resSkema.json(), resTuk.json(), resAnggaran.json()]);
 
@@ -112,7 +106,6 @@ const FormPengajuanUJK = () => {
     }
   };
 
-  // --- HANDLER FORM & FILE ---
   const handleInputGlobalChange = (e) => {
     const { name, value, files } = e.target;
     if (name === 'fileSurat') {
@@ -129,14 +122,13 @@ const FormPengajuanUJK = () => {
   const handleAddSkema = () => setSkemaUsulan([...skemaUsulan, { ...initialSkema, id: Date.now() }]);
   const handleRemoveSkema = (id) => setSkemaUsulan(skemaUsulan.filter(s => s.id !== id));
 
-  // --- HANDLER EDIT DATA ---
   const handleEdit = (item) => {
     setShowForm(true);
     setEditingId(item.id);
     setFormData({
       sumber_anggaran_id: item.sumber_anggaran_id || '',
       nomorSurat: item.nomor_surat_pengajuan || '',
-      fileSurat: null // File lama tersimpan di backend, kosongkan input frontend
+      fileSurat: null
     });
 
     const mappedSkema = (item.detail_skema || item.detailSkema || []).map(ds => ({
@@ -156,7 +148,6 @@ const FormPengajuanUJK = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // --- SUBMIT PENGJUAN (CREATE / UPDATE DRAFT) ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     setAlert({ type: 'save', title: 'Menyimpan...', text: 'Mohon tunggu proses upload file.' });
@@ -209,7 +200,6 @@ const FormPengajuanUJK = () => {
     }
   };
 
-  // --- KIRIM PENGAJUAN (SUBMIT KE LSP) --- PERBAIKAN POP-UP BUKAN window.confirm
   const handleKirimLsp = (id) => {
     setAlert({
       type: 'warning',
@@ -243,7 +233,6 @@ const FormPengajuanUJK = () => {
     });
   };
 
-  // --- REVISI: FUNGSI HAPUS DRAFT (DENGAN KONFIRMASI) ---
   const handleDelete = (id) => {
     setAlert({
       type: 'warning',
@@ -264,13 +253,66 @@ const FormPengajuanUJK = () => {
     });
   };
 
-  // Pagination Table
+  // --- PERBAIKAN: Fungsi Pembuka URL PDF via Rute Backend Baru ---
+  const handleOpenPreviewPdf = async (tipeDokumen, namaDokumen, targetId) => {
+    if (!targetId) {
+      showAlert('info', 'File Tidak Ditemukan', 'Belum ada file yang diunggah untuk dokumen ini.');
+      return;
+    }
+
+    try {
+      setAlert({ type: 'info', title: 'Memuat Dokumen...', text: 'Mengambil file PDF dari server...' });
+      
+      const token = sessionStorage.getItem('auth_token');
+      
+      // Tentukan endpoint berdasarkan tipe dokumen yang diklik
+      let apiEndpoint = '';
+      if (tipeDokumen === 'Surat Pengajuan') {
+        apiEndpoint = `${apiUrl}/api/pengajuan/surat/${targetId}`;
+      } else if (tipeDokumen === 'Kurikulum') {
+        apiEndpoint = `${apiUrl}/api/pengajuan/kurikulum/${targetId}`;
+      }
+      
+      const response = await fetch(apiEndpoint, {
+        method: 'GET',
+        headers: {
+          'ngrok-skip-browser-warning': '69420',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+         if (response.status === 404) throw new Error('File tidak ditemukan di server.');
+         throw new Error('Gagal memuat file dari server.');
+      }
+
+      // Ubah response menjadi Blob (File Biner) untuk membypass Iframe CORS Ngrok
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+
+      setViewPdf({ name: namaDokumen, url: blobUrl, isBlob: true });
+      closeAlert(); 
+
+    } catch (error) {
+      console.error(error);
+      showAlert('error', 'Gagal Memuat', error.message || 'Tidak dapat memuat dokumen PDF dari server.');
+    }
+  };
+
+  // Fungsi tambahan untuk membersihkan URL Object memory leak
+  const closePdfViewer = () => {
+    if (viewPdf?.isBlob) {
+      URL.revokeObjectURL(viewPdf.url);
+    }
+    setViewPdf(null);
+  };
+
+
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6; 
   const totalPages = Math.ceil(usulan.length / itemsPerPage) || 1;
   const paginatedUsulan = usulan.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  // Format Tanggal untuk Table (Tampilan Cantik)
   const formatTanggal = (start, end) => {
     if (!start || !end) return '-';
     const startDate = new Date(start);
@@ -278,7 +320,6 @@ const FormPengajuanUJK = () => {
     return `${startDate.getDate()} ${startDate.toLocaleString('default', { month: 'short' })} - ${endDate.getDate()} ${endDate.toLocaleString('default', { month: 'short' })} ${endDate.getFullYear()}`;
   };
 
-  // --- RENDER TABEL PESERTA ---
   if (viewPeserta) {
     return (
       <div className="dashboard-content fade-in-content">
@@ -312,117 +353,130 @@ const FormPengajuanUJK = () => {
               <Button variant="outline" icon="arrow-left" onClick={() => { setShowForm(false); setEditingId(null); }}>Kembali</Button>
               <div>
                 <h2 style={{ margin: 0, fontSize: '1.5rem', color: '#0f172a' }}>{editingId ? 'Edit Pengajuan UJK' : 'Pengajuan UJK Baru'}</h2>
-                <p className="text-muted" style={{ margin: 0 }}>Lengkapi dokumen persyaratan dan data asesi.</p>
+                <p className="text-muted" style={{ margin: 0 }}>Lengkapi dokumen persyaratan dan data asesi dalam satu form terpusat.</p>
               </div>
             </div>
           </div>
 
-          <form className="admin-form" onSubmit={handleSubmit}>
-             <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+          <form className="dashboard-card" onSubmit={handleSubmit} style={{ padding: 0, overflow: 'hidden', border: '1px solid #e2e8f0', borderRadius: '12px', backgroundColor: '#fff', margin: 0 }}>
+             <div style={{ display: 'flex', flexWrap: 'wrap' }}>
                 
                 {/* KOLOM KIRI: ADMINISTRASI */}
-                <div className="dashboard-card" style={{ flex: '1 1 300px', padding: '24px', margin: 0 }}>
-                  <h3 style={{ fontSize: '1.1rem', marginBottom: '15px' }}><i className="fas fa-file-signature text-blue" style={{marginRight: 8}}></i>Administrasi</h3>
+                <div style={{ flex: '1 1 320px', backgroundColor: '#f8fafc', padding: '30px', borderRight: '1px solid #e2e8f0' }}>
+                  <h3 style={{ fontSize: '1.15rem', marginBottom: '20px', color: '#0f172a', borderBottom: '2px solid #e2e8f0', paddingBottom: '10px' }}>
+                     <i className="fas fa-file-signature text-blue" style={{marginRight: 8}}></i>Administrasi
+                  </h3>
                   
-                  <div className="form-group" style={{ marginBottom: '15px' }}>
-                    <label>Nomor Surat Pengajuan <span style={{color: '#ef4444'}}>*</span></label>
-                    <input type="text" className="form-input" name="nomorSurat" value={formData.nomorSurat} onChange={handleInputGlobalChange} required />
+                  <div style={{ marginBottom: '20px' }}>
+                    <label style={labelStyle}>Nomor Surat Pengajuan <span style={{color: '#ef4444'}}>*</span></label>
+                    <input type="text" name="nomorSurat" value={formData.nomorSurat} onChange={handleInputGlobalChange} style={inputStyle} placeholder="Masukkan nomor surat..." required />
                   </div>
                   
-                  <div className="form-group" style={{ marginBottom: '15px' }}>
-                    <label>Jenis Pendanaan <span style={{color: '#ef4444'}}>*</span></label>
-                    <select className="form-input" name="sumber_anggaran_id" value={formData.sumber_anggaran_id} onChange={handleInputGlobalChange} required>
-                      <option value="">---Pilih Sumber Dana---</option>
+                  <div style={{ marginBottom: '20px' }}>
+                    <label style={labelStyle}>Jenis Pendanaan <span style={{color: '#ef4444'}}>*</span></label>
+                    <select name="sumber_anggaran_id" value={formData.sumber_anggaran_id} onChange={handleInputGlobalChange} style={{...inputStyle, cursor: 'pointer'}} required>
+                      <option value="" disabled>---Pilih Sumber Dana---</option>
                       {masterAnggaran.map(ang => (
                         <option key={ang.id} value={ang.id}>{ang.namaAnggaran}</option>
                       ))}
                     </select>
                   </div>
 
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label>Upload Surat Pengajuan (PDF) {editingId ? '' : <span style={{color: '#ef4444'}}>*</span>}</label>
-                    <input type="file" name="fileSurat" accept=".pdf" className="form-input" style={{ padding: '8px', backgroundColor: '#fff', border: '1px dashed #cbd5e1' }} onChange={handleInputGlobalChange} required={!editingId} />
-                    {editingId && <small className="text-muted" style={{display: 'block', marginTop: '4px'}}>Biarkan kosong jika tidak ingin mengubah file surat lama.</small>}
+                  <div style={{ marginBottom: '10px' }}>
+                    <label style={labelStyle}>Upload Surat Pengajuan (PDF) {editingId ? '' : <span style={{color: '#ef4444'}}>*</span>}</label>
+                    <input type="file" name="fileSurat" accept=".pdf" style={{ ...inputStyle, padding: '8px', border: '1px dashed #cbd5e1' }} onChange={handleInputGlobalChange} required={!editingId} />
+                    {editingId && <small className="text-muted" style={{display: 'block', marginTop: '6px', fontSize: '0.8rem'}}>*Biarkan kosong jika tidak mengubah file.</small>}
                   </div>
                 </div>
 
-                {/* KOLOM KANAN: SKEMA */}
-                <div style={{ flex: '2.5 1 600px' }}>
-                  <div className="dashboard-card" style={{ padding: '24px', margin: 0 }}>
-                    <h3 style={{ fontSize: '1.1rem', marginBottom: '20px' }}><i className="fas fa-users-cog text-blue" style={{marginRight: 8}}></i> Data Pelaksanaan</h3>
-                    
-                    {skemaUsulan.map((skema, index) => (
-                      <div key={skema.id} style={{ border: '1px solid #e2e8f0', borderRadius: '12px', padding: '20px', marginBottom: '20px', backgroundColor: '#f8fafc' }}>
-                         
-                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                           <h4 style={{ margin: 0, color: '#1e293b' }}><span className="badge primary"><i className="fas fa-layer-group"></i> Skema {index + 1}</span></h4>
-                           {index > 0 && <Button type="button" variant="outline-danger" size="sm" icon="trash" onClick={() => handleRemoveSkema(skema.id)}>Hapus</Button>}
-                         </div>
-
-                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
-                           {/* TOMBOL MODAL SKEMA */}
-                           <div className="form-group" style={{ margin: 0 }}>
-                             <label>Pilihan Skema Kompetensi <span style={{color: '#ef4444'}}>*</span></label>
-                             <button 
-                               type="button" 
-                               className="form-input" 
-                               style={{ textAlign: 'left', background: '#fff', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} 
-                               onClick={() => { setActiveModal({ type: 'skema', targetId: skema.id }); setModalSearch(''); }}
-                             >
-                               <span style={{ color: skema.skema_id ? '#0f172a' : '#94a3b8' }}>{skema.namaSkema || '-- Klik untuk Mencari Skema --'}</span>
-                               <i className="fas fa-search text-muted"></i>
-                             </button>
-                           </div>
-
-                           {/* TOMBOL MODAL TUK */}
-                           <div className="form-group" style={{ margin: 0 }}>
-                             <label>Lokasi Ujian (TUK) <span style={{color: '#ef4444'}}>*</span></label>
-                             <button 
-                               type="button" 
-                               className="form-input" 
-                               style={{ textAlign: 'left', background: '#fff', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} 
-                               onClick={() => { setActiveModal({ type: 'tuk', targetId: skema.id }); setModalSearch(''); }}
-                             >
-                               <span style={{ color: skema.jejaring_id ? '#0f172a' : '#94a3b8' }}>{skema.namaTuk || '-- Klik untuk Memilih TUK --'}</span>
-                               <i className="fas fa-search text-muted"></i>
-                             </button>
-                           </div>
-                         </div>
-
-                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
-                            <div className="form-group" style={{ margin: 0 }}>
-                              <label>Tgl Mulai <span style={{color: '#ef4444'}}>*</span></label>
-                              <input type="date" className="form-input" value={skema.tglMulai} onChange={(e) => setSkemaUsulan(skemaUsulan.map(s => s.id === skema.id ? {...s, tglMulai: e.target.value} : s))} required/>
-                            </div>
-                            <div className="form-group" style={{ margin: 0 }}>
-                              <label>Tgl Selesai <span style={{color: '#ef4444'}}>*</span></label>
-                              <input type="date" className="form-input" value={skema.tglSelesai} onChange={(e) => setSkemaUsulan(skemaUsulan.map(s => s.id === skema.id ? {...s, tglSelesai: e.target.value} : s))} required/>
-                            </div>
-                         </div>
-
-                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                            <div className="form-group" style={{ margin: 0 }}>
-                              <label>Kurikulum Program (PDF) {editingId ? '' : <span style={{color: '#ef4444'}}>*</span>}</label>
-                              <input type="file" accept=".pdf" className="form-input" style={{ padding: '8px', backgroundColor: '#fff', border: '1px dashed #cbd5e1' }} onChange={(e) => handleSkemaFileChange(skema.id, 'fileKurikulum', e.target.files[0])} required={!editingId}/>
-                            </div>
-                            <div className="form-group" style={{ margin: 0 }}>
-                              <label>Data Nominatif Asesi (Excel) {editingId ? '' : <span style={{color: '#ef4444'}}>*</span>}</label>
-                              <input type="file" accept=".xls, .xlsx, .csv" className="form-input" style={{ padding: '8px', backgroundColor: '#fff', border: '1px dashed #cbd5e1' }} onChange={(e) => handleSkemaFileChange(skema.id, 'fileNominatif', e.target.files[0])} required={!editingId}/>
-                            </div>
-                         </div>
-
-                      </div>
-                    ))}
-                    
-                    {!editingId && <Button type="button" variant="dashed" size="lg" isFullWidth icon="plus-circle" onClick={handleAddSkema}>Tambah Skema Ujian Lainnya</Button>}
+                {/* KOLOM KANAN: SKEMA (DATA PELAKSANAAN) */}
+                <div style={{ flex: '2 1 600px', padding: '30px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '2px solid #e2e8f0', paddingBottom: '10px' }}>
+                    <h3 style={{ fontSize: '1.15rem', color: '#0f172a', margin: 0 }}>
+                       <i className="fas fa-users-cog text-blue" style={{marginRight: 8}}></i> Data Pelaksanaan
+                    </h3>
                   </div>
+                  
+                  {skemaUsulan.map((skema, index) => (
+                    <div key={skema.id} style={{ border: '1px solid #e2e8f0', borderRadius: '10px', padding: '20px', marginBottom: '20px', backgroundColor: '#fff', position: 'relative' }}>
+                       
+                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                         <span style={{ backgroundColor: '#eff6ff', color: '#3b82f6', padding: '4px 12px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 'bold' }}>
+                           <i className="fas fa-layer-group" style={{marginRight: '6px'}}></i> Skema {index + 1}
+                         </span>
+                         {index > 0 && <Button type="button" variant="outline-danger" size="sm" icon="trash" onClick={() => handleRemoveSkema(skema.id)}>Hapus Skema</Button>}
+                       </div>
+
+                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginBottom: '20px' }}>
+                         {/* TOMBOL MODAL SKEMA */}
+                         <div>
+                           <label style={labelStyle}>Pilihan Skema Kompetensi <span style={{color: '#ef4444'}}>*</span></label>
+                           <button 
+                             type="button" 
+                             style={{ ...inputStyle, textAlign: 'left', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} 
+                             onClick={() => { setActiveModal({ type: 'skema', targetId: skema.id }); setModalSearch(''); }}
+                           >
+                             <span style={{ color: skema.skema_id ? '#0f172a' : '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                               {skema.namaSkema || '-- Klik untuk Mencari Skema --'}
+                             </span>
+                             <i className="fas fa-search" style={{ color: '#cbd5e1' }}></i>
+                           </button>
+                         </div>
+
+                         {/* TOMBOL MODAL TUK */}
+                         <div>
+                           <label style={labelStyle}>Lokasi Ujian (TUK) <span style={{color: '#ef4444'}}>*</span></label>
+                           <button 
+                             type="button" 
+                             style={{ ...inputStyle, textAlign: 'left', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} 
+                             onClick={() => { setActiveModal({ type: 'tuk', targetId: skema.id }); setModalSearch(''); }}
+                           >
+                             <span style={{ color: skema.jejaring_id ? '#0f172a' : '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                               {skema.namaTuk || '-- Klik untuk Memilih TUK --'}
+                             </span>
+                             <i className="fas fa-search" style={{ color: '#cbd5e1' }}></i>
+                           </button>
+                         </div>
+                       </div>
+
+                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginBottom: '20px' }}>
+                          <div>
+                            <label style={labelStyle}>Tanggal Mulai <span style={{color: '#ef4444'}}>*</span></label>
+                            <input type="date" style={inputStyle} value={skema.tglMulai} onChange={(e) => setSkemaUsulan(skemaUsulan.map(s => s.id === skema.id ? {...s, tglMulai: e.target.value} : s))} required/>
+                          </div>
+                          <div>
+                            <label style={labelStyle}>Tanggal Selesai <span style={{color: '#ef4444'}}>*</span></label>
+                            <input type="date" style={inputStyle} value={skema.tglSelesai} onChange={(e) => setSkemaUsulan(skemaUsulan.map(s => s.id === skema.id ? {...s, tglSelesai: e.target.value} : s))} required/>
+                          </div>
+                       </div>
+
+                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
+                          <div>
+                            <label style={labelStyle}>Kurikulum Program (PDF) {editingId ? '' : <span style={{color: '#ef4444'}}>*</span>}</label>
+                            <input type="file" accept=".pdf" style={{ ...inputStyle, padding: '8px', border: '1px dashed #cbd5e1' }} onChange={(e) => handleSkemaFileChange(skema.id, 'fileKurikulum', e.target.files[0])} required={!editingId}/>
+                          </div>
+                          <div>
+                            <label style={labelStyle}>Data Nominatif Asesi (Excel) {editingId ? '' : <span style={{color: '#ef4444'}}>*</span>}</label>
+                            <input type="file" accept=".xls, .xlsx, .csv" style={{ ...inputStyle, padding: '8px', border: '1px dashed #cbd5e1' }} onChange={(e) => handleSkemaFileChange(skema.id, 'fileNominatif', e.target.files[0])} required={!editingId}/>
+                          </div>
+                       </div>
+                    </div>
+                  ))}
+                  
+                  {!editingId && (
+                    <Button type="button" variant="dashed" size="lg" isFullWidth icon="plus-circle" onClick={handleAddSkema} style={{ borderStyle: 'dashed' }}>
+                      Tambah Skema Ujian Lainnya
+                    </Button>
+                  )}
                 </div>
              </div>
              
-             <div style={{ marginTop: '24px' }}>
-               <Button type="submit" variant="primary" size="lg" isFullWidth icon="save" style={{ padding: '16px', fontSize: '1.05rem', boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)' }}>
-                 {editingId ? 'Simpan Perubahan Draft' : 'Simpan Sebagai Draft'}
-               </Button>
+             {/* FOOTER AKSI */}
+             <div style={{ padding: '20px 30px', backgroundColor: '#f8fafc', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', gap: '15px' }}>
+                <Button type="button" variant="secondary" onClick={() => { setShowForm(false); setEditingId(null); }}>Batal</Button>
+                <Button type="submit" variant="primary" icon="save">
+                  {editingId ? 'Simpan Perubahan Draft' : 'Simpan Sebagai Draft'}
+                </Button>
              </div>
           </form>
         </div>
@@ -467,7 +521,13 @@ const FormPengajuanUJK = () => {
                         </td>
 
                         <td style={{ textAlign: 'center', verticalAlign: 'top', paddingTop: '20px' }}>
-                          <Button variant="outline" size="sm" icon="file-pdf" onClick={() => setViewPdf(`Surat Pengajuan ${item.nomor_surat_pengajuan}`)}>Buka</Button>
+                          {/* PERBAIKAN: Pemanggilan Surat Pengajuan menggunakan ID dari tabel ujk (item.id) */}
+                          <Button 
+                            variant="outline" size="sm" icon="file-pdf" 
+                            onClick={() => handleOpenPreviewPdf('Surat Pengajuan', `Surat Pengajuan ${item.nomor_surat_pengajuan}`, item.id)}
+                          >
+                            Buka
+                          </Button>
                         </td>
 
                         <td style={{ verticalAlign: 'top', paddingTop: '15px' }}>
@@ -499,7 +559,13 @@ const FormPengajuanUJK = () => {
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
                             {(item.detail_skema || item.detailSkema || []).map((ds, i) => (
                               <div key={i} style={{ minHeight: '55px', display: 'flex', alignItems: 'center' }}>
-                                <Button variant="outline" size="sm" icon="file-pdf" onClick={() => setViewPdf(`Kurikulum ${ds.skema?.namaSkema}`)}>Buka</Button>
+                                {/* PERBAIKAN: Pemanggilan Kurikulum menggunakan ID dari tabel detail (ds.id) */}
+                                <Button 
+                                  variant="outline" size="sm" icon="file-pdf" 
+                                  onClick={() => handleOpenPreviewPdf('Kurikulum', `Kurikulum ${ds.skema?.namaSkema}`, ds.id)}
+                                >
+                                  Buka
+                                </Button>
                               </div>
                             ))}
                           </div>
@@ -513,7 +579,7 @@ const FormPengajuanUJK = () => {
                                   variant="outline" 
                                   size="sm" 
                                   style={{ minWidth: '60px' }} 
-                                  onClick={() => setViewPeserta(ds)} // Membuka tabel peserta
+                                  onClick={() => setViewPeserta(ds)}
                                 >
                                   <strong>{ds.jumlah_peserta || 0}</strong> <i className="fas fa-users" style={{ marginLeft: '4px' }}></i>
                                 </Button>
@@ -524,7 +590,6 @@ const FormPengajuanUJK = () => {
 
                         <td style={{ textAlign: 'center', verticalAlign: 'top', paddingTop: '15px' }}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
-                              {/* MEMANGGIL FUNGSI YANG SUDAH DIREVISI */}
                               <Button variant="outline" size="sm" icon="paper-plane" onClick={() => handleKirimLsp(item.id)} style={{ width: '85px' }}>Kirim</Button>
                               <Button variant="outline" size="sm" icon="edit" onClick={() => handleEdit(item)} style={{ width: '85px' }}>Edit</Button>
                               <Button variant="outline-danger" size="sm" icon="trash" onClick={() => handleDelete(item.id)} style={{ width: '85px' }}>Hapus</Button>
@@ -547,20 +612,25 @@ const FormPengajuanUJK = () => {
         </div>
       )}
 
-      {/* --- MODAL PDF VIEWER (Simulasi) --- */}
+      {/* --- MODAL PDF VIEWER (DENGAN IFRAME) --- */}
       {viewPdf && (
          <div className="modal-overlay" style={{ zIndex: 9999 }}>
-           <div className="modal-content" style={{ width: '800px', maxWidth: '90%', height: '80vh', backgroundColor: '#ffffff', borderRadius: '12px', padding: '0', display: 'flex', flexDirection: 'column' }}>
-             <div className="modal-header" style={{ padding: '15px 20px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-               <h3 style={{margin:0, color: '#0f172a'}}><i className="fas fa-file-pdf" style={{color: '#ef4444', marginRight: 8}}></i> Pratinjau Dokumen</h3>
-               <button style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#64748b' }} onClick={() => setViewPdf(null)}>&times;</button>
+           <div className="modal-content fade-in-content" style={{ width: '800px', maxWidth: '95%', height: '85vh', backgroundColor: '#ffffff', borderRadius: '12px', padding: '0', display: 'flex', flexDirection: 'column' }}>
+             <div className="modal-header" style={{ padding: '15px 20px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f8fafc', borderRadius: '12px 12px 0 0' }}>
+               <h3 style={{margin:0, color: '#0f172a', fontSize: '1.25rem'}}>
+                 <i className="fas fa-file-pdf" style={{color: '#ef4444', marginRight: 8}}></i> {viewPdf.name}
+               </h3>
+               <button style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#64748b' }} onClick={closePdfViewer}>&times;</button>
              </div>
-             <div className="modal-body" style={{ flex: 1, backgroundColor: '#f8fafc', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-               <div style={{ textAlign: 'center', color: '#64748b' }}>
-                  <i className="fas fa-file-pdf" style={{ fontSize: '5rem', marginBottom: '15px', color: '#cbd5e1' }}></i>
-                  <p style={{ fontSize: '1.2rem', fontWeight: '600', color: '#334155' }}>Simulasi Penampil Dokumen</p>
-                  <p style={{ fontSize: '0.95rem' }}>Dokumen <strong>{viewPdf}</strong> yang diunggah akan tampil di area ini.</p>
-               </div>
+             
+             <div className="modal-body" style={{ flex: 1, backgroundColor: '#e2e8f0', padding: '10px' }}>
+                <iframe 
+                  src={viewPdf.url} 
+                  width="100%" 
+                  height="100%" 
+                  style={{ border: 'none', borderRadius: '8px', backgroundColor: '#fff', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }} 
+                  title={viewPdf.name} 
+                />
              </div>
            </div>
          </div>
@@ -585,10 +655,9 @@ const FormPengajuanUJK = () => {
               <input
                 type="text"
                 placeholder={`Cari nama ${activeModal.type === 'skema' ? 'skema...' : 'TUK...'}`}
-                className="form-input"
+                style={{ ...inputStyle, paddingLeft: '35px' }}
                 value={modalSearch}
                 onChange={(e) => setModalSearch(e.target.value)}
-                style={{ paddingLeft: '35px', paddingRight: '12px', paddingTop: '10px', paddingBottom: '10px' }}
                 autoFocus
               />
             </div>

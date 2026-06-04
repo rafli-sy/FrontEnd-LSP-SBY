@@ -13,27 +13,56 @@ const CekSertifikat = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  const handleSearch = (e) => {
+  const handleSearch = async (e) => {
     e.preventDefault();
     if (!searchQuery) return;
     
     setIsLoading(true); 
     setSearchResult(null);
 
-    setTimeout(() => {
-      setIsLoading(false);
-      if (searchQuery.includes('123')) {
-        setSearchResult({ 
-          status: 'valid', 
-          nama: 'Fernando Torres', 
-          skema: 'Junior Web Developer', 
-          noReg: 'REG.BNSP/TIK/12345/2026', 
-          tanggalTerbit: '15 Maret 2026' 
-        });
+    try {
+      // FIX 1: Ganti ?query= menjadi ?keyword= dan tambah header untuk bypass warning ngrok
+      const response = await fetch(
+        `https://untracked-exponent-oboe.ngrok-free.dev/api/sertifikat/cek-sertifikat?keyword=${encodeURIComponent(searchQuery)}`,
+        {
+          headers: {
+            "ngrok-skip-browser-warning": "69420"
+          }
+        }
+      );
+
+      // Mengecek apakah response dari server sukses (status HTTP 200-299)
+      if (response.ok) {
+        const result = await response.json();
+        
+        // Memastikan status JSON dari backend adalah success
+        if (result.status === 'success') {
+          const data = result.data;
+
+          // FIX 2: Sesuaikan properti dengan struktur JSON dari backend Laravel
+          setSearchResult({ 
+            status: 'valid', 
+            nama: data.nama_peserta, 
+            skema: data.skema_sertifikasi, 
+            noReg: data.nomor_registrasi, 
+            tanggalTerbit: data.tanggal_terbit,
+            masaBerlaku: data.masa_berlaku
+          });
+        } else {
+          setSearchResult({ status: 'invalid' });
+        }
       } else {
+        // Jika data tidak ditemukan di database (misal error 404)
         setSearchResult({ status: 'invalid' });
       }
-    }, 1500);
+    } catch (error) {
+      // Menangkap error jika server down atau ada masalah koneksi internet
+      console.error("Gagal mengambil data dari server:", error);
+      setSearchResult({ status: 'invalid' });
+    } finally {
+      // Menghentikan loading spinner setelah proses selesai (baik berhasil maupun gagal)
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -92,6 +121,7 @@ const CekSertifikat = () => {
                         <tr><td className="label">Skema Kompetensi</td><td className="value">: {searchResult.skema}</td></tr>
                         <tr><td className="label">No. Registrasi</td><td className="value">: {searchResult.noReg}</td></tr>
                         <tr><td className="label">Tanggal Terbit</td><td className="value">: {searchResult.tanggalTerbit}</td></tr>
+                        <tr><td className="label">Masa Berlaku</td><td className="value">: {searchResult.masaBerlaku}</td></tr>
                       </tbody>
                     </table>
                   </div>
