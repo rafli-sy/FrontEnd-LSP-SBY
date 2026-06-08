@@ -71,7 +71,7 @@ const FormPengajuanUJK = () => {
       
       const [resSkema, resTuk, resAnggaran] = await Promise.all([
         fetch(`${apiUrl}/api/admin-blk/list-skema-pengajuan`,  { method: 'GET', headers }),
-        fetch(`${apiUrl}/api/master/jejaring`, { headers }),
+        fetch(`${apiUrl}/api/admin-blk/list-jejaring-pengajuan`, { headers }),
         fetch(`${apiUrl}/api/master/sumber-anggaran`, { headers })
       ]);
 
@@ -171,6 +171,14 @@ const FormPengajuanUJK = () => {
       if (skema.fileNominatif) formPayload.append(`skemas[${index}][file_nominatif]`, skema.fileNominatif);
       if (skema.fileKurikulum) formPayload.append(`skemas[${index}][file_kurikulum]`, skema.fileKurikulum);
     });
+    
+    console.log("=== CEK FORM DATA ===");
+    console.log("fileSurat:", formData.fileSurat);
+    console.log("skemaUsulan state:", skemaUsulan);
+    for (let [key, value] of formPayload.entries()) {
+      console.log(key, "=>", value);
+    }
+    
 
     try {
       const endpoint = editingId 
@@ -198,6 +206,7 @@ const FormPengajuanUJK = () => {
         setAlert({ type: 'warning', title: 'Gagal Menyimpan', text: resData.message || 'Periksa kembali data Anda.', onCancel: closeAlert });
       }
     } catch (error) {
+      console.log(error.response?.data);
       console.error(error);
       setAlert({ type: 'error', title: 'Error', text: 'Terjadi kesalahan jaringan atau server.', onCancel: closeAlert });
     }
@@ -269,9 +278,9 @@ const FormPengajuanUJK = () => {
       
       let apiEndpoint = '';
       if (tipeDokumen === 'Surat Pengajuan') {
-        apiEndpoint = `${apiUrl}/api/pengajuan/surat/${targetId}`;
+        apiEndpoint = `${apiUrl}/api/admin-blk/surat/${targetId}`;
       } else if (tipeDokumen === 'Kurikulum') {
-        apiEndpoint = `${apiUrl}/api/pengajuan/kurikulum/${targetId}`;
+        apiEndpoint = `${apiUrl}/api/admin-blk/kurikulum/${targetId}`;
       }
       
       const response = await fetch(apiEndpoint, {
