@@ -38,6 +38,7 @@ const PenugasanPage = () => {
   // Konfigurasi Axios Sentral (Inline)
   const token = sessionStorage.getItem('auth_token') || localStorage.getItem('access_token');
   const baseUrl = `${import.meta.env.VITE_API_BASE_URL}/api`;
+  const storageUrl = `${import.meta.env.VITE_API_BASE_URL}/storage`;
   const config = useMemo(() => ({
     headers: {
       'ngrok-skip-browser-warning': 'true',
@@ -111,6 +112,24 @@ const PenugasanPage = () => {
 
   const docsWithForm = ['SPT.01', 'SPT.02', 'SPM.01', 'SPM.02', 'SPM.03', 'balasan', 'DOC.02', 'DOC.06', 'DOC.07', 'DOC.08', 'DOC.10', 'DOC.11', 'DOC.13', 'PLN.01', 'PLN.04'];
   const docsWithTtd = ['balasan', 'SPT.01', 'SPT.02', 'SPM.01', 'SPM.02'];
+  // --- FUNGSI BANTUAN CEK DOKUMEN ---
+  const cekSuratBalasan = (pengajuanParent) => {
+    if (!pengajuanParent || !pengajuanParent.dokumen_upload_lsp) return false;
+    return pengajuanParent.dokumen_upload_lsp.some(doc => doc.jenis_dokumen === 'surat_balasan');
+  };
+  const getSuratBalasanUrl = (pengajuanParent) => {
+    const doc = pengajuanParent?.dokumen_upload_lsp?.find(d => d.jenis_dokumen === 'surat_balasan');
+    return doc ? `${storageUrl}/${doc.path_file}` : '#';
+  };
+  const cekDokumenDetail = (skemaDetail, jenis) => {
+    if (!skemaDetail || !skemaDetail.dokumen_upload_lsp) return false;
+    return skemaDetail.dokumen_upload_lsp.some(doc => doc.jenis_dokumen === jenis); 
+  };
+  const getDokumenDetailUrl = (skemaDetail, jenis) => {
+    const doc = skemaDetail?.dokumen_upload_lsp?.find(d => d.jenis_dokumen === jenis);
+    return doc ? `${storageUrl}/${doc.path_file}` : '#';
+  };
+  // ------------------------------------
 
   const showAlert = (type, title, text, action = null) => {
     setAlertConfig({ type, title, text, onConfirm: () => { if(action) action(); setAlertConfig(null); }, onCancel: () => setAlertConfig(null) });
@@ -221,6 +240,7 @@ const PenugasanPage = () => {
     try {
       const res = await axios.get(`${baseUrl}/${rolePath}/semua-pengajuan`, config);
       const rawData = res.data.data || [];
+      console.log("DATA DARI API:", rawData);
       const grouped = {};
       
       rawData.forEach(item => {
@@ -231,6 +251,7 @@ const PenugasanPage = () => {
         if (!grouped[ujkId]) {
           grouped[ujkId] = {
             idUjk: ujkId,
+            pengajuan: item.pengajuan || item.pengajuan_ujk || item,
             pengajuan_id: validPengajuanId, 
             pengusul: item.pengajuan?.admin_blk?.instansi?.nama_institusi || item.pengajuan?.adminBlk?.instansi?.nama_institusi || 'Instansi BLK',
             pendanaan: item.pengajuan?.sumber_anggaran?.namaAnggaran || 'Mandiri',
@@ -264,6 +285,7 @@ const PenugasanPage = () => {
           penyelia_id: jadwal?.penyilia_id || null,
           isPlotted: isPlotted,
           status: isPlotted ? 'Selesai Diplot' : 'Sedang Diproses',
+          dokumen_upload_lsp: item.dokumen_upload_lsp || [],
           statusSurat: {
             balasan: !!validPengajuanId,
             permohonan: isPlotted,
@@ -933,30 +955,42 @@ const PenugasanPage = () => {
                               </div>
                               {skema.asesor1 && (
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px', padding: '10px 12px', background: '#f8fafc', borderRadius: '8px', marginTop: '8px', border: '1px solid #e2e8f0' }}>
+                                  
+                                  {/* Surat Tugas Asesor 1 */}
                                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                     <span style={{ fontSize: '0.7rem', fontWeight: '800', color: '#475569', textAlign: 'center' }}><i className="fas fa-file-pdf text-red-500"></i> Surat Tugas</span>
+                                    
+                                    {cekDokumenDetail(skema, 'spt_asesor_1') && (
+                                      <a href={getDokumenDetailUrl(skema, 'spt_asesor_1')} target="_blank" rel="noreferrer" style={{ background: '#e6fbf0', color: '#10b981', border: '1px solid #10b981', padding: '4px 8px', borderRadius: '6px', fontSize: '0.65rem', fontWeight: 'bold', textDecoration: 'none', textAlign: 'center', marginBottom: '2px' }}><i className="fas fa-check"></i> File Terupload</a>
+                                    )}
+
                                     <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: '#ffffff', border: '1px dashed #94a3b8', borderRadius: '6px', padding: '8px', cursor: 'pointer', transition: 'all 0.2s ease' }} onMouseOver={(e) => e.currentTarget.style.borderColor = '#3b82f6'} onMouseOut={(e) => e.currentTarget.style.borderColor = '#94a3b8'}>
                                       <i className="fas fa-cloud-upload-alt" style={{ fontSize: '1.1rem', color: '#3b82f6' }}></i>
-                                      <span style={{ fontSize: '0.7rem', fontWeight: '600', color: '#475569', maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                        {uploadSptAsesor[`${skema.idSkema}_1`]?.name ? uploadSptAsesor[`${skema.idSkema}_1`].name : 'Pilih File'}
-                                      </span>
+                                      <span style={{ fontSize: '0.7rem', fontWeight: '600', color: '#475569', maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{uploadSptAsesor[`${skema.idSkema}_1`]?.name ? uploadSptAsesor[`${skema.idSkema}_1`].name : 'Ganti/Upload'}</span>
                                       <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx" onChange={(e) => setUploadSptAsesor(prev => ({ ...prev, [`${skema.idSkema}_1`]: e.target.files[0] }))} />
                                     </label>
-                                    {uploadSptAsesor[`${skema.idSkema}_1`] && !sentSptAsesor[`${skema.idSkema}_1`] && (
-                                      <button type="button" onClick={() => handleKirimSptAsesorFile(skema.idSkema, '1')} style={{ background: '#2563eb', color: '#fff', border: 'none', padding: '5px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.7rem', fontWeight: 'bold', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px' }}><i className="fas fa-paper-plane"></i> Kirim</button>
+                                    
+                                    {uploadSptAsesor[`${skema.idSkema}_1`] && (
+                                      <button type="button" onClick={() => handleKirimSptAsesorFile(skema.idSkema, '1')} style={{ background: '#2563eb', color: '#fff', border: 'none', padding: '5px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.7rem', fontWeight: 'bold', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px' }}><i className="fas fa-paper-plane"></i> {sentSptAsesor[`${skema.idSkema}_1`] ? 'Berhasil' : 'Kirim'}</button>
                                     )}
                                   </div>
+
+                                  {/* Berita Acara Asesor 1 */}
                                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                     <span style={{ fontSize: '0.7rem', fontWeight: '800', color: '#475569', textAlign: 'center' }}><i className="fas fa-file-contract text-emerald-500"></i> Berita Acara</span>
+                                    
+                                    {cekDokumenDetail(skema, 'berita_acara_1') && (
+                                      <a href={getDokumenDetailUrl(skema, 'berita_acara_1')} target="_blank" rel="noreferrer" style={{ background: '#e6fbf0', color: '#10b981', border: '1px solid #10b981', padding: '4px 8px', borderRadius: '6px', fontSize: '0.65rem', fontWeight: 'bold', textDecoration: 'none', textAlign: 'center', marginBottom: '2px' }}><i className="fas fa-check"></i> File Terupload</a>
+                                    )}
+
                                     <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: '#ffffff', border: '1px dashed #94a3b8', borderRadius: '6px', padding: '8px', cursor: 'pointer', transition: 'all 0.2s ease' }} onMouseOver={(e) => e.currentTarget.style.borderColor = '#10b981'} onMouseOut={(e) => e.currentTarget.style.borderColor = '#94a3b8'}>
                                       <i className="fas fa-cloud-upload-alt" style={{ fontSize: '1.1rem', color: '#10b981' }}></i>
-                                      <span style={{ fontSize: '0.7rem', fontWeight: '600', color: '#475569', maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                        {uploadBaAsesor[`${skema.idSkema}_1`]?.name ? uploadBaAsesor[`${skema.idSkema}_1`].name : 'Pilih File'}
-                                      </span>
+                                      <span style={{ fontSize: '0.7rem', fontWeight: '600', color: '#475569', maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{uploadBaAsesor[`${skema.idSkema}_1`]?.name ? uploadBaAsesor[`${skema.idSkema}_1`].name : 'Ganti/Upload'}</span>
                                       <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx" onChange={(e) => setUploadBaAsesor(prev => ({ ...prev, [`${skema.idSkema}_1`]: e.target.files[0] }))} />
                                     </label>
-                                    {uploadBaAsesor[`${skema.idSkema}_1`] && !sentBaAsesor[`${skema.idSkema}_1`] && (
-                                      <button type="button" onClick={() => handleKirimBaAsesorFile(skema.idSkema, '1')} style={{ background: '#10b981', color: '#fff', border: 'none', padding: '5px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.7rem', fontWeight: 'bold', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px' }}><i className="fas fa-paper-plane"></i> Kirim</button>
+                                    
+                                    {uploadBaAsesor[`${skema.idSkema}_1`] && (
+                                      <button type="button" onClick={() => handleKirimBaAsesorFile(skema.idSkema, '1')} style={{ background: '#10b981', color: '#fff', border: 'none', padding: '5px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.7rem', fontWeight: 'bold', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px' }}><i className="fas fa-paper-plane"></i> {sentBaAsesor[`${skema.idSkema}_1`] ? 'Berhasil' : 'Kirim'}</button>
                                     )}
                                   </div>
                                 </div>
@@ -971,30 +1005,42 @@ const PenugasanPage = () => {
                               </div>
                               {skema.asesor2 && (
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px', padding: '10px 12px', background: '#f8fafc', borderRadius: '8px', marginTop: '8px', border: '1px solid #e2e8f0' }}>
+                                  
+                                  {/* Surat Tugas Asesor 2 */}
                                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                     <span style={{ fontSize: '0.7rem', fontWeight: '800', color: '#475569', textAlign: 'center' }}><i className="fas fa-file-pdf text-red-500"></i> Surat Tugas</span>
+                                    
+                                    {cekDokumenDetail(skema, 'spt_asesor_2') && (
+                                      <a href={getDokumenDetailUrl(skema, 'spt_asesor_2')} target="_blank" rel="noreferrer" style={{ background: '#e6fbf0', color: '#10b981', border: '1px solid #10b981', padding: '4px 8px', borderRadius: '6px', fontSize: '0.65rem', fontWeight: 'bold', textDecoration: 'none', textAlign: 'center', marginBottom: '2px' }}><i className="fas fa-check"></i> File Terupload</a>
+                                    )}
+
                                     <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: '#ffffff', border: '1px dashed #94a3b8', borderRadius: '6px', padding: '8px', cursor: 'pointer', transition: 'all 0.2s ease' }} onMouseOver={(e) => e.currentTarget.style.borderColor = '#3b82f6'} onMouseOut={(e) => e.currentTarget.style.borderColor = '#94a3b8'}>
                                       <i className="fas fa-cloud-upload-alt" style={{ fontSize: '1.1rem', color: '#3b82f6' }}></i>
-                                      <span style={{ fontSize: '0.7rem', fontWeight: '600', color: '#475569', maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                        {uploadSptAsesor[`${skema.idSkema}_2`]?.name ? uploadSptAsesor[`${skema.idSkema}_2`].name : 'Pilih File'}
-                                      </span>
+                                      <span style={{ fontSize: '0.7rem', fontWeight: '600', color: '#475569', maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{uploadSptAsesor[`${skema.idSkema}_2`]?.name ? uploadSptAsesor[`${skema.idSkema}_2`].name : 'Ganti/Upload'}</span>
                                       <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx" onChange={(e) => setUploadSptAsesor(prev => ({ ...prev, [`${skema.idSkema}_2`]: e.target.files[0] }))} />
                                     </label>
-                                    {uploadSptAsesor[`${skema.idSkema}_2`] && !sentSptAsesor[`${skema.idSkema}_2`] && (
-                                      <button type="button" onClick={() => handleKirimSptAsesorFile(skema.idSkema, '2')} style={{ background: '#2563eb', color: '#fff', border: 'none', padding: '5px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.7rem', fontWeight: 'bold', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px' }}><i className="fas fa-paper-plane"></i> Kirim</button>
+                                    
+                                    {uploadSptAsesor[`${skema.idSkema}_2`] && (
+                                      <button type="button" onClick={() => handleKirimSptAsesorFile(skema.idSkema, '2')} style={{ background: '#2563eb', color: '#fff', border: 'none', padding: '5px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.7rem', fontWeight: 'bold', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px' }}><i className="fas fa-paper-plane"></i> {sentSptAsesor[`${skema.idSkema}_2`] ? 'Berhasil' : 'Kirim'}</button>
                                     )}
                                   </div>
+
+                                  {/* Berita Acara Asesor 2 */}
                                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                     <span style={{ fontSize: '0.7rem', fontWeight: '800', color: '#475569', textAlign: 'center' }}><i className="fas fa-file-contract text-emerald-500"></i> Berita Acara</span>
+                                    
+                                    {cekDokumenDetail(skema, 'berita_acara_2') && (
+                                      <a href={getDokumenDetailUrl(skema, 'berita_acara_2')} target="_blank" rel="noreferrer" style={{ background: '#e6fbf0', color: '#10b981', border: '1px solid #10b981', padding: '4px 8px', borderRadius: '6px', fontSize: '0.65rem', fontWeight: 'bold', textDecoration: 'none', textAlign: 'center', marginBottom: '2px' }}><i className="fas fa-check"></i> File Terupload</a>
+                                    )}
+
                                     <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: '#ffffff', border: '1px dashed #94a3b8', borderRadius: '6px', padding: '8px', cursor: 'pointer', transition: 'all 0.2s ease' }} onMouseOver={(e) => e.currentTarget.style.borderColor = '#10b981'} onMouseOut={(e) => e.currentTarget.style.borderColor = '#94a3b8'}>
                                       <i className="fas fa-cloud-upload-alt" style={{ fontSize: '1.1rem', color: '#10b981' }}></i>
-                                      <span style={{ fontSize: '0.7rem', fontWeight: '600', color: '#475569', maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                        {uploadBaAsesor[`${skema.idSkema}_2`]?.name ? uploadBaAsesor[`${skema.idSkema}_2`].name : 'Pilih File'}
-                                      </span>
+                                      <span style={{ fontSize: '0.7rem', fontWeight: '600', color: '#475569', maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{uploadBaAsesor[`${skema.idSkema}_2`]?.name ? uploadBaAsesor[`${skema.idSkema}_2`].name : 'Ganti/Upload'}</span>
                                       <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx" onChange={(e) => setUploadBaAsesor(prev => ({ ...prev, [`${skema.idSkema}_2`]: e.target.files[0] }))} />
                                     </label>
-                                    {uploadBaAsesor[`${skema.idSkema}_2`] && !sentBaAsesor[`${skema.idSkema}_2`] && (
-                                      <button type="button" onClick={() => handleKirimBaAsesorFile(skema.idSkema, '2')} style={{ background: '#10b981', color: '#fff', border: 'none', padding: '5px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.7rem', fontWeight: 'bold', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px' }}><i className="fas fa-paper-plane"></i> Kirim</button>
+                                    
+                                    {uploadBaAsesor[`${skema.idSkema}_2`] && (
+                                      <button type="button" onClick={() => handleKirimBaAsesorFile(skema.idSkema, '2')} style={{ background: '#10b981', color: '#fff', border: 'none', padding: '5px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.7rem', fontWeight: 'bold', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px' }}><i className="fas fa-paper-plane"></i> {sentBaAsesor[`${skema.idSkema}_2`] ? 'Berhasil' : 'Kirim'}</button>
                                     )}
                                   </div>
                                 </div>
@@ -1083,7 +1129,29 @@ const PenugasanPage = () => {
                       <td style={{ textAlign: 'center', color: '#94a3b8', verticalAlign: 'top', paddingTop: '20px' }}>{(currentPage - 1) * itemsPerPage + index + 1}</td>
                       <td style={{ verticalAlign: 'top', paddingTop: '20px' }}><strong style={{ display: 'block', color: '#0f172a', fontSize: '1.05rem' }}>{item.idUjk}</strong><small className="text-muted"><i className="fas fa-building"></i> {item.pengusul}</small></td>
                       
-                      <td style={{ textAlign: 'center', verticalAlign: 'top', paddingTop: '20px' }}><Button variant="outline" size="sm" icon="file-pdf" onClick={() => showAlert('info', 'File Pengajuan', 'API download pengajuan belum direquest ke backend.')}>Lihat</Button></td>
+                     <td style={{ textAlign: 'center', verticalAlign: 'top', paddingTop: '20px' }}>
+                      {item.pengajuan?.file_surat_pengajuan ? (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          icon="file-pdf" 
+                          onClick={() => {
+                            setPreviewDokumen({
+                              jenis: 'Surat Pengajuan',
+                              fileUrl: `${storageUrl}/${item.pengajuan.file_surat_pengajuan}`,
+                              docKey: 'surat_pengajuan',
+                              ujkId: item.idUjk
+                            });
+                          }}
+                        >
+                          Lihat File
+                        </Button>
+                      ) : (
+                        <Button variant="outline" size="sm" icon="times" disabled>
+                          Tidak Ada
+                        </Button>
+                      )}
+                    </td>
                       
                       <td style={{ verticalAlign: 'top', paddingTop: '15px' }}>
                         <ul style={{ margin: 0, paddingLeft: '15px', color: '#334155', fontSize: '0.9rem' }}>
@@ -1101,18 +1169,35 @@ const PenugasanPage = () => {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
                           
                           {/* REVISI BARU: TAMPILAN UPLOAD SURAT BALASAN TABEL UTAMA (HORIZONTAL COMPACT) */}
-                          <div style={{ border: '1px solid #cbd5e1', padding: '10px', borderRadius: '8px', background: '#ffffff', width: '100%', display: 'flex', flexDirection: 'column', gap: '6px', textAlign: 'left', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
-                            <span style={{ fontSize: '0.7rem', fontWeight: '800', color: '#475569', textAlign: 'center' }}><i className="fas fa-envelope-open-text text-amber-500"></i> Upload Balasan</span>
-                            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: '#f8fafc', border: '1px dashed #94a3b8', borderRadius: '6px', padding: '8px', cursor: 'pointer', transition: 'all 0.2s ease' }} onMouseOver={(e) => e.currentTarget.style.borderColor = '#f59e0b'} onMouseOut={(e) => e.currentTarget.style.borderColor = '#94a3b8'}>
+                          {console.log("Cek dokumen:", item.pengajuan?.dokumen_upload_lsp)}
+                          <div style={{ border: '1px solid #cbd5e1', padding: '10px', borderRadius: '8px', background: '#ffffff', width: '100%', display: 'flex', flexDirection: 'column', gap: '6px', textAlign: 'left' }}>
+                            <span style={{ fontSize: '0.7rem', fontWeight: '800', color: '#475569', textAlign: 'center' }}>
+                              <i className="fas fa-envelope-open-text text-amber-500"></i> Surat Balasan
+                            </span>
+
+                            {/* Tetap cek apakah file ada buat ngasih badge */}
+                            {item.pengajuan?.dokumen_upload_lsp?.some(d => d.jenis_dokumen === 'surat_balasan') && (
+                              <div style={{ textAlign: 'center' }}>
+                                <span style={{ background: '#d1fae5', color: '#065f46', padding: '2px 6px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 'bold' }}>
+                                  <i className="fas fa-check-circle"></i> File Terupload
+                                </span>
+                              </div>
+                            )}
+
+                            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: '#f8fafc', border: '1px dashed #94a3b8', borderRadius: '6px', padding: '8px', cursor: 'pointer' }}>
                               <i className="fas fa-cloud-upload-alt text-blue" style={{fontSize:'1.1rem'}}></i> 
-                              <span style={{fontSize: '0.7rem', fontWeight: '600', color: '#475569', maxWidth: '100px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace: 'nowrap'}}>{uploadBalasan[item.idUjk]?.name ? uploadBalasan[item.idUjk].name : 'Pilih File'}</span>
+                              <span style={{fontSize: '0.7rem', fontWeight: '600', color: '#475569', maxWidth: '100px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace: 'nowrap'}}>
+                                {uploadBalasan[item.idUjk]?.name ? uploadBalasan[item.idUjk].name : 'Ganti/Upload File'}
+                              </span>
                               <input type="file" style={{ display: 'none' }} accept=".pdf" onChange={(e) => setUploadBalasan(prev => ({ ...prev, [item.idUjk]: e.target.files[0] }))} />
                             </label>
-                            {uploadBalasan[item.idUjk] && !sentBalasan[item.idUjk] && (
-                              <button onClick={() => handleKirimBalasanFile(item.idUjk, item.pengajuan_id, item.skemaList[0]?.idSkema)} style={{ background: '#10b981', color: '#ffffff', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 'bold', width:'100%', display:'flex', justifyContent:'center', alignItems:'center', gap:'4px' }}><i className="fas fa-paper-plane"></i> Kirim ke BLK</button>
+                            
+                            {uploadBalasan[item.idUjk] && (
+                              <button onClick={() => handleKirimBalasanFile(item.idUjk, item.pengajuan_id, item.skemaList[0]?.idSkema)} style={{ background: '#10b981', color: '#ffffff', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 'bold', width:'100%' }}>
+                                <i className="fas fa-paper-plane"></i> {sentBalasan[item.idUjk] ? 'Berhasil Terkirim' : 'Kirim ke BLK'}
+                              </button>
                             )}
                           </div>
-                          
                           <Button variant="primary" size="sm" onClick={() => { setSelectedPenugasan(item); setEditingId(null); }} style={{width: '100%', padding: '10px 0'}}>Mulai Plotting</Button>
                         </div>
                       </td>
