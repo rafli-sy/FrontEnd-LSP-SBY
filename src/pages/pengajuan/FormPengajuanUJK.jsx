@@ -33,7 +33,8 @@ const FormPengajuanUJK = () => {
   const inputStyle = { width: '100%', padding: '10px 14px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '0.95rem', color: '#334155', outline: 'none', transition: 'border-color 0.2s', boxSizing: 'border-box', backgroundColor: '#fff' };
 
   const initialForm = { sumber_anggaran_id: '', nomorSurat: '', fileSurat: null };
-  const initialSkema = { id: Date.now(), skema_id: '', namaSkema: '', jejaring_id: '', namaTuk: '', tglMulai: '', tglSelesai: '', fileNominatif: null, fileKurikulum: null, jumlahAsesi: 0 };
+  // PERUBAHAN: Menambahkan field namaBidang pada initial state
+  const initialSkema = { id: Date.now(), skema_id: '', namaSkema: '', namaBidang: '', jejaring_id: '', namaTuk: '', tglMulai: '', tglSelesai: '', fileNominatif: null, fileKurikulum: null, jumlahAsesi: 0 };
   
   const [formData, setFormData] = useState(initialForm);
   const [skemaUsulan, setSkemaUsulan] = useState([{ ...initialSkema }]);
@@ -135,6 +136,8 @@ const FormPengajuanUJK = () => {
       id: ds.id || Date.now() + Math.random(),
       skema_id: ds.skema_id || '',
       namaSkema: ds.skema?.namaSkema || '',
+      // PERBAIKAN: Mapping namaBidang saat edit data
+      namaBidang: ds.skema?.bidang?.namaBidang || ds.skema?.bidang?.nama_bidang || '',
       jejaring_id: ds.jejaring_id || '',
       namaTuk: ds.tuk?.namaInstitusi || '',
       tglMulai: ds.tanggal_mulai || '',
@@ -253,7 +256,6 @@ const FormPengajuanUJK = () => {
     });
   };
 
-  // --- PERBAIKAN: Fungsi Pembuka URL PDF via Rute Backend Baru ---
   const handleOpenPreviewPdf = async (tipeDokumen, namaDokumen, targetId) => {
     if (!targetId) {
       showAlert('info', 'File Tidak Ditemukan', 'Belum ada file yang diunggah untuk dokumen ini.');
@@ -265,7 +267,6 @@ const FormPengajuanUJK = () => {
       
       const token = sessionStorage.getItem('auth_token');
       
-      // Tentukan endpoint berdasarkan tipe dokumen yang diklik
       let apiEndpoint = '';
       if (tipeDokumen === 'Surat Pengajuan') {
         apiEndpoint = `${apiUrl}/api/pengajuan/surat/${targetId}`;
@@ -286,7 +287,6 @@ const FormPengajuanUJK = () => {
          throw new Error('Gagal memuat file dari server.');
       }
 
-      // Ubah response menjadi Blob (File Biner) untuk membypass Iframe CORS Ngrok
       const blob = await response.blob();
       const blobUrl = URL.createObjectURL(blob);
 
@@ -299,7 +299,6 @@ const FormPengajuanUJK = () => {
     }
   };
 
-  // Fungsi tambahan untuk membersihkan URL Object memory leak
   const closePdfViewer = () => {
     if (viewPdf?.isBlob) {
       URL.revokeObjectURL(viewPdf.url);
@@ -407,8 +406,8 @@ const FormPengajuanUJK = () => {
                          {index > 0 && <Button type="button" variant="outline-danger" size="sm" icon="trash" onClick={() => handleRemoveSkema(skema.id)}>Hapus Skema</Button>}
                        </div>
 
+                       {/* PERBAIKAN: ROW 1 MENAMPILKAN SKEMA DAN BIDANG YANG AUTO-FILL */}
                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginBottom: '20px' }}>
-                         {/* TOMBOL MODAL SKEMA */}
                          <div>
                            <label style={labelStyle}>Pilihan Skema Kompetensi <span style={{color: '#ef4444'}}>*</span></label>
                            <button 
@@ -423,20 +422,30 @@ const FormPengajuanUJK = () => {
                            </button>
                          </div>
 
-                         {/* TOMBOL MODAL TUK */}
                          <div>
-                           <label style={labelStyle}>Lokasi Ujian (TUK) <span style={{color: '#ef4444'}}>*</span></label>
-                           <button 
-                             type="button" 
-                             style={{ ...inputStyle, textAlign: 'left', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} 
-                             onClick={() => { setActiveModal({ type: 'tuk', targetId: skema.id }); setModalSearch(''); }}
-                           >
-                             <span style={{ color: skema.jejaring_id ? '#0f172a' : '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                               {skema.namaTuk || '-- Klik untuk Memilih TUK --'}
-                             </span>
-                             <i className="fas fa-search" style={{ color: '#cbd5e1' }}></i>
-                           </button>
+                           <label style={labelStyle}>Bidang / Kejuruan</label>
+                           <input 
+                             type="text" 
+                             style={{ ...inputStyle, backgroundColor: '#f1f5f9', color: '#64748b', cursor: 'not-allowed' }} 
+                             value={skema.namaBidang || ''} 
+                             placeholder="Otomatis terisi..." 
+                             readOnly 
+                           />
                          </div>
+                       </div>
+
+                       <div style={{ marginBottom: '20px' }}>
+                         <label style={labelStyle}>Lokasi Ujian (TUK) <span style={{color: '#ef4444'}}>*</span></label>
+                         <button 
+                           type="button" 
+                           style={{ ...inputStyle, textAlign: 'left', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} 
+                           onClick={() => { setActiveModal({ type: 'tuk', targetId: skema.id }); setModalSearch(''); }}
+                         >
+                           <span style={{ color: skema.jejaring_id ? '#0f172a' : '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                             {skema.namaTuk || '-- Klik untuk Memilih TUK --'}
+                           </span>
+                           <i className="fas fa-search" style={{ color: '#cbd5e1' }}></i>
+                         </button>
                        </div>
 
                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginBottom: '20px' }}>
@@ -521,7 +530,6 @@ const FormPengajuanUJK = () => {
                         </td>
 
                         <td style={{ textAlign: 'center', verticalAlign: 'top', paddingTop: '20px' }}>
-                          {/* PERBAIKAN: Pemanggilan Surat Pengajuan menggunakan ID dari tabel ujk (item.id) */}
                           <Button 
                             variant="outline" size="sm" icon="file-pdf" 
                             onClick={() => handleOpenPreviewPdf('Surat Pengajuan', `Surat Pengajuan ${item.nomor_surat_pengajuan}`, item.id)}
@@ -533,7 +541,7 @@ const FormPengajuanUJK = () => {
                         <td style={{ verticalAlign: 'top', paddingTop: '15px' }}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                             {(item.detail_skema || item.detailSkema || []).map((ds, i) => (
-                              <div key={i} style={{ minHeight: '55px', display: 'flex', alignItems: 'center' }}>
+                              <div key={i} style={{ minHeight: '65px', display: 'flex', alignItems: 'center' }}>
                                 <span style={{ color: '#475569', fontSize: '0.85rem' }}>
                                    <i className="fas fa-map-marker-alt text-muted" style={{ marginRight: '6px' }}></i> {ds.tuk?.namaInstitusi || '-'}
                                 </span>
@@ -545,8 +553,12 @@ const FormPengajuanUJK = () => {
                         <td style={{ verticalAlign: 'top', paddingTop: '15px' }}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                             {(item.detail_skema || item.detailSkema || []).map((ds, i) => (
-                              <div key={i} style={{ minHeight: '55px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                              <div key={i} style={{ minHeight: '65px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                                 <strong style={{ color: '#1e293b', fontSize: '0.9rem' }}>{ds.skema?.namaSkema || 'Skema Tidak Diketahui'}</strong>
+                                {/* PERBAIKAN: Menambahkan info Bidang di tabel agar lebih informatif */}
+                                <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '2px' }}>
+                                  Bidang: {ds.skema?.bidang?.namaBidang || ds.skema?.bidang?.nama_bidang || '-'}
+                                </div>
                                 <small className="text-muted" style={{ marginTop: '4px' }}>
                                   <i className="far fa-calendar-alt" style={{marginRight: '4px'}}></i> {formatTanggal(ds.tanggal_mulai, ds.tanggal_selesai)}
                                 </small>
@@ -558,8 +570,7 @@ const FormPengajuanUJK = () => {
                         <td style={{ verticalAlign: 'top', paddingTop: '15px' }}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
                             {(item.detail_skema || item.detailSkema || []).map((ds, i) => (
-                              <div key={i} style={{ minHeight: '55px', display: 'flex', alignItems: 'center' }}>
-                                {/* PERBAIKAN: Pemanggilan Kurikulum menggunakan ID dari tabel detail (ds.id) */}
+                              <div key={i} style={{ minHeight: '65px', display: 'flex', alignItems: 'center' }}>
                                 <Button 
                                   variant="outline" size="sm" icon="file-pdf" 
                                   onClick={() => handleOpenPreviewPdf('Kurikulum', `Kurikulum ${ds.skema?.namaSkema}`, ds.id)}
@@ -574,7 +585,7 @@ const FormPengajuanUJK = () => {
                         <td style={{ verticalAlign: 'top', paddingTop: '15px' }}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
                             {(item.detail_skema || item.detailSkema || []).map((ds, i) => (
-                              <div key={i} style={{ minHeight: '55px', display: 'flex', alignItems: 'center' }}>
+                              <div key={i} style={{ minHeight: '65px', display: 'flex', alignItems: 'center' }}>
                                 <Button 
                                   variant="outline" 
                                   size="sm" 
@@ -672,14 +683,19 @@ const FormPengajuanUJK = () => {
                     key={idx} 
                     style={{ padding: '14px', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', backgroundColor: '#fff', transition: 'all 0.2s' }}
                     onClick={() => {
-                      setSkemaUsulan(skemaUsulan.map(su => su.id === activeModal.targetId ? {...su, skema_id: item.id, namaSkema: item.namaSkema} : su));
+                      // PERBAIKAN: Menarik relasi nama bidang dari data skema
+                      const namaBidangAuto = item.bidang?.namaBidang || item.bidang?.nama_bidang || item.bidang_nama || '-';
+                      setSkemaUsulan(skemaUsulan.map(su => su.id === activeModal.targetId ? {...su, skema_id: item.id, namaSkema: item.namaSkema, namaBidang: namaBidangAuto} : su));
                       setActiveModal({ type: null, targetId: null });
                     }}
                     onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#f1f5f9'; e.currentTarget.style.borderColor = '#3b82f6'; }}
                     onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#fff'; e.currentTarget.style.borderColor = '#cbd5e1'; }}
                   >
                     <strong style={{ display: 'block', color: '#0f172a', fontSize: '1rem', marginBottom: '4px' }}>{item.namaSkema}</strong>
-                    <small className="text-muted" style={{ fontWeight: '500' }}>Jenis: {item.jenisSkema || 'N/A'}</small>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <small className="text-muted" style={{ fontWeight: '500' }}>Jenis: {item.jenisSkema || 'N/A'}</small>
+                      <small style={{ color: '#3b82f6', fontWeight: 'bold' }}>{item.bidang?.namaBidang || item.bidang?.nama_bidang || ''}</small>
+                    </div>
                   </div>
               ))}
 
