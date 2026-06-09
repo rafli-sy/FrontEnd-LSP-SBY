@@ -152,6 +152,8 @@ const PenugasanPage = () => {
         });
         showAlert('success', 'Pengiriman Berhasil', 'Surat balasan sukses dikirimkan ke Admin BLK!');
         setSentBalasan(prev => ({ ...prev, [idUjk]: true }));
+        fetchPengajuan();
+        setUploadSptAsesor(prev => ({ ...prev, [fileKey]: null }));
       } catch (error) {
         const errData = error.response?.data;
         let errorMsg = errData?.message || 'Terjadi kesalahan sistem.';
@@ -185,6 +187,8 @@ const PenugasanPage = () => {
         });
         showAlert('success', 'Pengiriman Berhasil', 'Surat Tugas berhasil diteruskan ke asesor.');
         setSentSptAsesor(prev => ({ ...prev, [fileKey]: true }));
+        fetchPengajuan();
+        setUploadSptAsesor(prev => ({ ...prev, [fileKey]: null }));
       } catch (error) {
         const errData = error.response?.data;
         let errorMsg = errData?.message || 'Terjadi kesalahan sistem.';
@@ -218,6 +222,8 @@ const PenugasanPage = () => {
         });
         showAlert('success', 'Pengiriman Berhasil', 'Berita Acara berhasil diteruskan ke asesor.');
         setSentBaAsesor(prev => ({ ...prev, [fileKey]: true }));
+        fetchPengajuan();
+        setUploadSptAsesor(prev => ({ ...prev, [fileKey]: null }));
       } catch (error) {
         const errData = error.response?.data;
         let errorMsg = errData?.message || 'Terjadi kesalahan sistem.';

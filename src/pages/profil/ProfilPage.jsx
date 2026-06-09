@@ -28,6 +28,51 @@ const ProfilPage = () => {
   const labelStyle = { display: 'block', marginBottom: '8px', fontSize: '0.85rem', fontWeight: '700', color: '#475569' };
   const inputStyle = { width: '100%', padding: '10px 14px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '0.95rem', color: '#334155', outline: 'none', transition: 'border-color 0.2s', boxSizing: 'border-box' };
 
+  // --- FUNGSI BARU BUAT HAPUS FOTO ---
+  const handleDeletePhoto = () => {
+    setAlert({
+      type: 'warning', 
+      title: 'Hapus Foto Profil?', 
+      text: 'Foto profil akan dihapus permanen dan kembali ke inisial nama. Lanjutkan?',
+      onConfirm: async () => {
+        closeAlert();
+        setIsLoading(true);
+        try {
+          const resDelete = await fetch(`${apiUrl}/api/profile/delete-picture`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${authToken}`,
+              'Accept': 'application/json',
+              'ngrok-skip-browser-warning': '69420'
+            }
+          });
+
+          const resultDelete = await resDelete.json();
+
+          if (!resDelete.ok) {
+            throw new Error(resultDelete.message || 'Gagal menghapus foto profil');
+          }
+
+          // Kosongin foto di layar
+          setProfilePhotoUrl('');
+          setSelectedFile(null);
+          
+          // Update context global pakai data fresh dari backend (fotonya udah null)
+          updateUserData(resultDelete.data);
+
+          setAlert({ type: 'success', title: 'Terhapus!', text: 'Foto profil berhasil dihapus.', onCancel: closeAlert });
+          alertTimer.current = setTimeout(() => closeAlert(), 2500);
+        } catch (error) {
+          console.error(error);
+          setAlert({ type: 'error', title: 'Gagal', text: error.message, onCancel: closeAlert });
+        } finally {
+          setIsLoading(false);
+        }
+      },
+      onCancel: closeAlert
+    });
+  };
+
   const fetchProfilePhoto = async () => {
     if (!authToken) {
       setProfilePhotoUrl('');
@@ -143,11 +188,16 @@ const ProfilPage = () => {
             body: JSON.stringify(payloadProfile)
           });
 
-          if (!resProfile.ok) {
+          const isJsonProfile = resProfile.headers.get('content-type')?.includes('application/json');
+          const resultProfile = isJsonProfile ? await resProfile.json() : null;
+
+          if (!resProfile.ok) { 
             const isJson = resProfile.headers.get('content-type')?.includes('application/json');
             const errData = isJson ? await resProfile.json() : null;
             throw new Error(errData?.message || 'Gagal memperbarui data profil');
           }
+
+          let updatedUserDariBackend = resultProfile.data;
 
           let latestFotoUrl = profilePhotoUrl;
 
@@ -161,21 +211,21 @@ const ProfilPage = () => {
               body: formData
             });
 
+            const isJsonFoto = resFoto.headers.get('content-type')?.includes('application/json');
+            const fotoResult = isJsonFoto ? await resFoto.json() : null;
+
             if (!resFoto.ok) {
                const isJson = resFoto.headers.get('content-type')?.includes('application/json');
                const errData = isJson ? await resFoto.json() : null;
                throw new Error(errData?.message || 'Data teks berhasil, tetapi gagal mengunggah foto profil.');
             }
             
-            const fotoResult = await resFoto.json();
             latestFotoUrl = fotoResult.data?.foto_url || fotoResult.foto_url || latestFotoUrl;
+            updatedUserDariBackend.fotoProfil = latestFotoUrl;
+            updatedUserDariBackend.foto = latestFotoUrl;
           }
 
-          updateUserData({ 
-            ...tempData, 
-            fotoProfil: latestFotoUrl,
-            foto: latestFotoUrl 
-          }); 
+          updateUserData(updatedUserDariBackend);
           
           await fetchProfilePhoto();
           setIsEditing(false);
@@ -236,6 +286,21 @@ const ProfilPage = () => {
             </div>
             <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={handlePhotoChange} disabled={isLoading} />
             
+            {isEditing && (profilePhotoUrl || userData?.fotoProfil) && (
+               <button 
+                  type="button"
+                  onClick={handleDeletePhoto}
+                  disabled={isLoading}
+                  style={{ 
+                    marginTop: '-5px', backgroundColor: '#fef2f2', color: '#ef4444', border: '1px solid #f87171', 
+                    padding: '6px 12px', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 'bold', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', gap: '6px'
+                  }}
+               >
+                 <i className="fas fa-trash-alt"></i> Hapus Foto
+               </button>
+            )}
+
             <div style={{ marginTop: '10px' }}>
               <h3 style={{ margin: '0 0 10px 0', color: '#0f172a', fontSize: '1.25rem', fontWeight: '800' }}>{tempData.namaLengkap || 'Nama Belum Diisi'}</h3>
               <span style={{ backgroundColor: '#eff6ff', color: '#3b82f6', padding: '6px 14px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '600' }} title="Instansi ditentukan oleh Super Admin">
