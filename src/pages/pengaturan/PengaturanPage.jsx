@@ -68,6 +68,8 @@ const PengaturanPage = () => {
             throw new Error(errorMessage);
           }
 
+          setPasswordData({ lama: '', baru: '', konfirmasi: '' });
+
           // 4. Jika Sukses
           setAlert({ 
             type: 'success', 
@@ -75,8 +77,6 @@ const PengaturanPage = () => {
             text: 'Kata sandi akun Anda telah diperbarui. Mengalihkan ke halaman login...', 
             onCancel: closeAlert 
           });
-          
-          setPasswordData({ lama: '', baru: '', konfirmasi: '' });
           
           // 5. Proses Logout Otomatis
           if (alertTimer.current) clearTimeout(alertTimer.current);

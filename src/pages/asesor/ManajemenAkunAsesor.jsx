@@ -264,7 +264,52 @@ const ManajemenAkunAsesor = () => {
   const skemaTampil = asesorData && asesorData.skema ? asesorData.skema : [];
 
   // --- AMBIL LINK FOTO AKTIF (SINKRON DENGAN SIDEBAR) ---
+  const [fotoProfilUrl, setFotoProfilUrl] = useState('');
   const fotoProfilAktif = asesorData?.user?.foto || asesorData?.foto || userData?.foto;
+  const fetchPorfilAktif = async () => {
+    const token = sessionStorage.getItem('auth_token');
+    
+    if (!token) {
+      setFotoProfilUrl('');
+      return;
+    }
+    try {
+      const timestamp = new Date().getTime();
+      const response = await fetch(`${apiUrl}/api/getFotoProfile?t=${timestamp}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'ngrok-skip-browser-warning': '69420' // Bypass wajib Ngrok
+        }
+      });
+      if (response.ok) {
+        const imageBlob = await response.blob();
+        
+        setFotoProfilUrl((prevUrl) => {
+          // Bersihin memori dari Blob yang lama biar browser nggak ngelag
+          if (prevUrl && prevUrl.startsWith('blob:')) {
+            URL.revokeObjectURL(prevUrl);
+          }
+          return URL.createObjectURL(imageBlob);
+        });
+      } else {
+        setFotoProfilUrl(''); 
+      }
+    } catch (error) {
+      console.error("Gagal load foto profil aktif:", error);
+      setFotoProfilUrl('');
+    }
+  };
+
+  useEffect(() => {
+    fetchPorfilAktif();
+
+    return () => {
+      if (fotoProfilUrl && fotoProfilUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(fotoProfilUrl);
+      }
+    };
+  }, [fotoProfilAktif, apiUrl]);
 
   return (
     <div className="dashboard-content fade-in-content" style={{ padding: '20px', minHeight: '100vh', backgroundColor: '#f8fafc' }}>
@@ -291,8 +336,8 @@ const ManajemenAkunAsesor = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
             <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
                <div style={{ width: '60px', height: '60px', borderRadius: '50%', backgroundColor: '#eff6ff', color: '#3b82f6', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '1.5rem', fontWeight: 'bold', overflow: 'hidden', border: '2px solid #e2e8f0' }}>
-                  {fotoProfilAktif ? (
-                    <img src={fotoProfilAktif} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  {fotoProfilUrl ? (
+                    <img src={fotoProfilUrl} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
                     userData?.namaLengkap?.charAt(0) || asesorData?.user?.namaLengkap?.charAt(0) || 'A'
                   )}
