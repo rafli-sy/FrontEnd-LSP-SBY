@@ -127,7 +127,7 @@ function App() {
             {/* Role: Staff LSP */}
             <Route element={<ProtectedRoute allowedRoles={['stafflsp', 'staflsp']} />}>
               <Route path="/staff-lsp" element={<DashboardStaffLSP />} />
-              <Route path="/staff-lsp/surat" element={<PenugasanPage />} />
+              <Route path="/staff-lsp/surat" element={<SuratMenyurat />} />
               <Route path="/staff-lsp/buku-induk" element={<BukuIndukPage role="staff-lsp" />} />
               <Route path="/staff-lsp/sertifikat" element={<Sertifikat />} />
             </Route>

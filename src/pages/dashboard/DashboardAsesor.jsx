@@ -1,172 +1,223 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './Dashboard.css';
-import Button from '../../components/ui/Button'; 
-import AlertPopup from '../../components/ui/AlertPopup';
-import TablePeserta from '../TablePeserta/TablePeserta'; // <-- Import komponen TablePeserta
+import { useUser } from '../../context/UserContext';
+import Button from '../../components/ui/Button';
+import AlertPopup from '../../components/ui/AlertPopup'; 
+import Pagination from '../../components/ui/Pagination';
 
 const DashboardAsesor = () => {
-  const navigate = useNavigate(); 
-  const [filterTanggal, setFilterTanggal] = useState('');
-  const [alert, setAlert] = useState(null); 
+  const navigate = useNavigate();
+  const { userData } = useUser();
+  const [previewDokumen, setPreviewDokumen] = useState(null);
+  const [alertConfig, setAlertConfig] = useState(null); 
   
-  // State baru untuk menampung data peserta yang dipilih
-  const [selectedPeserta, setSelectedPeserta] = useState(null); 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+  const [agendaPenugasan, setAgendaPenugasan] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Data Dummy Detail Peserta (agar tabel tidak kosong)
-  const dummyPeserta = [
-    { id: 1, nama: 'Giyu Tomioka', nik: '3578902006900001', jk: 'L', tempatLahir: 'Surabaya', tanggalLahir: '20 Juni 1990', alamat: 'Dukuh Menanggal III/29', rt: '1', rw: '1', kelurahan: 'Dukuh Menanggal', kecamatan: 'Gayungan', hp: '089689029754', email: 'giyu@gmail.com', pendidikan: 'S1' },
-    { id: 2, nama: 'Shinobu Kocho', nik: '3578902006900002', jk: 'P', tempatLahir: 'Malang', tanggalLahir: '15 Agustus 1995', alamat: 'Jl. Raya Mondoroko No 1', rt: '2', rw: '3', kelurahan: 'Singosari', kecamatan: 'Singosari', hp: '081234567890', email: 'shinobu@gmail.com', pendidikan: 'SMA' },
-    { id: 3, nama: 'Kyojuro Rengoku', nik: '3578902006900003', jk: 'L', tempatLahir: 'Sidoarjo', tanggalLahir: '10 Mei 1996', alamat: 'Perumahan Candi Indah', rt: '4', rw: '5', kelurahan: 'Candi', kecamatan: 'Candi', hp: '085544332211', email: 'kyojuro@gmail.com', pendidikan: 'SMK' }
-  ];
-  
-  const [penugasan, setPenugasan] = useState([
-    { id: 1, tanggal: '2026-04-06', skema: 'Junior Web Developer', tuk: 'TUK UPT Pelatihan Kerja Surabaya', asesi: 18, status: 'Menunggu Jadwal', noSurat: 'SPT-015/LSP/2026', peserta: dummyPeserta },
-    { id: 2, tanggal: '2026-03-25', skema: 'Desain UI/UX & Riset Psikologi Pengguna', tuk: 'TUK UPT Pelatihan Kerja Surabaya', asesi: 12, status: 'Menunggu Jadwal', noSurat: 'SPT-012/LSP/2026', peserta: dummyPeserta },
-    { id: 3, tanggal: '2026-03-15', skema: 'Pemrograman Web Full-Stack', tuk: 'TUK UPT Pelatihan Kerja Surabaya', asesi: 15, status: 'Menunggu Jadwal', noSurat: 'SPT-010/LSP/2026', peserta: dummyPeserta },
-    { id: 4, tanggal: '2026-03-10', skema: 'Front-End Development (React.js)', tuk: 'TUK LSP Surabaya', asesi: 20, status: 'Sedang Berlangsung', peserta: dummyPeserta },
-    { id: 5, tanggal: '2026-03-05', skema: 'Database Management', tuk: 'TUK LSP Surabaya', asesi: 20, status: 'Selesai', peserta: dummyPeserta },
-    { id: 6, tanggal: '2026-03-01', skema: 'Backend Development & API', tuk: 'TUK UPT Pelatihan Kerja Surabaya', asesi: 16, status: 'Selesai', peserta: dummyPeserta },
-  ]);
+  const apiUrl = import.meta.env.VITE_API_BASE_URL;
 
-  const closeAlert = () => setAlert(null);
+  // --- FETCH AGENDA / JADWAL PENUGASAN DARI BACKEND ---
+  useEffect(() => {
+    const fetchAgenda = async () => {
+      setIsLoading(true);
+      try {
+        const token = sessionStorage.getItem('auth_token');
+        const res = await fetch(`${apiUrl}/api/asesor/jadwal-penugasan`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+            'ngrok-skip-browser-warning': '69420'
+          }
+        });
 
-  const showSuccess = (text) => {
-    setAlert({ type: 'success', title: 'Sukses!', text });
-    setTimeout(() => setAlert(null), 2000);
-  };
+        if (res.ok) {
+          const result = await res.json();
+          setAgendaPenugasan(result.data || []);
+        }
+      } catch (error) {
+        console.error("Gagal mengambil data jadwal:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchAgenda();
+  }, [apiUrl]);
 
-  const handleTerima = (id) => {
-    setAlert({
-      type: 'save', title: 'Terima Penugasan?', text: 'Jadwal ini akan masuk ke daftar agenda aktif Anda.',
-      onConfirm: () => { setPenugasan(penugasan.map(p => p.id === id ? { ...p, status: 'Sedang Berlangsung' } : p)); showSuccess('Penugasan berhasil diterima.'); },
-      onCancel: closeAlert
+  const processedAgenda = useMemo(() => {
+    return [...agendaPenugasan].sort((a, b) => {
+      const dateA = a.rawDate ? new Date(a.rawDate) : new Date(a.tanggal);
+      const dateB = b.rawDate ? new Date(b.rawDate) : new Date(b.tanggal);
+      return dateA - dateB;
     });
-  };
+  }, [agendaPenugasan]);
 
-  const handleTolak = (id) => {
-    setAlert({
-      type: 'delete', title: 'Tolak Penugasan?', text: 'Aksi ini akan mengirim notifikasi pembatalan ke Admin LSP.',
-      onConfirm: () => { setPenugasan(penugasan.filter(p => p.id !== id)); showSuccess('Penugasan telah ditolak.'); },
-      onCancel: closeAlert
-    });
-  };
+  const paginatedData = processedAgenda.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const totalPages = Math.ceil(processedAgenda.length / itemsPerPage) || 1;
 
-  const tugasBaru = penugasan.filter(p => p.status === 'Menunggu Jadwal');
-  const agendaAktif = penugasan.filter(p => p.status === 'Sedang Berlangsung');
-  const riwayat = penugasan.filter(p => p.status === 'Selesai');
-  const dataTabel = penugasan.filter(p => p.status !== 'Menunggu Jadwal' && (filterTanggal === '' || p.tanggal === filterTanggal));
+  // Membersihkan memori cache Blob
+  useEffect(() => {
+    const handleGlobalBack = (e) => {
+      if (previewDokumen) { 
+        if (previewDokumen.fileUrl) {
+          URL.revokeObjectURL(previewDokumen.fileUrl); 
+        }
+        setPreviewDokumen(null); 
+        e.preventDefault(); 
+      }
+    };
+    window.addEventListener('globalBackRequested', handleGlobalBack);
+    return () => window.removeEventListener('globalBackRequested', handleGlobalBack);
+  }, [previewDokumen]);
 
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case 'Sedang Berlangsung': return <span style={{ backgroundColor: '#38bdf8', color: '#ffffff', padding: '6px 14px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 'bold' }}>{status}</span>;
-      case 'Selesai': return <span style={{ backgroundColor: '#4ade80', color: '#ffffff', padding: '6px 14px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 'bold' }}>{status}</span>;
-      default: return <span>{status}</span>;
+// --- FUNGSI PREVIEW DOKUMEN (SINKRONISASI DENGAN PROXY API BACKEND) ---
+  const handlePreviewDokumen = async (jenis, item) => {
+    try {
+      setAlertConfig({ type: 'info', title: 'Memuat Dokumen...', text: 'Sedang mengunduh dokumen dari server...' });
+
+      const token = sessionStorage.getItem('auth_token');
+      const idTarget = item.pengajuan_ujk_detail_id || item.detail_id || item.id_skema || item.id_penugasan; 
+
+      // 1. Ambil data informasi dokumen dari API
+      const res = await fetch(`${apiUrl}/api/asesor/dokumen/${idTarget}`, { 
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          'ngrok-skip-browser-warning': '69420'
+        }
+      });
+
+      if (!res.ok) throw new Error("Gagal mengambil daftar dokumen dari server.");
+
+      const responseData = await res.json();
+      const dokumenList = responseData.data || [];
+      
+      const dokDitemukan = dokumenList.find(d => {
+        const jenisDok = d.jenis_dokumen || '';
+        if (jenis === 'SPT') return jenisDok.includes('spt_asesor');
+        if (jenis === 'BA') return jenisDok.includes('berita_acara');
+        return false;
+      });
+
+      if (dokDitemukan) {
+        
+        // 🔥 JURUS PAMUNGKAS: Kita tembak API Proxy yang dibuat Backend, BUKAN url_download/storage
+        const proxyApiUrl = `${apiUrl}/api/asesor/download-file/${dokDitemukan.id}`;
+
+        const pdfResponse = await fetch(proxyApiUrl, {
+          method: 'GET',
+          headers: {
+            'ngrok-skip-browser-warning': '69420', // Tembus Ngrok
+            'Authorization': `Bearer ${token}` // Tembus Auth & CORS
+          }
+        });
+
+        if (!pdfResponse.ok) throw new Error("Gagal mengunduh file fisik PDF. Pastikan Backend sudah membuat route /download-file/{id}.");
+
+        const blob = await pdfResponse.blob();
+        const localBlobUrl = URL.createObjectURL(blob);
+
+        setPreviewDokumen({
+          jenis: jenis,
+          fileUrl: localBlobUrl,
+          namaSkema: item.skema_judul
+        });
+        
+        setAlertConfig(null); 
+        return; 
+      }
+
+      setAlertConfig({ type: 'warning', title: 'Belum Tersedia', text: `Dokumen ${jenis} untuk jadwal ini belum diterbitkan / diunggah oleh Admin.` });
+
+    } catch (error) {
+      console.error("Error preview dokumen:", error);
+      setAlertConfig({ type: 'error', title: 'Gagal Memuat', text: error.message });
     }
   };
 
+  if (previewDokumen) {
+    return (
+      <div className="dashboard-content fade-in-content">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', backgroundColor: '#fff', padding: '15px 20px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+          <div>
+            <h3 style={{ margin: '0 0 5px 0' }}>Pratinjau Dokumen - {previewDokumen.jenis}</h3>
+            <p className="text-muted" style={{ margin: 0, fontSize: '0.9rem' }}>Skema: {previewDokumen.namaSkema}</p>
+          </div>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <Button variant="outline" icon="arrow-left" onClick={() => {
+               if (previewDokumen.fileUrl) URL.revokeObjectURL(previewDokumen.fileUrl);
+               setPreviewDokumen(null);
+            }}>Kembali</Button>
+            <a 
+              href={previewDokumen.fileUrl} 
+              download={`${previewDokumen.jenis}_Asesor.pdf`}
+              target="_blank" rel="noreferrer"
+              style={{ backgroundColor: '#10b981', color: '#fff', padding: '10px 16px', borderRadius: '8px', textDecoration: 'none', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
+              <i className="fas fa-download"></i> Unduh PDF
+            </a>
+          </div>
+        </div>
+        <div style={{ width: '100%', height: '80vh', borderRadius: '8px', overflow: 'hidden', border: '1px solid #cbd5e1' }}>
+          <iframe src={previewDokumen.fileUrl} width="100%" height="100%" style={{ border: 'none' }} title="Preview Dokumen" />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="dashboard-content fade-in-content">
-      
-      {/* === LOGIKA RENDER: Jika peserta dipilih, tampilkan Tabel Detail === */}
-      {selectedPeserta ? (
-        <div className="fade-in-content">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '20px' }}>
-            <Button variant="outline" icon="arrow-left" onClick={() => setSelectedPeserta(null)}>
-              Kembali
-            </Button>
-            <div>
-              <h2 style={{ margin: 0, fontSize: '1.5rem' }}>Data Detail Nominatif Peserta</h2>
-              <p className="text-muted" style={{ margin: 0 }}>Skema: <strong>{selectedPeserta.skema}</strong></p>
-            </div>
-          </div>
-          
-          <div className="dashboard-card" style={{ padding: '25px' }}>
-            {/* Memanggil Komponen TablePeserta */}
-            <TablePeserta dataPeserta={selectedPeserta.peserta} skemaName={selectedPeserta.skema} />
-          </div>
-        </div>
-      ) : (
-        /* === TAMPILAN DASHBOARD UTAMA ASESOR === */
-        <div className="fade-in-content">
-          <div className="stats-grid">
-            <div className="stat-card"><div className="stat-icon" style={{ background: '#fef3c7', color: '#f59e0b' }}><i className="fas fa-bell"></i></div><div className="stat-info"><h3>{tugasBaru.length}</h3><p>Tugas Baru Masuk</p></div></div>
-            <div className="stat-card"><div className="stat-icon" style={{ background: '#eff6ff', color: '#3b82f6' }}><i className="fas fa-calendar-day"></i></div><div className="stat-info"><h3>{agendaAktif.length} Ujian</h3><p>Sedang Dilaksanakan</p></div></div>
-            <div className="stat-card"><div className="stat-icon" style={{ background: '#f1f5f9', color: '#64748b' }}><i className="fas fa-history"></i></div><div className="stat-info"><h3>{riwayat.length} Ujian</h3><p>Selesai Dinilai</p></div></div>
-          </div>
+    <div className="dashboard-content fade-in-content" style={{ position: 'relative' }}>
+      {alertConfig && <AlertPopup {...alertConfig} onConfirm={() => setAlertConfig(null)} onCancel={() => setAlertConfig(null)} />}
 
-          {tugasBaru.length > 0 && (
-            <div style={{ marginTop: '25px', marginBottom: '20px' }}>
-              <h3 className="section-title">Konfirmasi Penugasan Baru</h3>
-              {tugasBaru.map(tugas => (
-                <div key={tugas.id} className="dashboard-card fade-in-content" style={{ borderLeft: '5px solid #f59e0b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', marginBottom: '15px', padding: '20px' }}>
-                  <div style={{ flex: '1 1 min-content' }}>
-                    <h4 style={{ margin: '0 0 8px 0', color: '#0f172a', fontSize: '1.1rem' }}><i className="fas fa-envelope-open-text" style={{ color: '#f59e0b', marginRight: '8px' }}></i> SPT Baru: {tugas.noSurat}</h4>
-                    <p style={{ margin: 0, color: '#475569', fontSize: '0.95rem' }}><strong>Skema:</strong> {tugas.skema} <br/><strong>Lokasi:</strong> {tugas.tuk} <br/><strong>Tanggal:</strong> {tugas.tanggal}</p>
-                  </div>
-                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                    {/* Menggunakan tombol untuk melihat asesi */}
-                    <Button variant="outline" icon="users" onClick={() => setSelectedPeserta(tugas)}>
-                      Lihat {tugas.asesi} Asesi
-                    </Button>
-                    <Button variant="outline" icon="file-pdf" onClick={() => alert(`Mengunduh SPT: ${tugas.noSurat}...`)}>Lihat SPT</Button>
-                    <Button variant="danger" icon="times" onClick={() => handleTolak(tugas.id)}>Tolak</Button>
-                    <Button variant="success" icon="check" onClick={() => handleTerima(tugas.id)}>Terima Tugas</Button>
-                  </div>
-                </div>
+      <div style={{ marginBottom: '30px' }}>
+        <h2 style={{ fontSize: '1.75rem', color: '#0f172a', fontWeight: '700', margin: '0' }}>Halo, {userData?.namaLengkap || userData?.username || 'Asesor'}!</h2>
+        <p className="text-muted" style={{ fontSize: '1rem', marginTop: '6px' }}>Pantau jadwal penugasan dan unduh dokumen administrasi Anda.</p>
+      </div>
+
+      <div className="dashboard-card" style={{ padding: '0' }}>
+        <div style={{ padding: '20px', borderBottom: '1px solid #e2e8f0' }}>
+            <h3 style={{ fontSize: '1.25rem', color: '#1e293b', fontWeight: '600', margin: '0' }}>Daftar Penugasan</h3>
+        </div>
+
+        <div className="table-responsive" style={{ padding: '20px' }}>
+          {isLoading ? (
+             <div style={{textAlign: 'center', padding: '30px', color: '#64748b'}}>Memuat Jadwal Penugasan...</div>
+          ) : (
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th style={{ width: '5%', textAlign: 'center' }}>No</th>
+                <th style={{ width: '20%', textAlign: 'center' }}>Tanggal</th>
+                <th style={{ width: '35%', textAlign: 'center' }}>Skema Kejuruan</th>
+                <th style={{ width: '25%', textAlign: 'center' }}>Lokasi TUK</th>
+                <th style={{ width: '15%', textAlign: 'center' }}>Dokumen</th>
+              </tr>
+            </thead>
+            <tbody>
+              {paginatedData.map((item, index) => (
+                <tr key={item.id_penugasan}>
+                  <td style={{ textAlign: 'center', color: '#94a3b8' }}>{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                  <td style={{ textAlign: 'center', fontWeight: '600', color: '#334155' }}><i className="far fa-calendar-alt text-muted" style={{marginRight:'6px'}}></i>{item.tanggal}</td>
+                  <td style={{ textAlign: 'center' }}><strong style={{ color: '#0f172a' }}>{item.skema_judul}</strong></td>
+                  <td style={{ textAlign: 'center', color: '#475569', fontSize: '0.9rem' }}>{item.lokasi_tuk}</td>
+                  <td style={{ textAlign: 'center' }}>
+                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                      <button style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '6px 10px', borderRadius: '8px', fontSize: '0.7rem', fontWeight: '600', cursor: 'pointer', backgroundColor: '#eff6ff', color: '#2563eb', border: '1px solid #dbeafe', minWidth: '80px', gap: '4px' }} onClick={() => handlePreviewDokumen('SPT', item)}><i className="fas fa-file-signature" style={{ fontSize: '1.2rem' }}></i><span>Surat Tugas</span></button>
+                      <button style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '6px 10px', borderRadius: '8px', fontSize: '0.7rem', fontWeight: '600', cursor: 'pointer', backgroundColor: '#eff6ff', color: '#2563eb', border: '1px solid #dbeafe', minWidth: '80px', gap: '4px' }} onClick={() => handlePreviewDokumen('BA', item)}><i className="fas fa-file-contract" style={{ fontSize: '1.2rem' }}></i><span>Berita Acara</span></button>
+                    </div>
+                  </td>
+                </tr>
               ))}
-            </div>
+              {paginatedData.length === 0 && <tr><td colSpan="5" style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>Tidak ada jadwal penugasan.</td></tr>}
+            </tbody>
+          </table>
           )}
-
-          <div className="dashboard-card" style={{ marginTop: '25px', padding: '0', overflow: 'hidden' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 25px', borderBottom: '1px dashed #cbd5e1', flexWrap: 'wrap', gap: '15px' }}>
-              <div><h3 style={{ margin: '0 0 5px 0', fontSize: '1.25rem', color: '#0f172a' }}>Jadwal & Riwayat Uji Kompetensi</h3><p style={{ margin: 0, color: '#64748b', fontSize: '0.9rem' }}>Daftar seluruh penugasan asesmen yang sedang dan telah Anda laksanakan.</p></div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 'bold' }}><i className="fas fa-filter"></i> Filter:</span><input type="date" value={filterTanggal} onChange={(e) => setFilterTanggal(e.target.value)} style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} />{filterTanggal && <button onClick={() => setFilterTanggal('')} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontWeight: 'bold' }}>Reset</button>}</div>
-            </div>
-
-            <div className="table-responsive">
-              <table className="admin-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ backgroundColor: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
-                    <th style={{ padding: '16px 25px' }}>Tanggal</th>
-                    <th style={{ padding: '16px 25px' }}>Skema Kejuruan</th>
-                    <th style={{ padding: '16px 25px' }}>Lokasi (TUK)</th>
-                    <th style={{ padding: '16px 25px' }}>Peserta</th>
-                    <th style={{ padding: '16px 25px' }}>Status</th>
-                    <th style={{ padding: '16px 25px', textAlign: 'center' }}>Dokumen / Aksi</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {dataTabel.length > 0 ? dataTabel.map((item) => (
-                    <tr key={item.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                      <td style={{ padding: '16px 25px', fontWeight: '700' }}>{item.tanggal}</td>
-                      <td style={{ padding: '16px 25px' }}>{item.skema}</td>
-                      <td style={{ padding: '16px 25px' }}>{item.tuk}</td>
-                      <td style={{ padding: '16px 25px' }}>
-                        {/* Tombol pemicu TablePeserta */}
-                        <Button variant="outline" size="sm" onClick={() => setSelectedPeserta(item)}>
-                          <strong>{item.asesi}</strong> Orang <i className="fas fa-users" style={{ marginLeft: '5px' }}></i>
-                        </Button>
-                      </td>
-                      <td style={{ padding: '16px 25px' }}>{getStatusBadge(item.status)}</td>
-                      <td style={{ padding: '16px 25px', textAlign: 'center' }}>
-                        {item.status === 'Sedang Berlangsung' && <Button variant="primary" style={{ padding: '6px 12px' }} onClick={() => navigate('/asesor/tugas', { state: { tab: 'aktif' } })}>Mulai Penilaian</Button>}
-                        {item.status === 'Selesai' && <Button variant="outline" style={{ padding: '6px 12px' }} onClick={() => navigate('/asesor/tugas', { state: { tab: 'riwayat' } })}>Lihat Rekap</Button>}
-                      </td>
-                    </tr>
-                  )) : (
-                    <tr><td colSpan="6" style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>Tidak ada riwayat ujian pada tanggal tersebut.</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
         </div>
-      )}
-
-      {/* Render AlertPopup untuk aksi Terima/Tolak */}
-      <AlertPopup {...alert} />
-      
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalData={processedAgenda.length} itemsPerPage={itemsPerPage} />
+      </div>
     </div>
   );
 };

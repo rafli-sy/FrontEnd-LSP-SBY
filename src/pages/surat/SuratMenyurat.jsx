@@ -261,18 +261,13 @@ const SuratMenyurat = () => {
           status: isPlotted ? 'Siap Diterbitkan' : 'Menunggu Plotting',
           dokumen_upload_lsp: item.dokumen_upload_lsp || [],
           
-          statusSurat: (() => {
-            const savedStr = localStorage.getItem('downloaded_surat_status');
-            const saved = savedStr ? JSON.parse(savedStr) : {};
-            const skemaSaved = saved[item.id] || {};
-            return {
-              balasan: cekSuratBalasan(item.pengajuan || item.pengajuan_ujk || item) || skemaSaved.balasan || false,
-              permohonan: skemaSaved.permohonan || [],
-              tugas: skemaSaved.tugas || [],
-              administrasi: skemaSaved.administrasi || [],
-              administrasiPleno: skemaSaved.administrasiPleno || []
-            };
-          })(),
+          statusSurat: {
+            balasan: cekSuratBalasan(item.pengajuan || item.pengajuan_ujk || item), 
+            permohonan: [],
+            tugas: [],
+            administrasi: [],
+            administrasiPleno: []
+          },
           savedForms: {},
           peserta: item.peserta_pengajuan_ujk || item.pesertaPengajuanUjk || []
         });
@@ -394,18 +389,13 @@ const SuratMenyurat = () => {
       return; 
     }
 
-    if (docKey === 'administrasiPleno') {
-      const pesertaList = skemaItem?.peserta || [];
-      const isAllAsesiPlottingDone = pesertaList.length > 0 && 
-        pesertaList.every(p => (p.asesor_id || p.asesor) && (p.keputusan_uji || p.keputusan || p.rekomendasi_asesor)) &&
-        !pesertaList.every(p => {
-          const status = p.keputusan_uji || p.keputusan || p.rekomendasi_asesor;
-          return status === 'belum kompeten' || status === 'BK';
-        });
-      if (!isAllAsesiPlottingDone) {
-        showAlert('warning', 'Data Belum Lengkap', 'Silakan lengkapi Pembagian Asesi dengan mengisi Asesor Penguji dan Keputusan Uji untuk semua peserta terlebih dahulu.');
-        return;
-      }
+    // --- PERBAIKAN: VALIDASI PEMBAGIAN ASESI SEBELUM CETAK HASIL PLENO ---
+    if (['PLN.03', 'PLN.04', 'PLN.05'].includes(docKey)) {
+        const isAsesiDivided = skemaItem.peserta && skemaItem.peserta.some(p => p.asesor_id || p.asesor || p.keputusan || p.rekomendasi_asesor);
+        if (!isAsesiDivided) {
+           showAlert('warning', 'Data Belum Lengkap', 'Admin LSP belum menentukan asesor untuk peserta. Cetak dokumen ini tidak dapat dilakukan.');
+           return;
+        }
     }
 
     if (jenisSurat === 'Asesi') {
@@ -433,29 +423,6 @@ const SuratMenyurat = () => {
   };
 
   const handleSubMenuClick = (doc) => {
-    if (doc.code.startsWith('PLN')) {
-      const pesertaList = targetUjk?.skema?.peserta || [];
-      const isAllAsesiPlottingDone = pesertaList.length > 0 && 
-        pesertaList.every(p => (p.asesor_id || p.asesor) && (p.keputusan_uji || p.keputusan || p.rekomendasi_asesor)) &&
-        !pesertaList.every(p => {
-          const status = p.keputusan_uji || p.keputusan || p.rekomendasi_asesor;
-          return status === 'belum kompeten' || status === 'BK';
-        });
-      if (!isAllAsesiPlottingDone) {
-        showAlert('warning', 'Data Belum Lengkap', 'Silakan lengkapi Pembagian Asesi dengan mengisi Asesor Penguji dan Keputusan Uji untuk semua peserta terlebih dahulu.');
-        return;
-      }
-    }
-
-    if (doc.code === 'DOC.01') {
-      const pesertaList = targetUjk?.skema?.peserta || [];
-      const isAllAsesorPengujiFilled = pesertaList.length > 0 && pesertaList.every(p => p.asesor_id || p.asesor);
-      if (!isAllAsesorPengujiFilled) {
-        showAlert('warning', 'Data Belum Lengkap', 'Silakan lengkapi Pembagian Asesi dengan mengisi Asesor Penguji untuk semua peserta terlebih dahulu.');
-        return;
-      }
-    }
-
     setFormType(activeSubMenu);
     setActiveDocKey(doc.code);
     setSelectedSubDoc(doc);
@@ -484,13 +451,14 @@ const SuratMenyurat = () => {
   };
 
   const mapPdfEndpoint = (docKey, skemaId, pengajuanId, isTtd = false) => {
+    const ttdSuffix = isTtd ? '-ttd' : '';
     const map = {
-      'balasan': `/staf-lsp/cetak-surat-balasan/${pengajuanId}`,
-      'SPT.01': `/staf-lsp/cetak-surat-spt-asesor/${skemaId}`,
-      'SPT.02': `/staf-lsp/cetak-surat-spt-asesor/${skemaId}`,
-      'SPT.03': `/staf-lsp/cetak-surat-spt-penyilia/${skemaId}`,
-      'SPM.01': `/staf-lsp/cetak-surat-permohonan-asesor1/${skemaId}`,
-      'SPM.02': `/staf-lsp/cetak-surat-permohonan-asesor2/${skemaId}`,
+      'balasan': `/staf-lsp/cetak-surat-balasan${ttdSuffix}/${pengajuanId}`,
+      'SPT.01': `/staf-lsp/cetak-surat-spt-asesor1${ttdSuffix}/${skemaId}`,
+      'SPT.02': `/staf-lsp/cetak-surat-spt-asesor2${ttdSuffix}/${skemaId}`,
+      'SPT.03': `/staf-lsp/cetak-surat-spt-penyilia${ttdSuffix}/${skemaId}`,
+      'SPM.01': `/staf-lsp/cetak-surat-permohonan-asesor1${ttdSuffix}/${skemaId}`,
+      'SPM.02': `/staf-lsp/cetak-surat-permohonan-asesor2${ttdSuffix}/${skemaId}`,
       'SPM.03': `/staf-lsp/cetak-surat-permohonan-penyilia/${skemaId}`, 
       'DOC.01': `/staf-lsp/cetak-surat-laporan-penyilia/${skemaId}`,
       'DOC.02': `/staf-lsp/cetak-surat-berita-acara/${skemaId}`,
@@ -571,6 +539,8 @@ const SuratMenyurat = () => {
         } else {
           errorMessage = error.response.data?.message || errorMessage;
         }
+      } else {
+        saved[idSkema][docTypeKey] = true;
       }
       showAlert('error', 'Gagal Render Dokumen', errorMessage);
     }
@@ -584,33 +554,6 @@ const SuratMenyurat = () => {
   };
 
   const markDocAsDone = (idUjk, idSkema, docTypeKey, docCode) => {
-    try {
-      const savedStr = localStorage.getItem('downloaded_surat_status');
-      const saved = savedStr ? JSON.parse(savedStr) : {};
-      if (!saved[idSkema]) {
-        saved[idSkema] = {
-          balasan: false,
-          permohonan: [],
-          tugas: [],
-          administrasi: [],
-          administrasiPleno: []
-        };
-      }
-      if (['administrasi', 'administrasiPleno', 'tugas', 'permohonan'].includes(docTypeKey)) {
-        if (!Array.isArray(saved[idSkema][docTypeKey])) {
-          saved[idSkema][docTypeKey] = [];
-        }
-        if (!saved[idSkema][docTypeKey].includes(docCode)) {
-          saved[idSkema][docTypeKey].push(docCode);
-        }
-      } else {
-        saved[idSkema][docTypeKey] = true;
-      }
-      localStorage.setItem('downloaded_surat_status', JSON.stringify(saved));
-    } catch (e) {
-      console.error('Error saving to localStorage:', e);
-    }
-
     setAntreanSurat(prev => prev.map(surat => {
       if (surat.idUjk === idUjk) {
         return {

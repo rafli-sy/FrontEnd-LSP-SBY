@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import './Layout.css'; 
 import logoLSP from '../assets/logo.png'; 
 
@@ -8,10 +8,15 @@ const Layout = () => {
   const navigate = useNavigate();
   const currentPath = location.pathname;
 
-  // --- LOGIKA PRIMARY ROLE ---
+  const getActiveClass = (path) => currentPath === path ? 'active-link' : '';
+
+  // 1. Tentukan "Primary Role" (Role Utama Pengguna)
+  // Di aplikasi nyata, ini diambil dari data User di LocalStorage / Context API / Backend.
+  // Untuk saat ini, kita deteksi berdasarkan URL path saat komponen pertama kali di-mount.
   const [primaryRole, setPrimaryRole] = useState('');
 
   useEffect(() => {
+    // Hanya atur Primary Role jika belum pernah di-set (simulasi login pertama kali)
     if (!primaryRole) {
       if (currentPath.startsWith('/super-admin')) setPrimaryRole('super-admin');
       else if (currentPath.startsWith('/admin-lsp')) setPrimaryRole('admin-lsp');
@@ -21,199 +26,164 @@ const Layout = () => {
     }
   }, [currentPath, primaryRole]);
 
-  // --- STATE UNTUK CUSTOM DROPDOWN ---
-  const [isRoleMenuOpen, setIsRoleMenuOpen] = useState(false);
-  const dropdownRef = useRef(null);
+  // Simulasi Role Switcher berdasarkan hasil diskusi
+  const handleRoleSwitch = (e) => {
+    navigate(e.target.value);
+  };
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsRoleMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // --- LIST ROLE DINAMIS BERDASARKAN PRIMARY ROLE ---
-  const getAvailableRoles = () => {
+  // 2. Fungsi untuk me-render Option Dinamis berdasarkan Kewenangan (Aturan Anda)
+  const renderRoleOptions = () => {
     switch (primaryRole) {
+      case 'super-admin':
+        // Super Admin: Bisa pindah ke semua page
+        return (
+          <>
+            <option value="/super-admin">Super Admin</option>
+            <option value="/admin-lsp">Admin LSP</option>
+            <option value="/staff-lsp">Staff LSP</option>
+            <option value="/admin-blk">Admin BLK</option>
+            <option value="/asesor">Asesor</option>
+          </>
+        );
+      
       case 'admin-lsp':
-        return [
-          { path: '/admin-lsp', label: 'Admin LSP' },
-          { path: '/staff-lsp', label: 'Staff LSP' },
-        ];
+        // Admin LSP: Hanya bisa pindah ke Staff LSP (dan dirinya sendiri)
+        return (
+          <>
+            <option value="/admin-lsp">Admin LSP</option>
+            <option value="/staff-lsp">Staff LSP</option>
+          </>
+        );
+
       case 'admin-blk':
-        return [
-          { path: '/admin-blk', label: 'Admin BLK' },
-          { path: '/asesor', label: 'Asesor' },
-        ];
+        // Admin BLK: Hanya bisa pindah ke Asesor (dan dirinya sendiri)
+        return (
+          <>
+            <option value="/admin-blk">Admin BLK</option>
+            <option value="/asesor">Asesor</option>
+          </>
+        );
+
       case 'staff-lsp':
-        return [{ path: '/staff-lsp', label: 'Staff LSP' }];
+        // Staff LSP: Tidak punya kewenangan pindah
+        return <option value="/staff-lsp">Staff LSP</option>;
+
       case 'asesor':
-        return [{ path: '/asesor', label: 'Asesor' }];
+        // Asesor: Tidak punya kewenangan pindah
+        return <option value="/asesor">Asesor</option>;
+
       default:
-        return [];
+        return <option value="/">Pilih Role...</option>;
     }
   };
 
-  const roles = getAvailableRoles();
-
-  const handleRoleSelect = (path) => {
-    setIsRoleMenuOpen(false);
-    navigate(path);
-  };
-
-  const getPageTitle = () => {
-    if (currentPath.startsWith('/super-admin')) return 'Dashboard Super Admin';
-    if (currentPath.startsWith('/admin-lsp')) return 'Dashboard Admin LSP';
-    if (currentPath.startsWith('/staff-lsp')) return 'Dashboard Staff LSP';
-    if (currentPath.startsWith('/admin-blk')) return 'Dashboard Admin BLK';
-    if (currentPath.startsWith('/asesor')) return 'Dashboard Asesor';
-    return 'Sistem Manajemen UJK';
-  };
-
-  const getHomeRoute = () => {
-    if (currentPath.startsWith('/super-admin')) return '/super-admin';
-    if (currentPath.startsWith('/admin-lsp')) return '/admin-lsp';
-    if (currentPath.startsWith('/staff-lsp')) return '/staff-lsp';
-    if (currentPath.startsWith('/admin-blk')) return '/admin-blk';
-    if (currentPath.startsWith('/asesor')) return '/asesor';
-    return '/';
-  };
-
-  const getActiveClass = (path) => currentPath === path ? 'active-link' : '';
-
   return (
     <div className="dashboard-container">
+      {/* --- SIDEBAR KIRI --- */}
       <aside className="sidebar">
-        <div className="sidebar-top">
-          <div className="sidebar-logo">
-            <Link to={getHomeRoute()}><img src={logoLSP} alt="Logo LSP" /></Link>
-            <div className="logo-text"><span className="brand">LSP BLK SURABAYA</span></div>
-          </div>
-
-          <nav className="sidebar-nav" style={{ overflowY: 'auto' }}>
-            
-            {/* 1. ROLE: SUPER ADMIN (DIPERBAIKI) */}
-            {primaryRole === 'super-admin' && (
-              <>
-                <div className="menu-label">SISTEM KONTROL</div>
-                <Link to="/super-admin" className={getActiveClass('/super-admin')}><i className="fas fa-home"></i> Dashboard </Link>
-                <Link to="/super-admin/manajemen-akun" className={getActiveClass('/super-admin/manajemen-akun')}><i className="fas fa-users-cog"></i> Manajemen Akun</Link>
-              </>
-            )}
-            {/* 2. ROLE: ADMIN LSP */}
-            {currentPath.startsWith('/admin-lsp') && primaryRole !== 'super-admin' && (
-              <>
-                <p className="menu-label">The Controller</p>
-                <Link to="/admin-lsp" className={getActiveClass('/admin-lsp')}><i className="fas fa-home"></i> Dashboard</Link>
-                <p className="menu-label">Master Data</p>
-                <Link to="/admin-lsp/skema" className={getActiveClass('/admin-lsp/skema')}><i className="fas fa-file-code"></i> Data Skema</Link>
-                <Link to="/admin-lsp/asesor" className={getActiveClass('/admin-lsp/asesor')}><i className="fas fa-user-tie"></i> Data Asesor</Link>
-                <Link to="/admin-lsp/tuk" className={getActiveClass('/admin-lsp/tuk')}><i className="fas fa-map-marker-alt"></i> Penyelia & TUK</Link>
-                <p className="menu-label">Manajemen UJK</p>
-                {/* Teks disesuaikan menjadi Penugasan Asesor */}
-                <Link to="/admin-lsp/penugasan" className={getActiveClass('/admin-lsp/penugasan')}><i className="fas fa-tasks"></i> Penugasan Asesor</Link>
-                <Link to="/admin-lsp/buku-induk" className={getActiveClass('/admin-lsp/buku-induk')}><i className="fas fa-book"></i> Buku Induk</Link>
-                {/* FITUR BARU: Verifikasi Sertifikat */}
-                <Link to="/admin-lsp/verifikasi-sertifikat" className={getActiveClass('/admin-lsp/verifikasi-sertifikat')}><i className="fas fa-certificate"></i> Verifikasi Sertifikat</Link>
-                <Link to="/admin-lsp/profil" className={getActiveClass('/admin-lsp/profil')}><i className="fas fa-user-edit"></i> Profil</Link>
-              </>
-            )}
-
-            {/* 3. ROLE: STAFF LSP */}
-            {currentPath.startsWith('/staff-lsp') && primaryRole !== 'super-admin' && (
-              <>
-                <p className="menu-label">Menu Administrasi</p>
-                <Link to="/staff-lsp" className={getActiveClass('/staff-lsp')}><i className="fas fa-envelope-open-text"></i> Tugas Surat Menyurat</Link>
-              </>
-            )}
-
-            {/* 4. ROLE: ADMIN BLK */}
-            {currentPath.startsWith('/admin-blk') && primaryRole !== 'super-admin' && (
-              <>
-                <p className="menu-label">Pelayanan BLK</p>
-                <Link to="/admin-blk" className={getActiveClass('/admin-blk')}><i className="fas fa-chart-line"></i> Dashboard </Link>
-                <Link to="/admin-blk/pengajuan" className={getActiveClass('/admin-blk/pengajuan')}><i className="fas fa-paper-plane"></i> Pengajuan UJK</Link>
-              </>
-            )}
-
-            {/* 5. ROLE: ASESOR */}
-            {currentPath.startsWith('/asesor') && primaryRole !== 'super-admin' && (
-              <>
-                <p className="menu-label">Pelayanan Asesor</p>
-                <Link to="/asesor" className={getActiveClass('/asesor')}><i className="fas fa-home"></i> Dashboard</Link>
-                <Link to="/asesor/tugas" className={getActiveClass('/asesor/tugas')}><i className="fas fa-calendar-check"></i> Ujian Aktif</Link> 
-                <Link to="/asesor/manajemen-akun" className={getActiveClass('/asesor/manajemen-akun')}><i className="fas fa-user-edit"></i> Manajemen Akun</Link>
-                <Link to="/asesor/profil" className={getActiveClass('/asesor/profil')}><i className="fas fa-user"></i> Profil</Link>
-              </>
-            )}
-          </nav>
-        </div>
-
-        <div className="sidebar-bottom">
-          <div className="profile-switch-card">
-            <div className="user-profile-info">
-              <div className="user-avatar-wrapper">
-                <i className="fas fa-user-circle user-avatar"></i>
-                <span className="status-indicator"></span>
-              </div>
-              <div className="user-details">
-                <span className="user-name">Angga Yunanda</span>
-                <span className="user-role-text">Online</span>
-              </div>
-            </div>
-
-            {primaryRole !== 'super-admin' && roles.length > 1 && (
-              <div className="switch-role-container" ref={dropdownRef}>
-                <div 
-                  className={`switch-role-ui ${isRoleMenuOpen ? 'active' : ''}`} 
-                  onClick={() => setIsRoleMenuOpen(!isRoleMenuOpen)}
-                >
-                  <div className="switch-left">
-                    <i className="fas fa-sync-alt"></i>
-                    <span>Ganti Akses</span>
-                  </div>
-                  <i className={`fas fa-chevron-${isRoleMenuOpen ? 'up' : 'down'} arrow-icon`}></i>
-                </div>
-
-                <div className={`custom-role-dropdown ${isRoleMenuOpen ? 'show' : ''}`}>
-                  <div className="dropdown-header">Pilih Akses Role</div>
-                  <div className="dropdown-list">
-                    {roles.map((role) => {
-                      const isActive = currentPath.startsWith(role.path);
-                      return (
-                        <button
-                          key={role.path}
-                          onClick={() => handleRoleSelect(role.path)}
-                          className={`role-option ${isActive ? 'active-role' : ''}`}
-                        >
-                          <span>{role.label}</span>
-                          {isActive && <i className="fas fa-check check-icon"></i>}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <Link to="/login" className="logout-btn-premium">
-            <i className="fas fa-sign-out-alt"></i> <span>Keluar Sistem</span>
+        <div className="sidebar-logo">
+          <Link to="/">
+            <img src={logoLSP} alt="Logo LSP BLK Surabaya" />
           </Link>
+          <div className="logo-text">
+            <span className="brand">LSP BLK SURABAYA</span>
+          </div>
         </div>
+
+        <nav className="sidebar-nav" style={{ overflowY: 'auto' }}>
+          
+          {/* 1. ROLE: SUPER ADMIN */}
+          {currentPath.startsWith('/super-admin') && (
+            <>
+              <p className="menu-label">SYSTEM MANAGER</p>
+              <Link to="/super-admin" className={getActiveClass('/super-admin')}><i className="fas fa-home"></i> Dashboard</Link>
+              <Link to="/super-admin/users" className={getActiveClass('/super-admin/users')}><i className="fas fa-users-cog"></i> Manajemen Akun</Link>
+              <Link to="/super-admin/audit" className={getActiveClass('/super-admin/audit')}><i className="fas fa-history"></i> Audit Trail</Link>
+            </>
+          )}
+
+          {/* 2. ROLE: ADMIN LSP */}
+          {currentPath.startsWith('/admin-lsp') && (
+            <>
+              <p className="menu-label">THE CONTROLLER</p>
+              <Link to="/admin-lsp" className={getActiveClass('/admin-lsp')}><i className="fas fa-home"></i> Dashboard</Link>
+              <p className="menu-label">MASTER DATA</p>
+              <Link to="/admin-lsp/skema" className={getActiveClass('/admin-lsp/skema')}><i className="fas fa-file-code"></i> Data Skema</Link>
+              <Link to="/admin-lsp/asesor" className={getActiveClass('/admin-lsp/asesor')}><i className="fas fa-user-tie"></i> Data Asesor</Link>
+              <Link to="/admin-lsp/tuk" className={getActiveClass('/admin-lsp/tuk')}><i className="fas fa-map-marker-alt"></i> Penyelia & TUK</Link>
+              <p className="menu-label">KONTROL & REPORT</p>
+              {/* Istilah diubah menjadi Penugasan Asesor sesuai catatan mentor */}
+              <Link to="/admin-lsp/penugasan" className={getActiveClass('/admin-lsp/penugasan')}><i className="fas fa-tasks"></i> Penugasan Asesor</Link>
+              <Link to="/admin-lsp/buku-induk" className={getActiveClass('/admin-lsp/buku-induk')}><i className="fas fa-book"></i> Buku Induk</Link>
+              {/* FITUR BARU: Manajemen Akun Admin LSP */}
+              <Link to="/admin-lsp/profil" className={getActiveClass('/admin-lsp/profil')}><i className="fas fa-user-edit"></i> Profil</Link>
+            </>
+          )}
+
+          {/* 3. ROLE: STAFF LSP */}
+          {currentPath.startsWith('/staff-lsp') && (
+            <>
+              <p className="menu-label">THE ADMINISTRATOR</p>
+              <Link to="/staff-lsp" className={getActiveClass('/staff-lsp')}><i className="fas fa-home"></i> Dashboard</Link>
+              <Link to="/staff-lsp/verifikasi" className={getActiveClass('/staff-lsp/verifikasi')}><i className="fas fa-check-double"></i> Verifikasi Peserta</Link>
+              <Link to="/staff-lsp/cetak" className={getActiveClass('/staff-lsp/cetak')}><i className="fas fa-print"></i> Manajemen Cetak</Link>
+            </>
+          )}
+
+          {/* 4. ROLE: ADMIN BLK */}
+          {currentPath.startsWith('/admin-blk') && (
+            <>
+              <p className="menu-label">THE REQUESTER</p>
+              <Link to="/admin-blk" className={getActiveClass('/admin-blk')}><i className="fas fa-chart-line"></i> Dashboard BLK</Link>
+              <Link to="/admin-blk/pengajuan" className={getActiveClass('/admin-blk/pengajuan')}><i className="fas fa-paper-plane"></i> Pengajuan UJK</Link>
+              <Link to="/admin-blk/peserta" className={getActiveClass('/admin-blk/peserta')}><i className="fas fa-file-import"></i> Import Peserta</Link>
+            </>
+          )}
+
+          {/* 5. ROLE: ASESOR */}
+          {currentPath.startsWith('/asesor') && (
+            <>
+              <p className="menu-label">THE FIELD EXPERT</p>
+              <Link to="/asesor" className={getActiveClass('/asesor')}><i className="fas fa-home"></i> Dashboard Utama</Link>
+              <Link to="/asesor/tugas" className={getActiveClass('/asesor/tugas')}><i className="fas fa-calendar-check"></i> Ujian Aktif</Link>
+              <Link to="/asesor/manajemen-akun" className={getActiveClass('/asesor/manajemen-akun')}><i className="fas fa-user-edit"></i> Manajemen Akun</Link>
+              <Link to="/asesor/profil" className={getActiveClass('/asesor/profil')}><i className="fas fa-user"></i> Profil</Link>
+            </>
+          )}
+
+          <Link to="/login" className="logout-btn" style={{ marginTop: '30px' }}>
+            <i className="fas fa-sign-out-alt"></i> <span>Logout</span>
+          </Link>
+        </nav>
       </aside>
 
+      {/* --- KONTEN KANAN --- */}
       <div className="main-content">
         <header className="top-navbar">
-          <div className="nav-left"><h2 className="page-title">{getPageTitle()}</h2></div>
-        </header>
-        <main className="content-area">
-          <div className="fade-in-content">
-            <Outlet />
+          <div className="nav-title">Sistem Manajemen LSP</div>
+          <div className="user-profile">
+            {/* Fitur Role Switcher dengan Opsi Dinamis berdasarkan primaryRole */}
+            <select 
+              className="role-switcher-dropdown" 
+              onChange={handleRoleSwitch}
+              value={
+                currentPath.startsWith('/super-admin') ? '/super-admin' :
+                currentPath.startsWith('/admin-lsp') ? '/admin-lsp' :
+                currentPath.startsWith('/staff-lsp') ? '/staff-lsp' :
+                currentPath.startsWith('/admin-blk') ? '/admin-blk' : 
+                currentPath.startsWith('/asesor') ? '/asesor' : ''
+              }
+              // Jika hanya punya 1 opsi (tidak bisa pindah), kita buat select-nya disabled
+              disabled={primaryRole === 'staff-lsp' || primaryRole === 'asesor'}
+            >
+              {renderRoleOptions()}
+            </select>
+            <i className="fas fa-user-circle"></i>
           </div>
+        </header>
+
+        <main className="content-area">
+          <Outlet /> 
         </main>
       </div>
     </div>

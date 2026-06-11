@@ -1,0 +1,204 @@
+/* Container Utama */
+.pengaturan-container {
+    padding: 40px 30px 30px; /* Padding disesuaikan */
+    font-family: 'Public Sans', 'Inter', sans-serif;
+    color: #334155; /* Slate 700 */
+    
+    /* Hapus display:flex dan align-items:center di sini 
+       agar elemen di dalamnya bisa diatur posisinya masing-masing */
+    display: block; 
+}
+
+/* Header Section */
+.pengaturan-header {
+    margin-bottom: 30px;
+    width: 100%;
+    /* max-width dihapus agar header mengambil lebar penuh dan bisa ke pojok kiri */
+    text-align: left; /* Mengembalikan teks ke sebelah kiri */
+}
+
+.pengaturan-header h2 {
+    margin: 0 0 8px 0;
+    color: #0f172a; /* Slate 900 */
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.text-muted {
+    color: #64748b; /* Slate 500 */
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+/* Membatasi lebar konten agar tidak terlalu melebar di layar besar */
+.pengaturan-content-wrapper {
+    width: 100%;
+    max-width: 550px;
+    margin: 0 auto; /* Kunci utamanya: Ini akan mendorong card form ke tengah layar */
+}
+
+/* Desain Kartu (Card) */
+.pengaturan-card {
+    background-color: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0; /* Slate 200 */
+}
+
+.shadow-sm {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+.card-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #f1f5f9; /* Sangat soft border */
+    background-color: #f8fafc; /* Slate 50 - sedikit abu-abu untuk header */
+    border-radius: 12px 12px 0 0;
+}
+
+.card-header h3 {
+    margin: 0;
+    font-size: 1.15rem;
+    color: #1e293b; /* Slate 800 */
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+}
+
+.text-blue {
+    color: #3b82f6; /* Blue 500 */
+}
+
+.icon-spacing {
+    margin-right: 10px;
+}
+
+.card-body {
+    padding: 24px;
+}
+
+/* Form Styling */
+.pengaturan-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* Jarak antar grup form */
+}
+
+.form-group-custom {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group-custom label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #475569; /* Slate 600 */
+}
+
+/* Wrapper untuk meletakkan icon di dalam input */
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-icon {
+    position: absolute;
+    left: 14px;
+    color: #94a3b8; /* Slate 400 */
+    font-size: 0.9rem;
+    pointer-events: none; /* Agar tidak menghalangi klik ke input */
+}
+
+/* Custom Input Field */
+.form-input-custom {
+    width: 100%;
+    padding: 12px 16px 12px 40px; /* Padding kiri lebih besar untuk icon */
+    border: 1px solid #cbd5e1; /* Slate 300 */
+    border-radius: 8px;
+    font-size: 0.95rem;
+    color: #1e293b;
+    background-color: #ffffff;
+    transition: all 0.2s ease-in-out;
+    box-sizing: border-box; /* Mencegah input meluber keluar kontainer */
+}
+
+.form-input-custom::placeholder {
+    color: #cbd5e1;
+    font-weight: 400;
+}
+
+.form-input-custom:hover {
+    border-color: #94a3b8;
+}
+
+.form-input-custom:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); /* Efek glow biru saat fokus */
+}
+
+.form-input-custom:disabled {
+    background-color: #f1f5f9;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+/* Area Tombol Submit */
+.submit-action-area {
+    margin-top: 15px;
+    padding-top: 20px;
+    border-top: 1px dashed #e2e8f0;
+}
+
+/* Customisasi tambahan untuk tombol dari komponen Button */
+.btn-update-password {
+    background-color: #3b82f6 !important; /* Diubah menjadi Biru (Blue 500) */
+    color: white !important;
+    border: none !important;
+    padding: 12px 16px !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    font-size: 1rem !important;
+    transition: all 0.2s ease !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.btn-update-password:hover:not(:disabled) {
+    background-color: #2563eb !important; /* Biru lebih gelap saat di-hover (Blue 600) */
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2); /* Bayangan biru */
+}
+
+.btn-update-password.btn-loading {
+    background-color: #94a3b8 !important; /* Warna abu-abu saat loading */
+    cursor: not-allowed !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+/* Animasi Fade-in */
+.fade-in-content {
+    animation: fadeIn 0.4s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsif untuk layar kecil (HP) */
+@media (max-width: 640px) {
+    .pengaturan-container {
+        padding: 20px 15px;
+    }
+    
+    .card-header, .card-body {
+        padding: 20px 15px;
+    }
+}

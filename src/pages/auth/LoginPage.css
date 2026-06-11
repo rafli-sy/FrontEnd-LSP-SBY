@@ -34,7 +34,7 @@
 
 .login-header {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 25px;
 }
 
 .login-logo {
@@ -49,47 +49,59 @@
 }
 
 .login-header h2 {
-  color: #212529;
-  font-size: 1.6rem;
-  margin-bottom: 0;
-  font-weight: 700;
+  font-size: 1.5rem;
+  color: #1e293b;
+  margin: 0 0 5px 0;
 }
 
-/* Form Styling */
-.login-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+.login-header p {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.login-error-msg {
+  background-color: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  margin-bottom: 20px;
+  text-align: center;
 }
 
 .form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  margin-bottom: 20px;
 }
 
 .form-group label {
+  display: block;
   font-size: 0.85rem;
   font-weight: 600;
-  color: #495057;
+  color: #475569;
+  margin-bottom: 8px;
 }
 
 .input-with-icon {
   position: relative;
-  display: flex;
-  align-items: center;
 }
 
-.input-with-icon i {
+.input-with-icon .fa-user,
+.input-with-icon .fa-lock {
   position: absolute;
   left: 15px;
-  color: #6c757d;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
   font-size: 1rem;
+  z-index: 2;
 }
 
+/* FIX: Duplikasi syntax error dibersihkan & box-sizing ditambahkan */
 .input-with-icon input {
   width: 100%;
-  padding: 12px 15px 12px 45px;
+  padding: 12px 45px; /* RUANG EKSTRA 45px UNTUK ICON MATA */
   border: 1px solid #ced4da;
   border-radius: 8px;
   font-size: 0.95rem;
@@ -98,6 +110,7 @@
   transition: all 0.3s ease;
   background-color: #f8f9fa;
   outline: none;
+  box-sizing: border-box;
 }
 
 .input-with-icon input:focus {
@@ -106,7 +119,7 @@
   box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.1);
 }
 
-/* Tombol Login */
+/* Tombol Login Kembali Bekerja */
 .login-submit-btn {
   background-color: #0056b3;
   color: #ffffff;
@@ -120,45 +133,54 @@
   justify-content: center;
   align-items: center;
   gap: 10px;
-  transition:
-    background-color 0.3s,
-    transform 0.2s;
+  transition: background-color 0.3s, transform 0.2s;
   margin-top: 10px;
+  width: 100%;
 }
 
-.login-submit-btn:hover {
+.login-submit-btn:hover:not(:disabled) {
   background-color: #004494;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0, 86, 179, 0.2);
+}
+
+.login-submit-btn:disabled {
+  background-color: #94a3b8;
+  cursor: not-allowed;
 }
 
 .login-footer {
-  text-align: center;
   margin-top: 25px;
-  padding-top: 20px;
-  border-top: 1px solid #e9ecef;
+  text-align: center;
 }
 
 .login-footer a {
-  color: #6c757d;
+  color: #64748b;
   text-decoration: none;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 500;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  transition: color 0.3s;
+  gap: 6px;
+  transition: color 0.2s;
 }
 
 .login-footer a:hover {
   color: #0056b3;
 }
 
-/* --- RESPONSIVE LAYAR HP --- */
-@media (max-width: 480px) {
-  .login-card {
-    padding: 30px 20px; /* Padding dikurangi agar tidak mentok di layar kecil */
-  }
-  .login-header h2 {
-    font-size: 1.4rem; /* Judul sedikit dikecilkan di HP */
-  }
+/* --- FITUR TOGGLE PASSWORD MATA --- */
+.toggle-password-icon {
+  position: absolute;
+  right: 15px;
+  left: auto !important; /* Mencegah bentrok dengan icon gembok di kiri */
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #6c757d;
+  font-size: 1.1rem;
+  transition: color 0.2s ease;
+  z-index: 2;
+}
+
+.toggle-password-icon:hover {
+  color: #0056b3; 
 }

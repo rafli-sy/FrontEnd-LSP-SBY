@@ -17,7 +17,7 @@ const TablePeserta = ({ dataPeserta, detail_id, skemaName, asesorList, isAdmin, 
     headers: { 'ngrok-skip-browser-warning': 'true', 'Authorization': `Bearer ${token}` }
   }), [token]);
 
-  const showAsesorKeputusan = true;
+  const showAsesorKeputusan = isAdmin || isStaffAsesorActive;
 
   useEffect(() => {
     if (dataPeserta && dataPeserta.length > 0) {
@@ -39,7 +39,7 @@ const TablePeserta = ({ dataPeserta, detail_id, skemaName, asesorList, isAdmin, 
         email: p.email,
         pendidikan: p.pendidikanTerakhir,
         asesor_id: p.asesor_id || '', 
-        keputusan: p.keputusan_uji === 'kompeten' ? 'K' : 'BK'
+        keputusan: p.keputusan_uji === 'kompeten' ? 'K' : (p.keputusan_uji === 'belum kompeten' ? 'BK' : '')
       }));
       setPeserta(mapped);
     }
@@ -75,7 +75,7 @@ const TablePeserta = ({ dataPeserta, detail_id, skemaName, asesorList, isAdmin, 
           const payloadKeputusan = {
             hasil_uji: peserta.map(p => ({
               peserta_id: p.id,
-              keputusan_uji: p.keputusan === 'K' ? 'kompeten' : 'belum kompeten'
+              keputusan_uji: p.keputusan === 'K' ? 'kompeten' : (p.keputusan === 'BK' ? 'belum kompeten' : 'belum kompeten')
             }))
           };
           await axios.put(`${baseUrl}/admin-lsp/keputusan-uji/${detail_id}`, payloadKeputusan, config);
@@ -145,7 +145,7 @@ const TablePeserta = ({ dataPeserta, detail_id, skemaName, asesorList, isAdmin, 
                 
                 {showAsesorKeputusan && (
                   <td>
-                    <select disabled={!isAdmin} value={item.asesor_id || ''} onChange={(e) => handleUpdatePeserta(index, 'asesor_id', e.target.value)} className="form-select">
+                    <select value={item.asesor_id || ''} onChange={(e) => handleUpdatePeserta(index, 'asesor_id', e.target.value)} className="form-select">
                       <option value="">Pilih Asesor...</option>
                       {asesorList.map(a => <option key={a.id} value={a.id}>{a.user?.namaLengkap || a.nama}</option>)}
                     </select>
@@ -153,9 +153,10 @@ const TablePeserta = ({ dataPeserta, detail_id, skemaName, asesorList, isAdmin, 
                 )}
                 {showAsesorKeputusan && (
                   <td>
-                    <select disabled={!isAdmin} value={item.keputusan || 'BK'} onChange={(e) => handleUpdatePeserta(index, 'keputusan', e.target.value)} className="form-select">
-                      <option value="BK">Belum Kompeten</option>
+                    <select value={item.keputusan || ''} onChange={(e) => handleUpdatePeserta(index, 'keputusan', e.target.value)} className="form-select">
+                      <option value="">Status...</option>
                       <option value="K">Kompeten</option>
+                      <option value="BK">Belum Kompeten</option>
                     </select>
                   </td>
                 )}
@@ -165,13 +166,11 @@ const TablePeserta = ({ dataPeserta, detail_id, skemaName, asesorList, isAdmin, 
         </table>
       </div>
 
-      {isAdmin && (
-        <div style={{ marginTop: '20px', textAlign: 'right' }}>
-          <Button variant="primary" onClick={handleSimpanData} isLoading={isLoading}>
-            {isLoading ? 'Menyimpan...' : 'Simpan & Selesai'}
-          </Button>
-        </div>
-      )}
+      <div style={{ marginTop: '20px', textAlign: 'right' }}>
+        <Button variant="primary" onClick={handleSimpanData} isLoading={isLoading}>
+          {isLoading ? 'Menyimpan...' : 'Simpan & Selesai'}
+        </Button>
+      </div>
     </div>
   );
 };
