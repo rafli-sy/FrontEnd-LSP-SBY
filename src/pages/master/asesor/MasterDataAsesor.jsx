@@ -58,11 +58,17 @@ const MasterDataAsesor = () => {
   };
 
   const handleToggleStatus = async (asesor) => {
-    const aksiText = asesor.status === 'Aktif' ? 'menon-aktifkan' : 'mengaktifkan';
+    const isAktif = asesor.status === 'Aktif';
+    const aksiText = isAktif ? 'menon-aktifkan' : 'mengaktifkan';
+    const btnText = isAktif ? 'Ya, Non-aktifkan' : 'Ya, Aktifkan';
+    const btnColor = isAktif ? '#ef4444' : '#10b981'; // Merah untuk Non-aktif, Hijau untuk Aktif
+
     setAlert({
       type: 'confirm',
       title: 'Konfirmasi Status',
       text: `Apakah Anda yakin untuk ${aksiText} asesor ${asesor.nama} berikut?`,
+      confirmText: btnText,
+      confirmColor: btnColor,
       onConfirm: async () => {
         try {
           await axios.patch(`${baseUrl}/admin-lsp/asesor/${asesor.id}/status`, {}, config);
@@ -91,8 +97,6 @@ const MasterDataAsesor = () => {
 
   return (
     <div className="dashboard-content fade-in-content">
-      
-      {/* HEADER UTAMA */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '25px', flexWrap: 'wrap', gap: '15px' }}>
         <div>
           <h2 style={{ margin: 0, color: '#0f172a' }}>Master Data Asesor</h2>
@@ -101,8 +105,6 @@ const MasterDataAsesor = () => {
       </div>
 
       <div className="dashboard-card" style={{ padding: 0, overflow: 'hidden', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-        
-        {/* TOOLBAR PENCARIAN & FILTER MODERN */}
         <div style={{ padding: '20px', borderBottom: '1px solid #e2e8f0', backgroundColor: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
           <div style={{ flex: '1', minWidth: '250px', position: 'relative', maxWidth: '400px' }}>
             <i className="fas fa-search" style={{ position: 'absolute', left: '12px', top: '12px', color: '#94a3b8' }}></i>
@@ -144,11 +146,8 @@ const MasterDataAsesor = () => {
                     <div style={{ fontSize: '0.85rem', color: '#64748b' }}><i className="fas fa-map-marker-alt"></i> {asesor.alamat}</div>
                   </td>
                   <td style={{ textAlign: 'center' }}><span className="badge info">{asesor.noReg}</span></td>
-                  
-                  {/* REVISI HANYA PADA KOLOM INI (BIDANG & SKEMA UJI) */}
                   <td style={{ padding: '12px 10px' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      {/* Sub-Kelompok: Bidang */}
                       {asesor.bidang && asesor.bidang.length > 0 && (
                         <div>
                           <div style={{ fontSize: '0.65rem', fontWeight: '800', color: '#94a3b8', letterSpacing: '0.5px', marginBottom: '6px', textTransform: 'uppercase' }}>Bidang Asesmen</div>
@@ -161,8 +160,6 @@ const MasterDataAsesor = () => {
                           </div>
                         </div>
                       )}
-
-                      {/* Sub-Kelompok: Skema */}
                       {asesor.skema && asesor.skema.length > 0 && (
                         <div>
                           <div style={{ fontSize: '0.65rem', fontWeight: '800', color: '#94a3b8', letterSpacing: '0.5px', marginBottom: '6px', textTransform: 'uppercase' }}>Skema Sertifikasi</div>
@@ -175,15 +172,11 @@ const MasterDataAsesor = () => {
                           </div>
                         </div>
                       )}
-
-                      {/* Tampilan jika kosong */}
                       {(!asesor.bidang?.length && !asesor.skema?.length) && (
                         <span style={{ color: '#94a3b8', fontStyle: 'italic', fontSize: '0.85rem' }}>Belum ada data skema/bidang</span>
                       )}
                     </div>
                   </td>
-                  {/* SELESAI REVISI KOLOM */}
-
                   <td style={{ textAlign: 'center' }}>
                     <button 
                       onClick={() => handleToggleStatus(asesor)}
@@ -198,7 +191,6 @@ const MasterDataAsesor = () => {
             </tbody>
           </table>
         </div>
-        
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalData={filteredAsesor.length} itemsPerPage={itemsPerPage} />
       </div>
       {alert && <AlertPopup {...alert} />}
