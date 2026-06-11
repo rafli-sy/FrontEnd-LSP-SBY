@@ -17,6 +17,7 @@ const FormPengajuanUJK = () => {
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [originalData, setOriginalData] = useState(null); // State untuk snapshot data asli
   const [alert, setAlert] = useState(null);
   
   const [viewPdf, setViewPdf] = useState(null); 
@@ -33,7 +34,6 @@ const FormPengajuanUJK = () => {
   const inputStyle = { width: '100%', padding: '10px 14px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '0.95rem', color: '#334155', outline: 'none', transition: 'border-color 0.2s', boxSizing: 'border-box', backgroundColor: '#fff' };
 
   const initialForm = { sumber_anggaran_id: '', nomorSurat: '', fileSurat: null };
-  // PERUBAHAN: Menambahkan field namaBidang pada initial state
   const initialSkema = { id: Date.now(), skema_id: '', namaSkema: '', namaBidang: '', jejaring_id: '', namaTuk: '', tglMulai: '', tglSelesai: '', fileNominatif: null, fileKurikulum: null, jumlahAsesi: 0 };
   
   const [formData, setFormData] = useState(initialForm);
@@ -46,7 +46,7 @@ const FormPengajuanUJK = () => {
       if (activeModal.type) { setActiveModal({ type: null, targetId: null }); e.preventDefault(); }
       else if (viewPeserta) { setViewPeserta(null); e.preventDefault(); }
       else if (viewPdf) { setViewPdf(null); e.preventDefault(); }
-      else if (showForm) { setShowForm(false); setEditingId(null); e.preventDefault(); }
+      else if (showForm) { setShowForm(false); setEditingId(null); setOriginalData(null); e.preventDefault(); }
     };
     window.addEventListener('globalBackRequested', handleGlobalBack);
     return () => window.removeEventListener('globalBackRequested', handleGlobalBack);
@@ -123,20 +123,37 @@ const FormPengajuanUJK = () => {
   const handleAddSkema = () => setSkemaUsulan([...skemaUsulan, { ...initialSkema, id: Date.now() }]);
   const handleRemoveSkema = (id) => setSkemaUsulan(skemaUsulan.filter(s => s.id !== id));
 
-  const handleEdit = (item) => {
+  // --- POPUP KONFIRMASI UNTUK MEMBUKA EDIT ---
+  const handleConfirmEdit = (item) => {
+    setAlert({
+      type: 'info',
+      title: 'Edit Draft?',
+      text: 'Anda akan membuka mode edit untuk draft pengajuan ini. Lanjutkan?',
+      onConfirm: () => {
+        closeAlert();
+        handleExecuteEdit(item);
+      },
+      onCancel: closeAlert
+    });
+  };
+
+  const handleExecuteEdit = (item) => {
     setShowForm(true);
     setEditingId(item.id);
-    setFormData({
+    
+    // 1. Siapkan Data Form Utama
+    const initialFormData = {
       sumber_anggaran_id: item.sumber_anggaran_id || '',
       nomorSurat: item.nomor_surat_pengajuan || '',
       fileSurat: null
-    });
+    };
+    setFormData(initialFormData);
 
+    // 2. Siapkan Data Skema
     const mappedSkema = (item.detail_skema || item.detailSkema || []).map(ds => ({
       id: ds.id || Date.now() + Math.random(),
       skema_id: ds.skema_id || '',
       namaSkema: ds.skema?.namaSkema || '',
-      // PERBAIKAN: Mapping namaBidang saat edit data
       namaBidang: ds.skema?.bidang?.namaBidang || ds.skema?.bidang?.nama_bidang || '',
       jejaring_id: ds.jejaring_id || '',
       namaTuk: ds.tuk?.namaInstitusi || '',
@@ -147,74 +164,100 @@ const FormPengajuanUJK = () => {
       fileKurikulum: null
     }));
     
-    setSkemaUsulan(mappedSkema.length > 0 ? mappedSkema : [{...initialSkema}]);
+    const initialSkemaData = mappedSkema.length > 0 ? mappedSkema : [{...initialSkema}];
+    setSkemaUsulan(initialSkemaData);
+
+    // 3. Simpan "snapshot" data asli ke dalam state originalData untuk perbandingan nanti
+    setOriginalData(JSON.stringify({ formData: initialFormData, skemaUsulan: initialSkemaData }));
+    
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setAlert({ type: 'save', title: 'Menyimpan...', text: 'Mohon tunggu proses upload file.' });
 
-    const formPayload = new FormData();
-    formPayload.append('sumber_anggaran_id', formData.sumber_anggaran_id);
-    formPayload.append('nomor_surat_pengajuan', formData.nomorSurat);
-    
-    if (formData.fileSurat) {
-      formPayload.append('file_surat_pengajuan', formData.fileSurat);
-    }
-
-    skemaUsulan.forEach((skema, index) => {
-      formPayload.append(`skemas[${index}][skema_id]`, skema.skema_id);
-      formPayload.append(`skemas[${index}][jejaring_id]`, skema.jejaring_id);
-      formPayload.append(`skemas[${index}][tanggal_mulai]`, skema.tglMulai);
-      formPayload.append(`skemas[${index}][tanggal_selesai]`, skema.tglSelesai);
-      if (skema.fileNominatif) formPayload.append(`skemas[${index}][file_nominatif]`, skema.fileNominatif);
-      if (skema.fileKurikulum) formPayload.append(`skemas[${index}][file_kurikulum]`, skema.fileKurikulum);
-    });
-    
-    console.log("=== CEK FORM DATA ===");
-    console.log("fileSurat:", formData.fileSurat);
-    console.log("skemaUsulan state:", skemaUsulan);
-    for (let [key, value] of formPayload.entries()) {
-      console.log(key, "=>", value);
-    }
-    
-
-    try {
-      const endpoint = editingId 
-        ? `${apiUrl}/api/admin-blk/update-draft-pengajuan/${editingId}` 
-        : `${apiUrl}/api/admin-blk/pengajuan-ujk`;
-      
-      const response = await fetch(endpoint, {
-        method: 'POST', 
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
-          'ngrok-skip-browser-warning': '69420'
-        }, 
-        body: formPayload
+    // --- LOGIKA CEK PERUBAHAN DATA (HANYA UNTUK MODE EDIT) ---
+    if (editingId) {
+      // Buat snapshot dari data yang ada di form saat ini (abaikan file karena file tidak bisa disamakan via stringify)
+      const currentDataString = JSON.stringify({ 
+        formData: { ...formData, fileSurat: null }, 
+        skemaUsulan: skemaUsulan.map(s => ({ ...s, fileNominatif: null, fileKurikulum: null })) 
       });
-
-      const resData = await response.json();
-
-      if (response.ok && resData.status === 'success') {
-        setAlert({ type: 'success', title: 'Tersimpan!', text: 'Draft berhasil disimpan.', onCancel: closeAlert });
+      
+      // Cek apakah ada file baru yang diunggah
+      const hasNewFiles = formData.fileSurat !== null || skemaUsulan.some(s => s.fileNominatif !== null || s.fileKurikulum !== null);
+      
+      // Jika teks/data tidak berubah DAN tidak ada file baru yang diunggah
+      if (currentDataString === originalData && !hasNewFiles) {
         setShowForm(false);
         setEditingId(null);
-        fetchDrafts(); 
-      } else {
-        setAlert({ type: 'warning', title: 'Gagal Menyimpan', text: resData.message || 'Periksa kembali data Anda.', onCancel: closeAlert });
+        setOriginalData(null); // Bersihkan riwayat
+        return; // Hentikan fungsi di sini (langsung tutup form tanpa pop-up / simpan ke server)
       }
-    } catch (error) {
-      console.log(error.response?.data);
-      console.error(error);
-      setAlert({ type: 'error', title: 'Error', text: 'Terjadi kesalahan jaringan atau server.', onCancel: closeAlert });
     }
+    
+    setAlert({
+      type: 'confirm',
+      title: editingId ? 'Simpan Perubahan?' : 'Simpan Draft Baru?',
+      text: 'Apakah Anda yakin data yang diisi sudah benar dan ingin menyimpannya?',
+      onConfirm: async () => {
+        setAlert({ type: 'info', title: 'Menyimpan...', text: 'Mohon tunggu proses upload file.' });
+
+        const formPayload = new FormData();
+        formPayload.append('sumber_anggaran_id', formData.sumber_anggaran_id);
+        formPayload.append('nomor_surat_pengajuan', formData.nomorSurat);
+        
+        if (formData.fileSurat) {
+          formPayload.append('file_surat_pengajuan', formData.fileSurat);
+        }
+
+        skemaUsulan.forEach((skema, index) => {
+          formPayload.append(`skemas[${index}][skema_id]`, skema.skema_id);
+          formPayload.append(`skemas[${index}][jejaring_id]`, skema.jejaring_id);
+          formPayload.append(`skemas[${index}][tanggal_mulai]`, skema.tglMulai);
+          formPayload.append(`skemas[${index}][tanggal_selesai]`, skema.tglSelesai);
+          if (skema.fileNominatif) formPayload.append(`skemas[${index}][file_nominatif]`, skema.fileNominatif);
+          if (skema.fileKurikulum) formPayload.append(`skemas[${index}][file_kurikulum]`, skema.fileKurikulum);
+        });
+
+        try {
+          const endpoint = editingId 
+            ? `${apiUrl}/api/admin-blk/update-draft-pengajuan/${editingId}` 
+            : `${apiUrl}/api/admin-blk/pengajuan-ujk`;
+          
+          const response = await fetch(endpoint, {
+            method: 'POST', 
+            headers: { 
+              'Authorization': `Bearer ${token}`,
+              'Accept': 'application/json',
+              'ngrok-skip-browser-warning': '69420'
+            }, 
+            body: formPayload
+          });
+
+          const resData = await response.json();
+
+          if (response.ok && resData.status === 'success') {
+            setAlert({ type: 'success', title: 'Tersimpan!', text: 'Draft berhasil disimpan.', onCancel: closeAlert });
+            setShowForm(false);
+            setEditingId(null);
+            setOriginalData(null); // Bersihkan riwayat
+            fetchDrafts(); 
+          } else {
+            setAlert({ type: 'warning', title: 'Gagal Menyimpan', text: resData.message || 'Periksa kembali data Anda.', onCancel: closeAlert });
+          }
+        } catch (error) {
+          console.error(error);
+          setAlert({ type: 'error', title: 'Error', text: 'Terjadi kesalahan jaringan atau server.', onCancel: closeAlert });
+        }
+      },
+      onCancel: closeAlert
+    });
   };
 
   const handleKirimLsp = (id) => {
     setAlert({
-      type: 'warning',
+      type: 'confirm', 
       title: 'Kirim Pengajuan?',
       text: 'Kirim pengajuan ini ke LSP? Data tidak bisa diubah setelah dikirim.',
       onConfirm: async () => {
@@ -247,7 +290,7 @@ const FormPengajuanUJK = () => {
 
   const handleDelete = (id) => {
     setAlert({
-      type: 'warning',
+      type: 'confirm', 
       title: 'Hapus Draft?',
       text: 'Apakah Anda yakin ingin menghapus draft ini secara permanen?',
       onConfirm: async () => {
@@ -315,7 +358,6 @@ const FormPengajuanUJK = () => {
     setViewPdf(null);
   };
 
-
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6; 
   const totalPages = Math.ceil(usulan.length / itemsPerPage) || 1;
@@ -358,7 +400,7 @@ const FormPengajuanUJK = () => {
         <div className="fade-in-content">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '25px', paddingBottom: '15px', borderBottom: '1px solid #e2e8f0' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-              <Button variant="outline" icon="arrow-left" onClick={() => { setShowForm(false); setEditingId(null); }}>Kembali</Button>
+              <Button variant="outline" icon="arrow-left" onClick={() => { setShowForm(false); setEditingId(null); setOriginalData(null); }}>Kembali</Button>
               <div>
                 <h2 style={{ margin: 0, fontSize: '1.5rem', color: '#0f172a' }}>{editingId ? 'Edit Pengajuan UJK' : 'Pengajuan UJK Baru'}</h2>
                 <p className="text-muted" style={{ margin: 0 }}>Lengkapi dokumen persyaratan dan data asesi dalam satu form terpusat.</p>
@@ -415,7 +457,6 @@ const FormPengajuanUJK = () => {
                          {index > 0 && <Button type="button" variant="outline-danger" size="sm" icon="trash" onClick={() => handleRemoveSkema(skema.id)}>Hapus Skema</Button>}
                        </div>
 
-                       {/* PERBAIKAN: ROW 1 MENAMPILKAN SKEMA DAN BIDANG YANG AUTO-FILL */}
                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginBottom: '20px' }}>
                          <div>
                            <label style={labelStyle}>Pilihan Skema Kompetensi <span style={{color: '#ef4444'}}>*</span></label>
@@ -491,7 +532,7 @@ const FormPengajuanUJK = () => {
              
              {/* FOOTER AKSI */}
              <div style={{ padding: '20px 30px', backgroundColor: '#f8fafc', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', gap: '15px' }}>
-                <Button type="button" variant="secondary" onClick={() => { setShowForm(false); setEditingId(null); }}>Batal</Button>
+                <Button type="button" variant="secondary" onClick={() => { setShowForm(false); setEditingId(null); setOriginalData(null); }}>Batal</Button>
                 <Button type="submit" variant="primary" icon="save">
                   {editingId ? 'Simpan Perubahan Draft' : 'Simpan Sebagai Draft'}
                 </Button>
@@ -564,7 +605,6 @@ const FormPengajuanUJK = () => {
                             {(item.detail_skema || item.detailSkema || []).map((ds, i) => (
                               <div key={i} style={{ minHeight: '65px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                                 <strong style={{ color: '#1e293b', fontSize: '0.9rem' }}>{ds.skema?.namaSkema || 'Skema Tidak Diketahui'}</strong>
-                                {/* PERBAIKAN: Menambahkan info Bidang di tabel agar lebih informatif */}
                                 <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '2px' }}>
                                   Bidang: {ds.skema?.bidang?.namaBidang || ds.skema?.bidang?.nama_bidang || '-'}
                                 </div>
@@ -610,9 +650,24 @@ const FormPengajuanUJK = () => {
 
                         <td style={{ textAlign: 'center', verticalAlign: 'top', paddingTop: '15px' }}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
-                              <Button variant="outline" size="sm" icon="paper-plane" onClick={() => handleKirimLsp(item.id)} style={{ width: '85px' }}>Kirim</Button>
-                              <Button variant="outline" size="sm" icon="edit" onClick={() => handleEdit(item)} style={{ width: '85px' }}>Edit</Button>
-                              <Button variant="outline-danger" size="sm" icon="trash" onClick={() => handleDelete(item.id)} style={{ width: '85px' }}>Hapus</Button>
+                              <Button variant="outline" size="sm" icon="paper-plane" onClick={() => handleKirimLsp(item.id)} style={{ width: '90px', justifyContent: 'center' }}>Kirim</Button>
+                              <Button variant="outline" size="sm" icon="edit" onClick={() => handleConfirmEdit(item)} style={{ width: '90px', justifyContent: 'center' }}>Edit</Button>
+                              
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                icon="trash" 
+                                onClick={() => handleDelete(item.id)} 
+                                style={{ 
+                                  width: '90px', 
+                                  justifyContent: 'center', 
+                                  backgroundColor: '#ef4444', 
+                                  color: 'white', 
+                                  borderColor: '#ef4444' 
+                                }}
+                              >
+                                Hapus
+                              </Button>
                             </div>
                         </td>
                       </tr>
@@ -692,7 +747,6 @@ const FormPengajuanUJK = () => {
                     key={idx} 
                     style={{ padding: '14px', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', backgroundColor: '#fff', transition: 'all 0.2s' }}
                     onClick={() => {
-                      // PERBAIKAN: Menarik relasi nama bidang dari data skema
                       const namaBidangAuto = item.bidang?.namaBidang || item.bidang?.nama_bidang || item.bidang_nama || '-';
                       setSkemaUsulan(skemaUsulan.map(su => su.id === activeModal.targetId ? {...su, skema_id: item.id, namaSkema: item.namaSkema, namaBidang: namaBidangAuto} : su));
                       setActiveModal({ type: null, targetId: null });
