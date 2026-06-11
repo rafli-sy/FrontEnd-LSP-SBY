@@ -539,6 +539,8 @@ const SuratMenyurat = () => {
         } else {
           errorMessage = error.response.data?.message || errorMessage;
         }
+      } else {
+        saved[idSkema][docTypeKey] = true;
       }
       showAlert('error', 'Gagal Render Dokumen', errorMessage);
     }

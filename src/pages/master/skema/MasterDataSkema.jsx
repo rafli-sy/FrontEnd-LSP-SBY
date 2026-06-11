@@ -65,7 +65,9 @@ const MasterDataSkema = () => {
     });
   };
 
-  const handleInputChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleToggleStatusForm = () => {
+    setFormData((prev) => ({ ...prev, status: prev.status === 'Aktif' ? 'Non-aktif' : 'Aktif' }));
+  };
 
   const handleToggleStatusForm = () => {
     setFormData((prev) => ({ ...prev, status: prev.status === 'Aktif' ? 'Non-aktif' : 'Aktif' }));

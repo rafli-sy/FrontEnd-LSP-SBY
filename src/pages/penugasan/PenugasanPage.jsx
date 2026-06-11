@@ -92,7 +92,7 @@ const PenugasanPage = () => {
   const [pesertaModalData, setPesertaModalData] = useState(null);
 
   const [isAsesorModalOpen, setIsAsesorModalOpen] = useState(false);
-  const [asesorTargetRole, setAsesorTargetRole] = useState(''); 
+  const [asesorTargetRole, setAsesorTargetRole] = useState('');
   const [filterBidang, setFilterBidang] = useState('');
   const [filterSkema, setFilterSkema] = useState('');
 
