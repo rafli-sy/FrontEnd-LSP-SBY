@@ -1,169 +1,301 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import axios from 'axios';
 import Button from '../../../components/ui/Button';
-import Modal from '../../../components/ui/Modal'; // <-- BUG FIX IMPORT SEBELUMNYA
-import AlertPopup from '../../../components/ui/AlertPopup'; // <-- IMPORT BARU
-import './DataTUK.css';
+import Modal from '../../../components/ui/Modal'; 
+import AlertPopup from '../../../components/ui/AlertPopup'; 
+import Pagination from '../../../components/ui/Pagination';
 
 const DataTUK = () => {
-  const [tukList, setTukList] = useState([
-    { id: 1, kode: 'TUK-001', nama: 'TUK Sewaktu BLK Surabaya', jenis: 'Sewaktu', lokasi: 'Dukuh Menanggal III/29', kapasitas: 20, status: 'Aktif' },
-    { id: 2, kode: 'TUK-002', nama: 'TUK Mandiri PT. Bambang Jaya', jenis: 'Mandiri', lokasi: 'Kawasan Industri Rungkut', kapasitas: 15, status: 'Aktif' },
-    { id: 3, kode: 'TUK-003', nama: 'TUK Sewaktu BLK Wonojati', jenis: 'Sewaktu', lokasi: 'Kabupaten Malang', kapasitas: 25, status: 'Aktif' },
-  ]);
+  const token = sessionStorage.getItem('auth_token') || localStorage.getItem('access_token');
+  const baseUrl = `${import.meta.env.VITE_API_BASE_URL}/api`;
+  const config = useMemo(() => ({
+    headers: { 'ngrok-skip-browser-warning': 'true', 'Authorization': `Bearer ${token}` }
+  }), [token]);
 
+  const [tukList, setTukList] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState('create');
   const [searchQuery, setSearchQuery] = useState('');
-  const [formData, setFormData] = useState({ id: null, kode: '', nama: '', jenis: 'Sewaktu', lokasi: '', kapasitas: '', status: 'Aktif' });
+  const [filterStatus, setFilterStatus] = useState('Aktif');
+  
+  const [formData, setFormData] = useState({ id: null, kodeInstitusi: '', namaInstitusi: '', alamat: '', kota: '', status: 'Aktif' });
+  const [initialData, setInitialData] = useState(null); // STATE BARU: Menyimpan wujud asli data sebelum diedit
+  
+  const [alert, setAlert] = useState(null);
+  const alertTimer = useRef(null);
+  
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
 
-  // --- LOGIKA ALERT POPUP ---
-  const [alertConfig, setAlertConfig] = useState({ type: null, title: '', text: '', action: null });
-
-  const showAlert = (type, title, text, action = null) => {
-    setAlertConfig({ type, title, text, action });
-    if (type === 'success' || type === 'warning' || type === 'info') {
-      setTimeout(() => setAlertConfig({ type: null, title: '', text: '', action: null }), 2000);
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      const statusParam = filterStatus === 'Semua' ? 'semua' : filterStatus.toLowerCase();
+      const res = await axios.get(`${baseUrl}/master/jejaring?status=${statusParam}`, config);
+      setTukList(res.data.data || []);
+    } catch (error) {
+      console.error("Gagal mengambil data TUK:", error);
+      showAlert('error', 'Gagal', 'Gagal memuat data dari server.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleConfirmAlert = () => {
-    if (alertConfig.action) alertConfig.action();
-    setAlertConfig({ type: null, title: '', text: '', action: null });
+  useEffect(() => { fetchData(); }, [filterStatus]);
+
+  const closeAlert = () => {
+    setAlert(null);
+    if (alertTimer.current) clearTimeout(alertTimer.current);
   };
 
-  const handleCancelAlert = () => {
-    setAlertConfig({ type: null, title: '', text: '', action: null });
+  const showSuccess = (title, text) => {
+    setAlert({ type: 'success', title, text, onCancel: closeAlert });
+    if (alertTimer.current) clearTimeout(alertTimer.current);
+    alertTimer.current = setTimeout(() => closeAlert(), 2500);
   };
-  // -------------------------
+
+  const showAlert = (type, title, text) => {
+    setAlert({ type, title, text, onCancel: closeAlert });
+  };
 
   const handleInputChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
+  // --- FUNGSI TOGGLE STATUS DI DALAM MODAL ---
+  const handleToggleStatusForm = () => {
+    setFormData((prev) => ({
+      ...prev,
+      status: prev.status === 'Aktif' ? 'Non-aktif' : 'Aktif'
+    }));
+  };
+
   const handleTambah = () => {
     setModalMode('create');
-    setFormData({ id: null, kode: '', nama: '', jenis: 'Sewaktu', lokasi: '', kapasitas: '', status: 'Aktif' });
+    const newData = { id: null, kodeInstitusi: '', namaInstitusi: '', alamat: '', kota: '', status: 'Aktif' };
+    setFormData(newData);
+    setInitialData(newData); // Set data awal
     setIsModalOpen(true);
   };
 
   const handleEdit = (data) => {
     setModalMode('edit');
-    setFormData(data);
+    const editData = {
+      id: data.id,
+      kodeInstitusi: data.kodeInstitusi,
+      namaInstitusi: data.namaInstitusi,
+      alamat: data.alamat,
+      kota: data.kota,
+      status: data.status
+    };
+    setFormData(editData);
+    setInitialData(editData); // Simpan data awal sebelum user mulai mengetik
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id) => {
-    showAlert('delete', 'Hapus TUK', 'Yakin ingin menghapus data TUK ini?', () => {
-      setTukList(tukList.filter(item => item.id !== id));
-      showAlert('success', 'Berhasil', 'Data TUK telah dihapus.');
-    });
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    showAlert('save', 'Simpan TUK', 'Apakah Anda yakin ingin menyimpan perubahan data TUK ini?', () => {
-      if (modalMode === 'create') {
-        setTukList([...tukList, { ...formData, id: Date.now() }]);
-      } else {
-        setTukList(tukList.map(item => item.id === formData.id ? formData : item));
+    
+    if (modalMode === 'edit') {
+      // CEK PERUBAHAN: Jika formData persis sama dengan initialData, langsung tutup modal
+      if (JSON.stringify(formData) === JSON.stringify(initialData)) {
+        setIsModalOpen(false);
+        return;
       }
-      setIsModalOpen(false);
-      showAlert('success', 'Berhasil!', 'Data TUK berhasil disimpan!');
-    });
+
+      setAlert({
+        type: 'confirm',
+        title: 'Konfirmasi Ubah Data',
+        text: 'Apakah Anda yakin ingin menyimpan perubahan data TUK ini?',
+        onConfirm: async () => {
+          closeAlert(); // Tutup popup konfirmasi
+          try {
+            await axios.put(`${baseUrl}/admin-lsp/jejaring/${formData.id}/edit`, formData, config);
+            showSuccess('Berhasil!', 'Data TUK berhasil diperbarui.');
+            setIsModalOpen(false);
+            fetchData(); 
+          } catch (error) {
+            showAlert('error', 'Gagal', error.response?.data?.message || 'Terjadi kesalahan sistem.');
+          }
+        },
+        onCancel: closeAlert
+      });
+
+    } else {
+      setAlert({
+        type: 'confirm',
+        title: 'Konfirmasi Tambah Data',
+        text: 'Apakah Anda yakin ingin menambahkan data TUK ini?',
+        onConfirm: async () => {
+          closeAlert();
+          try {
+            await axios.post(`${baseUrl}/admin-lsp/jejaring/add`, formData, config);
+            showSuccess('Berhasil!', 'Data TUK berhasil ditambahkan.');
+            setIsModalOpen(false);
+            fetchData(); 
+          } catch (error) {
+            showAlert('error', 'Gagal', error.response?.data?.message || 'Terjadi kesalahan sistem.');
+          }
+        },
+        onCancel: closeAlert
+      });
+    }
   };
 
-  const filteredTUK = tukList.filter(tuk => tuk.nama.toLowerCase().includes(searchQuery.toLowerCase()) || tuk.kode.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredTUK = tukList.filter(tuk => {
+    const matchSearch = tuk.namaInstitusi.toLowerCase().includes(searchQuery.toLowerCase()) || tuk.kodeInstitusi.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchSearch;
+  });
+
+  const totalPages = Math.ceil(filteredTUK.length / itemsPerPage) || 1;
+  const paginatedTUK = filteredTUK.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const labelStyle = { display: 'block', fontSize: '0.85rem', fontWeight: '600', color: '#475569', marginBottom: '6px' };
+  const inputStyle = { width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', color: '#0f172a', fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box' };
+  const filterSelectStyle = {
+    padding: '9px 30px 9px 12px',
+    borderRadius: '8px',
+    border: '1px solid #cbd5e1',
+    outline: 'none',
+    background: '#fff',
+    fontSize: '0.9rem',
+    cursor: 'pointer',
+    appearance: 'none',
+    WebkitAppearance: 'none',
+    MozAppearance: 'none',
+    backgroundImage: `url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236c757d%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")`,
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: 'right 10px top 50%',
+    backgroundSize: '10px auto'
+  };
 
   return (
     <div className="dashboard-content fade-in-content">
-      
-      {alertConfig.type && (
-        <AlertPopup type={alertConfig.type} title={alertConfig.title} text={alertConfig.text} onConfirm={handleConfirmAlert} onCancel={handleCancelAlert} />
-      )}
+      {alert && <AlertPopup {...alert} />}
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '25px', flexWrap: 'wrap', gap: '15px' }}>
         <div>
-          <h2>Data Tempat Uji Kompetensi (TUK)</h2>
+          <h2 style={{ margin: 0, color: '#0f172a' }}>Data Tempat Uji Kompetensi (TUK)</h2>
           <p className="text-muted" style={{ margin: '5px 0 0' }}>Manajemen daftar lokasi penyelenggaraan ujian kompetensi.</p>
         </div>
         <Button variant="primary" icon="map-marker-alt" onClick={handleTambah}>Tambah TUK</Button>
       </div>
 
-      <div className="dashboard-card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-          <h3 style={{ margin: 0 }}>Daftar Lokasi TUK</h3>
-          <input type="text" className="form-input" placeholder="Cari TUK / Kode..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ width: '300px' }} />
+      <div className="dashboard-card" style={{ padding: 0, overflow: 'hidden', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+        <div style={{ padding: '20px', borderBottom: '1px solid #e2e8f0', backgroundColor: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+          <div style={{ flex: '1', minWidth: '250px', position: 'relative', maxWidth: '400px' }}>
+            <i className="fas fa-search" style={{ position: 'absolute', left: '12px', top: '12px', color: '#94a3b8' }}></i>
+            <input type="text" placeholder="Cari Institusi TUK / Kode..." value={searchQuery} onChange={(e) => {setSearchQuery(e.target.value); setCurrentPage(1);}} style={{ width: '100%', padding: '10px 10px 10px 35px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', fontSize: '0.9rem' }} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <label style={{ fontSize: '0.85rem', fontWeight: '600', color: '#475569' }}><i className="fas fa-filter"></i> Filter:</label>
+            <select value={filterStatus} onChange={(e) => {setFilterStatus(e.target.value); setCurrentPage(1);}} style={filterSelectStyle}>
+              <option value="Aktif">Lihat Aktif</option>
+              <option value="Non-aktif">Lihat Non-Aktif</option>
+              <option value="Semua">Semua Status</option>
+            </select>
+          </div>
         </div>
 
-        <div className="table-responsive">
+        <div className="table-responsive" style={{ padding: '20px' }}>
           <table className="admin-table">
-            <thead style={{ backgroundColor: '#f8fafc' }}>
+            <thead>
               <tr>
                 <th style={{ width: '5%', textAlign: 'center' }}>No</th>
                 <th style={{ width: '15%' }}>Kode TUK</th>
-                <th>Nama TUK & Lokasi</th>
-                <th style={{ textAlign: 'center' }}>Jenis</th>
-                <th style={{ textAlign: 'center' }}>Kapasitas</th>
-                <th style={{ textAlign: 'center' }}>Aksi</th>
+                <th style={{ width: '30%' }}>Nama Institusi</th>
+                <th style={{ width: '25%' }}>Alamat & Kota</th>
+                <th style={{ width: '15%', textAlign: 'center' }}>Status</th>
+                <th style={{ width: '10%', textAlign: 'center' }}>Aksi</th>
               </tr>
             </thead>
             <tbody>
-              {filteredTUK.map((tuk, index) => (
+              {isLoading ? <tr><td colSpan="6" style={{textAlign:'center', padding:'30px', color:'#94a3b8'}}><i className="fas fa-spinner fa-spin fa-2x"></i><br/>Memuat Data...</td></tr> : paginatedTUK.length > 0 ? paginatedTUK.map((tuk, index) => (
                 <tr key={tuk.id}>
-                  <td style={{ textAlign: 'center', color: '#64748b' }}>{index + 1}</td>
-                  <td><strong>{tuk.kode}</strong></td>
-                  <td><strong>{tuk.nama}</strong><br/><small className="text-muted"><i className="fas fa-map-pin"></i> {tuk.lokasi}</small></td>
+                  <td style={{ textAlign: 'center', color: '#64748b' }}>{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                  <td><strong>{tuk.kodeInstitusi}</strong></td>
+                  <td style={{ fontWeight: '600', color: '#0f172a' }}>{tuk.namaInstitusi}</td>
+                  <td>
+                    <div style={{ fontSize: '0.85rem', color: '#475569', marginBottom: '4px' }}>{tuk.alamat}</div>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#3b82f6' }}>Kota {tuk.kota}</div>
+                  </td>
+                  
+                  {/* DI TABEL CUMA TAMPIL BADGE (TIDAK BISA DIKLIK) */}
                   <td style={{ textAlign: 'center' }}>
-                    <span className="badge warning" style={{ backgroundColor: tuk.jenis === 'Mandiri' ? '#dbeafe' : '#fef3c7', color: tuk.jenis === 'Mandiri' ? '#1e40af' : '#b45309' }}>
-                      {tuk.jenis}
+                    <span className={`badge ${tuk.status === 'Aktif' ? 'success' : 'danger'}`} style={{ padding: '6px 12px', display: 'inline-block' }}>
+                      {tuk.status}
                     </span>
                   </td>
-                  <td style={{ textAlign: 'center' }}><strong>{tuk.kapasitas}</strong> Peserta</td>
+                  
                   <td style={{ textAlign: 'center' }}>
-                    <div style={{ display: 'flex', gap: '5px', justifyContent: 'center' }}>
-                      <Button variant="outline" icon="edit" onClick={() => handleEdit(tuk)} />
-                      <Button variant="danger" icon="trash" onClick={() => handleDelete(tuk.id)} />
-                    </div>
+                    <Button variant="outline" icon="edit" onClick={() => handleEdit(tuk)} />
                   </td>
                 </tr>
-              ))}
-              {filteredTUK.length === 0 && <tr><td colSpan="6" style={{ textAlign: 'center' }}>Tidak ada data TUK.</td></tr>}
+              )) : <tr><td colSpan="6" style={{textAlign:'center', padding:'30px', color:'#94a3b8'}}>Data tidak ditemukan.</td></tr>}
             </tbody>
           </table>
         </div>
+        
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalData={filteredTUK.length} itemsPerPage={itemsPerPage} />
       </div>
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={modalMode === 'create' ? 'Tambah Data TUK' : 'Edit Data TUK'}>
-        <form onSubmit={handleSubmit}>
-          <div className="form-group" style={{ marginBottom: '15px' }}>
-            <label>Kode TUK</label>
-            <input type="text" name="kode" className="form-input" placeholder="Misal: TUK-001" value={formData.kode} onChange={handleInputChange} required />
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div>
+            <label style={labelStyle}><i className="fas fa-barcode text-muted" style={{marginRight: '5px'}}></i> Kode TUK</label>
+            <input type="text" name="kodeInstitusi" style={inputStyle} placeholder="Misal: TUK-001" value={formData.kodeInstitusi} onChange={handleInputChange} required />
           </div>
-          <div className="form-group" style={{ marginBottom: '15px' }}>
-            <label>Nama Tempat Uji (TUK)</label>
-            <input type="text" name="nama" className="form-input" value={formData.nama} onChange={handleInputChange} required />
+
+          <div>
+            <label style={labelStyle}><i className="fas fa-building text-muted" style={{marginRight: '5px'}}></i> Nama Institusi TUK</label>
+            <input type="text" name="namaInstitusi" style={inputStyle} placeholder="Contoh: TUK Sewaktu BLK Surabaya" value={formData.namaInstitusi} onChange={handleInputChange} required />
           </div>
-          <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
-            <div className="form-group">
-              <label>Jenis TUK</label>
-              <select name="jenis" className="form-select" value={formData.jenis} onChange={handleInputChange}>
-                <option value="Sewaktu">Sewaktu</option>
-                <option value="Mandiri">Mandiri</option>
-                <option value="Tempat Kerja">Tempat Kerja</option>
-              </select>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div>
+              <label style={labelStyle}><i className="fas fa-city text-muted" style={{marginRight: '5px'}}></i> Kota</label>
+              <input type="text" name="kota" style={inputStyle} placeholder="Contoh: Surabaya" value={formData.kota} onChange={handleInputChange} required />
             </div>
-            <div className="form-group">
-              <label>Kapasitas Peserta (Orang)</label>
-              <input type="number" name="kapasitas" className="form-input" min="1" value={formData.kapasitas} onChange={handleInputChange} required />
+
+            {/* GANTI DROPDOWN MENJADI TOMBOL SWITCH */}
+            <div>
+              <label style={labelStyle}><i className="fas fa-toggle-on text-muted" style={{marginRight: '5px'}}></i> Status TUK</label>
+              <button 
+                type="button"
+                onClick={handleToggleStatusForm}
+                style={{
+                  width: '100%', padding: '10px 14px', borderRadius: '8px', 
+                  border: formData.status === 'Aktif' ? '1px solid #10b981' : '1px solid #ef4444', 
+                  backgroundColor: formData.status === 'Aktif' ? '#ecfdf5' : '#fef2f2', 
+                  color: formData.status === 'Aktif' ? '#047857' : '#b91c1c', 
+                  fontSize: '0.95rem', fontWeight: 'bold', cursor: 'pointer',
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center', transition: '0.2s'
+                }}
+              >
+                <span>{formData.status}</span>
+                <i className="fas fa-exchange-alt"></i>
+              </button>
             </div>
           </div>
-          <div className="form-group" style={{ marginBottom: '25px' }}>
-            <label>Lokasi / Alamat Lengkap</label>
-            <textarea name="lokasi" className="form-input" rows="3" value={formData.lokasi} onChange={handleInputChange} required style={{ resize: 'vertical' }}></textarea>
+
+          <div>
+            <label style={labelStyle}><i className="fas fa-map-marker-alt text-muted" style={{marginRight: '5px'}}></i> Alamat Lengkap</label>
+            <textarea name="alamat" style={{...inputStyle, resize: 'vertical', minHeight: '80px'}} rows="3" placeholder="Masukkan alamat lengkap TUK" value={formData.alamat} onChange={handleInputChange} required></textarea>
           </div>
-          
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <Button variant="outline" onClick={() => setIsModalOpen(false)} style={{ flex: 1 }} type="button">Batal</Button>
-            <Button type="submit" variant="success" icon="save" style={{ flex: 1 }}>Simpan Data</Button>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '30px', borderTop: '1px solid #e2e8f0', paddingTop: '20px' }}>
+            
+            {/* Tombol Batal (Abu-abu) */}
+            <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)}>
+              Batal
+            </Button>
+            
+            {/* Tombol Simpan (Biru) - Ganti variant="success" jika ingin warna hijau */}
+            <Button type="submit" variant="primary" icon="save">
+              {modalMode === 'create' ? 'Simpan Data Baru' : 'Simpan Perubahan'}
+            </Button>
+
           </div>
+
         </form>
       </Modal>
     </div>

@@ -1,165 +1,316 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import axios from 'axios';
 import Button from '../../../components/ui/Button';
-import Modal from '../../../components/ui/Modal'; // <-- BUG FIX IMPORT SEBELUMNYA
-import AlertPopup from '../../../components/ui/AlertPopup'; // <-- IMPORT BARU
-import './MasterDataSkema.css';
+import Modal from '../../../components/ui/Modal';
+import AlertPopup from '../../../components/ui/AlertPopup';
+import Pagination from '../../../components/ui/Pagination';
 
 const MasterDataSkema = () => {
-  const [skemaList, setSkemaList] = useState([
-    { id: 1, kode: 'SKM-001', nama: 'Pembuatan Roti Dan Kue', jenis: 'Klaster', bidang: 'Pariwisata' },
-    { id: 2, kode: 'SKM-002', nama: 'Practical Office Advance', jenis: 'KKNI', bidang: 'TIK' },
-    { id: 3, kode: 'SKM-003', nama: 'Teknisi Perawatan AC Residential', jenis: 'Klaster', bidang: 'Refrigerasi' }
-  ]);
+  const token = sessionStorage.getItem('auth_token') || localStorage.getItem('access_token');
+  const baseUrl = `${import.meta.env.VITE_API_BASE_URL}/api`;
+  const config = useMemo(() => ({
+    headers: { 'ngrok-skip-browser-warning': 'true', 'Authorization': `Bearer ${token}` }
+  }), [token]);
 
+  const [skemaList, setSkemaList] = useState([]);
+  const [listBidang, setListBidang] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState('create');
   const [searchQuery, setSearchQuery] = useState('');
-  const [formData, setFormData] = useState({ id: null, kode: '', nama: '', jenis: 'Klaster', bidang: '' });
+  const [filterStatus, setFilterStatus] = useState('Aktif');
+  
+  const [alert, setAlert] = useState(null);
+  const alertTimer = useRef(null);
 
-  // --- LOGIKA ALERT POPUP ---
-  const [alertConfig, setAlertConfig] = useState({ type: null, title: '', text: '', action: null });
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
 
-  const showAlert = (type, title, text, action = null) => {
-    setAlertConfig({ type, title, text, action });
-    if (type === 'success' || type === 'warning' || type === 'info') {
-      setTimeout(() => setAlertConfig({ type: null, title: '', text: '', action: null }), 2000);
+  const [formData, setFormData] = useState({ id: null, kodeSkema: '', namaSkema: '', jenisSkema: 'Klaster', bidang_id: '', profesi: '', status: 'Aktif' });
+  const [initialData, setInitialData] = useState(null);
+
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      const statusParam = filterStatus === 'Semua' ? 'semua' : filterStatus.toLowerCase();
+      const res = await axios.get(`${baseUrl}/master/skema?status=${statusParam}`, config);
+      setSkemaList(res.data.data || []);
+      const resBidang = await axios.get(`${baseUrl}/master/bidang`, config);
+      setListBidang(resBidang.data.data || []);
+    } catch (error) {
+      console.error("Gagal memuat data:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleConfirmAlert = () => {
-    if (alertConfig.action) alertConfig.action();
-    setAlertConfig({ type: null, title: '', text: '', action: null });
+  useEffect(() => { fetchData(); }, [filterStatus]);
+
+  const closeAlert = () => {
+    setAlert(null);
+    if (alertTimer.current) clearTimeout(alertTimer.current);
   };
 
-  const handleCancelAlert = () => {
-    setAlertConfig({ type: null, title: '', text: '', action: null });
+  const showSuccess = (title, text) => {
+    setAlert({ type: 'success', title, text, onCancel: closeAlert });
+    if (alertTimer.current) clearTimeout(alertTimer.current);
+    alertTimer.current = setTimeout(() => closeAlert(), 2500);
   };
-  // -------------------------
 
-  const handleInputChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+  const showAlert = (type, title, text, onConfirmAction = null) => {
+    setAlert({ 
+      type, title, text, onCancel: closeAlert,
+      ...(onConfirmAction && { onConfirm: onConfirmAction }) 
+    });
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    if (name === 'bidang_id') {
+      const selectedBidang = listBidang.find(b => b.id.toString() === value.toString());
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        profesi: selectedBidang ? selectedBidang.namaBidang : prev.profesi
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleToggleStatusForm = () => {
+    setFormData((prev) => ({ ...prev, status: prev.status === 'Aktif' ? 'Non-aktif' : 'Aktif' }));
+  };
 
   const handleTambah = () => {
     setModalMode('create');
-    setFormData({ id: null, kode: '', nama: '', jenis: 'Klaster', bidang: '' });
+    const newData = { id: null, kodeSkema: '', namaSkema: '', jenisSkema: 'Klaster', bidang_id: '', profesi: '', status: 'Aktif' };
+    setFormData(newData);
+    setInitialData(newData);
     setIsModalOpen(true);
   };
 
   const handleEdit = (data) => {
     setModalMode('edit');
-    setFormData(data);
+    const editData = {
+      id: data.id,
+      kodeSkema: data.kodeSkema,
+      namaSkema: data.namaSkema,
+      jenisSkema: data.jenisSkema,
+      bidang_id: data.bidang_id, 
+      profesi: data.profesi,
+      status: data.status
+    };
+    setFormData(editData);
+    setInitialData(editData);
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id) => {
-    showAlert('delete', 'Hapus Skema', 'Hapus Skema ini? Pastikan skema tidak sedang digunakan dalam ujian berjalan.', () => {
-      setSkemaList(skemaList.filter(item => item.id !== id));
-      showAlert('success', 'Berhasil', 'Data Skema telah dihapus.');
-    });
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    showAlert('save', 'Simpan Skema', 'Apakah Anda yakin ingin menyimpan perubahan data skema ini?', () => {
-      if (modalMode === 'create') {
-        const newId = skemaList.length > 0 ? Math.max(...skemaList.map(s => s.id)) + 1 : 1;
-        setSkemaList([...skemaList, { ...formData, id: newId }]);
-      } else {
-        setSkemaList(skemaList.map(item => item.id === formData.id ? formData : item));
+    if (modalMode === 'edit') {
+      if (JSON.stringify(formData) === JSON.stringify(initialData)) {
+        setIsModalOpen(false);
+        return;
       }
-      setIsModalOpen(false);
-      showAlert('success', 'Berhasil!', 'Data skema berhasil disimpan!');
-    });
+      showAlert('confirm', 'Konfirmasi Ubah Data', 'Apakah Anda yakin ingin menyimpan perubahan data Skema ini?', async () => {
+        closeAlert();
+        try {
+          await axios.put(`${baseUrl}/admin-lsp/skema/${formData.id}/edit`, formData, config);
+          showSuccess('Berhasil!', 'Data skema berhasil diperbarui.');
+          setIsModalOpen(false);
+          fetchData();
+        } catch (error) {
+          showAlert('error', 'Gagal', error.response?.data?.message || 'Terjadi kesalahan sistem.');
+        }
+      });
+    } else {
+      showAlert('confirm', 'Konfirmasi Tambah Data', 'Apakah Anda yakin ingin menambahkan data Skema ini?', async () => {
+        closeAlert();
+        try {
+          await axios.post(`${baseUrl}/admin-lsp/skema/add`, formData, config);
+          showSuccess('Berhasil!', 'Data skema berhasil ditambahkan.');
+          setIsModalOpen(false);
+          fetchData();
+        } catch (error) {
+          showAlert('error', 'Gagal', error.response?.data?.message || 'Terjadi kesalahan sistem.');
+        }
+      });
+    }
   };
 
-  const filteredSkema = skemaList.filter(skema => skema.nama.toLowerCase().includes(searchQuery.toLowerCase()) || skema.kode.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredSkema = skemaList.filter(s => {
+    const matchSearch = s.namaSkema?.toLowerCase().includes(searchQuery.toLowerCase()) || s.kodeSkema?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchStatus = filterStatus === 'Semua' ? true : s.status === filterStatus;
+    return matchSearch && matchStatus;
+  });
+
+  const totalPages = Math.ceil(filteredSkema.length / itemsPerPage) || 1;
+  const paginatedSkema = filteredSkema.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const labelStyle = { display: 'block', fontSize: '0.85rem', fontWeight: '600', color: '#475569', marginBottom: '6px' };
+  const inputStyle = { width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', color: '#0f172a', fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box' };
+  const selectStyle = {
+    ...inputStyle,
+    cursor: 'pointer',
+    appearance: 'none',
+    WebkitAppearance: 'none',
+    MozAppearance: 'none',
+    backgroundImage: `url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236c757d%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")`,
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: 'right 14px top 50%',
+    backgroundSize: '12px auto',
+    paddingRight: '35px'
+  };
+  const filterSelectStyle = {
+    padding: '9px 30px 9px 12px',
+    borderRadius: '8px',
+    border: '1px solid #cbd5e1',
+    outline: 'none',
+    background: '#fff',
+    fontSize: '0.9rem',
+    cursor: 'pointer',
+    appearance: 'none',
+    WebkitAppearance: 'none',
+    MozAppearance: 'none',
+    backgroundImage: `url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236c757d%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")`,
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: 'right 10px top 50%',
+    backgroundSize: '10px auto'
+  };
 
   return (
     <div className="dashboard-content fade-in-content">
-      
-      {alertConfig.type && (
-        <AlertPopup type={alertConfig.type} title={alertConfig.title} text={alertConfig.text} onConfirm={handleConfirmAlert} onCancel={handleCancelAlert} />
-      )}
+      {alert && <AlertPopup {...alert} />}
 
-      <div className="dashboard-header" style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '25px', flexWrap: 'wrap', gap: '15px' }}>
         <div>
-          <h2>Master Data Skema</h2>
-          <p className="text-muted" style={{ margin: '5px 0 0' }}>Manajemen daftar skema uji kompetensi yang aktif di LSP.</p>
+          <h2 style={{ margin: 0, color: '#0f172a' }}>Master Data Skema</h2>
+          <p className="text-muted" style={{ margin: '5px 0 0' }}>Kelola daftar skema sertifikasi yang tersedia.</p>
         </div>
         <Button variant="primary" icon="plus" onClick={handleTambah}>Tambah Skema</Button>
       </div>
 
-      <div className="dashboard-card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-          <h3 style={{ margin: 0 }}>Daftar Skema Ujian</h3>
-          <input type="text" className="form-input" placeholder="Cari Skema / Kode..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ width: '300px' }} />
+      <div className="dashboard-card" style={{ padding: 0, overflow: 'hidden', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+        <div style={{ padding: '20px', borderBottom: '1px solid #e2e8f0', backgroundColor: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+          <div style={{ flex: '1', minWidth: '250px', position: 'relative', maxWidth: '400px' }}>
+            <i className="fas fa-search" style={{ position: 'absolute', left: '12px', top: '12px', color: '#94a3b8' }}></i>
+            <input type="text" placeholder="Cari Nama Skema / Kode..." value={searchQuery} onChange={(e) => {setSearchQuery(e.target.value); setCurrentPage(1);}} style={{ width: '100%', padding: '10px 10px 10px 35px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', fontSize: '0.9rem' }} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <label style={{ fontSize: '0.85rem', fontWeight: '600', color: '#475569' }}><i className="fas fa-filter"></i> Filter:</label>
+            <select value={filterStatus} onChange={(e) => {setFilterStatus(e.target.value); setCurrentPage(1);}} style={filterSelectStyle}>
+              <option value="Aktif">Lihat Aktif</option>
+              <option value="Non-aktif">Lihat Non-Aktif</option>
+              <option value="Semua">Semua Status</option>
+            </select>
+          </div>
         </div>
 
-        <div className="table-responsive">
+        <div className="table-responsive" style={{ padding: '20px' }}>
           <table className="admin-table">
-            <thead style={{ backgroundColor: '#f8fafc' }}>
+            <thead>
               <tr>
                 <th style={{ width: '5%', textAlign: 'center' }}>No</th>
                 <th style={{ width: '15%' }}>Kode Skema</th>
-                <th style={{ width: '40%' }}>Judul Skema Kompetensi</th>
-                <th style={{ width: '15%', textAlign: 'center' }}>Jenis</th>
+                <th style={{ width: '30%' }}>Nama Skema</th>
+                <th style={{ width: '15%' }}>Jenis</th>
                 <th style={{ width: '15%' }}>Bidang</th>
+                <th style={{ width: '10%', textAlign: 'center' }}>Status</th>
                 <th style={{ width: '10%', textAlign: 'center' }}>Aksi</th>
               </tr>
             </thead>
             <tbody>
-              {filteredSkema.map((skema, index) => (
-                <tr key={skema.id}>
-                  <td style={{ textAlign: 'center' }}>{index + 1}</td>
-                  <td><strong>{skema.kode}</strong></td>
-                  <td style={{ fontWeight: '600', color: '#0f172a' }}>{skema.nama}</td>
-                  <td style={{ textAlign: 'center' }}><span className="badge warning" style={{ backgroundColor: skema.jenis === 'KKNI' ? '#dbeafe' : '#fef3c7', color: skema.jenis === 'KKNI' ? '#1e40af' : '#b45309' }}>{skema.jenis}</span></td>
-                  <td>{skema.bidang}</td>
+              {isLoading ? <tr><td colSpan="7" style={{textAlign:'center', padding:'30px', color:'#94a3b8'}}><i className="fas fa-spinner fa-spin fa-2x"></i><br/>Memuat Data...</td></tr> : paginatedSkema.length > 0 ? paginatedSkema.map((item, index) => (
+                <tr key={item.id}>
+                  <td style={{ textAlign: 'center', color: '#64748b' }}>{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                  <td><strong>{item.kodeSkema}</strong></td>
+                  <td style={{ fontWeight: '600', color: '#0f172a' }}>{item.namaSkema}</td>
+                  <td>{item.jenisSkema}</td>
+                  <td>{item.bidang?.namaBidang || '-'}</td>
+                  
                   <td style={{ textAlign: 'center' }}>
-                    <div style={{ display: 'flex', gap: '5px', justifyContent: 'center' }}>
-                      <Button variant="outline" icon="edit" onClick={() => handleEdit(skema)} />
-                      <Button variant="danger" icon="trash" onClick={() => handleDelete(skema.id)} />
-                    </div>
+                    <span className={`badge ${item.status === 'Aktif' ? 'success' : 'danger'}`} style={{ padding: '6px 12px', display: 'inline-block' }}>
+                      {item.status}
+                    </span>
+                  </td>
+                  
+                  <td style={{ textAlign: 'center' }}>
+                    <Button variant="outline" icon="edit" onClick={() => handleEdit(item)} />
                   </td>
                 </tr>
-              ))}
+              )) : <tr><td colSpan="7" style={{textAlign:'center', padding:'30px', color:'#94a3b8'}}>Data tidak ditemukan.</td></tr>}
             </tbody>
           </table>
         </div>
+        
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalData={filteredSkema.length} itemsPerPage={itemsPerPage} />
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={modalMode === 'create' ? 'Tambah Data Skema' : 'Edit Skema'}>
-        <form onSubmit={handleSubmit}>
-          <div className="form-group" style={{ marginBottom: '15px' }}>
-            <label>Kode Skema</label>
-            <input type="text" name="kode" className="form-input" placeholder="Misal: SKM-001" value={formData.kode} onChange={handleInputChange} required />
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={modalMode === 'create' ? 'Tambah Data Skema' : 'Edit Data Skema'}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div>
+            <label style={labelStyle}><i className="fas fa-barcode text-muted" style={{marginRight: '5px'}}></i> Kode Skema</label>
+            <input type="text" name="kodeSkema" style={inputStyle} placeholder="Contoh: SKM-001" value={formData.kodeSkema} onChange={handleInputChange} required />
           </div>
-          <div className="form-group" style={{ marginBottom: '15px' }}>
-            <label>Nama / Judul Skema</label>
-            <input type="text" name="nama" className="form-input" placeholder="Misal: Pembuatan Roti Dan Kue" value={formData.nama} onChange={handleInputChange} required />
+
+          <div>
+            <label style={labelStyle}><i className="fas fa-book text-muted" style={{marginRight: '5px'}}></i> Nama Skema</label>
+            <input type="text" name="namaSkema" style={inputStyle} placeholder="Contoh: Web Developer" value={formData.namaSkema} onChange={handleInputChange} required />
           </div>
-          <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '25px' }}>
-             <div className="form-group">
-                <label>Bidang Keahlian</label>
-                <select name="bidang" className="form-select" value={formData.bidang} onChange={handleInputChange} required>
-                  <option value="">-- Pilih --</option>
-                  <option value="Pariwisata">Pariwisata</option>
-                  <option value="TIK">TIK</option>
-                  <option value="Refrigerasi">Refrigerasi</option>
-                  <option value="Otomotif">Otomotif</option>
-                  <option value="Manufaktur">Manufaktur</option>
-                </select>
-             </div>
-             <div className="form-group">
-                <label>Jenis Skema</label>
-                <select name="jenis" className="form-select" value={formData.jenis} onChange={handleInputChange}>
-                  <option value="Klaster">Klaster</option>
-                  <option value="KKNI">KKNI</option>
-                </select>
-             </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div>
+              <label style={labelStyle}><i className="fas fa-layer-group text-muted" style={{marginRight: '5px'}}></i> Jenis Skema</label>
+              <select name="jenisSkema" value={formData.jenisSkema} onChange={handleInputChange} style={selectStyle} required>
+                <option value="Okupasi">Okupasi</option>
+                <option value="Klaster">Klaster</option>
+              </select>
+            </div>
+            
+            <div>
+              <label style={labelStyle}><i className="fas fa-briefcase text-muted" style={{marginRight: '5px'}}></i> Bidang</label>
+              <select name="bidang_id" value={formData.bidang_id} onChange={handleInputChange} style={selectStyle} required>
+                <option value="" disabled>Pilih Bidang</option>
+                {listBidang.map(b => (
+                  <option key={b.id} value={b.id}>{b.namaBidang}</option>
+                ))}
+              </select>
+            </div>
           </div>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <Button variant="outline" onClick={() => setIsModalOpen(false)} style={{ flex: 1 }} type="button">Batal</Button>
-            <Button type="submit" variant="success" icon="save" style={{ flex: 1 }}>Simpan Data</Button>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div>
+              <label style={labelStyle}><i className="fas fa-user-tie text-muted" style={{marginRight: '5px'}}></i> Profesi (Opsional)</label>
+              <input type="text" name="profesi" style={inputStyle} placeholder="Contoh: Programmer" value={formData.profesi || ''} onChange={handleInputChange} />
+            </div>
+
+            {modalMode === 'edit' && (
+              <div>
+                <label style={labelStyle}><i className="fas fa-toggle-on text-muted" style={{marginRight: '5px'}}></i> Status Skema</label>
+                <button 
+                  type="button"
+                  onClick={handleToggleStatusForm}
+                  style={{
+                    width: '100%', padding: '10px 14px', borderRadius: '8px', 
+                    border: formData.status === 'Aktif' ? '1px solid #10b981' : '1px solid #ef4444', 
+                    backgroundColor: formData.status === 'Aktif' ? '#ecfdf5' : '#fef2f2', 
+                    color: formData.status === 'Aktif' ? '#047857' : '#b91c1c', 
+                    fontSize: '0.95rem', fontWeight: 'bold', cursor: 'pointer',
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center', transition: '0.2s'
+                  }}
+                >
+                  <span>{formData.status}</span>
+                  <i className="fas fa-exchange-alt"></i>
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '30px', borderTop: '1px solid #e2e8f0', paddingTop: '20px' }}>
+            <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)}>Batal</Button>
+            <Button type="submit" variant="primary" icon="save">{modalMode === 'create' ? 'Simpan Data Baru' : 'Simpan Perubahan'}</Button>
           </div>
         </form>
       </Modal>
