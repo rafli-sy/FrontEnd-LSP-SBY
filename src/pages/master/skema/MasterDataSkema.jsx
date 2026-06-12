@@ -69,8 +69,18 @@ const MasterDataSkema = () => {
     setFormData((prev) => ({ ...prev, status: prev.status === 'Aktif' ? 'Non-aktif' : 'Aktif' }));
   };
 
-  const handleToggleStatusForm = () => {
-    setFormData((prev) => ({ ...prev, status: prev.status === 'Aktif' ? 'Non-aktif' : 'Aktif' }));
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => {
+      const updated = { ...prev, [name]: value };
+      if (name === 'bidang_id') {
+        const selectedBidang = listBidang.find(b => String(b.id) === String(value));
+        if (selectedBidang) {
+          updated.profesi = selectedBidang.namaBidang;
+        }
+      }
+      return updated;
+    });
   };
 
   const handleTambah = () => {

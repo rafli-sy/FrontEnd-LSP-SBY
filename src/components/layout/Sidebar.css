@@ -307,3 +307,30 @@
     left: 0;
   }
 }
+
+/* --- SUBMENU ACCORDION FOR MASTER DATA --- */
+.submenu-container {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideDownMenu 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.submenu-link {
+  padding-left: 45px !important;
+}
+
+.submenu-link:hover:not(.active-link) {
+  padding-left: 52px !important;
+}
+
+@keyframes slideDownMenu {
+  from {
+    max-height: 0;
+    opacity: 0;
+  }
+  to {
+    max-height: 250px;
+    opacity: 1;
+  }
+}

@@ -72,6 +72,7 @@ const SuratMenyurat = () => {
 
   const [antreanSurat, setAntreanSurat] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [daftarPenyelia, setDaftarPenyelia] = useState([]);
 
   const [selectedPenugasan, setSelectedPenugasan] = useState(null); 
   const [viewPesertaUjk, setViewPesertaUjk] = useState(null); 
@@ -261,13 +262,17 @@ const SuratMenyurat = () => {
           status: isPlotted ? 'Siap Diterbitkan' : 'Menunggu Plotting',
           dokumen_upload_lsp: item.dokumen_upload_lsp || [],
           
-          statusSurat: {
-            balasan: cekSuratBalasan(item.pengajuan || item.pengajuan_ujk || item), 
-            permohonan: [],
-            tugas: [],
-            administrasi: [],
-            administrasiPleno: []
-          },
+          statusSurat: (() => {
+            const localData = localStorage.getItem(`downloaded_docs_${item.id}`);
+            const parsed = localData ? JSON.parse(localData) : null;
+            return {
+              balasan: cekSuratBalasan(item.pengajuan || item.pengajuan_ujk || item), 
+              permohonan: parsed?.permohonan || [],
+              tugas: parsed?.tugas || [],
+              administrasi: parsed?.administrasi || [],
+              administrasiPleno: parsed?.administrasiPleno || []
+            };
+          })(),
           savedForms: {},
           peserta: item.peserta_pengajuan_ujk || item.pesertaPengajuanUjk || []
         });
@@ -282,7 +287,17 @@ const SuratMenyurat = () => {
 
   useEffect(() => {
     fetchPengajuan();
-  }, []);
+    const fetchPenyelia = async () => {
+      try {
+        const res = await axios.get(`${baseUrl}/master/penyilia`, config);
+        const dataMaster = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+        setDaftarPenyelia(dataMaster.filter(p => p.status === 'Aktif'));
+      } catch (error) {
+        console.error('Error fetching penyelia:', error);
+      }
+    };
+    fetchPenyelia();
+  }, [baseUrl, config]);
 
   useEffect(() => {
     if (selectedPenugasan) {
@@ -389,6 +404,14 @@ const SuratMenyurat = () => {
       return; 
     }
 
+    if (jenisSurat === 'Administrasi Pleno' || docKey === 'administrasiPleno') {
+      const isComplete = skemaItem.peserta && skemaItem.peserta.length > 0 && skemaItem.peserta.every(p => p.asesor_id && (p.keputusan_uji === 'kompeten' || p.keputusan_uji === 'belum kompeten'));
+      if (!isComplete) {
+        showAlert('warning', 'Data Belum Lengkap', 'Silakan tentukan Asesor Penguji dan Keputusan Uji untuk semua asesi terlebih dahulu di Pembagian Asesi.');
+        return;
+      }
+    }
+
     // --- PERBAIKAN: VALIDASI PEMBAGIAN ASESI SEBELUM CETAK HASIL PLENO ---
     if (['PLN.03', 'PLN.04', 'PLN.05'].includes(docKey)) {
         const isAsesiDivided = skemaItem.peserta && skemaItem.peserta.some(p => p.asesor_id || p.asesor || p.keputusan || p.rekomendasi_asesor);
@@ -423,6 +446,26 @@ const SuratMenyurat = () => {
   };
 
   const handleSubMenuClick = (doc) => {
+    if (doc.code === 'DOC.01') {
+      const activeSurat = antreanSurat.find(s => s.idUjk === targetUjk?.surat?.idUjk);
+      const activeSkema = activeSurat?.skemaList.find(s => s.idSkema === targetUjk?.skema?.idSkema);
+      const isAsesorComplete = activeSkema?.peserta && activeSkema?.peserta.length > 0 && activeSkema?.peserta.every(p => p.asesor_id);
+      if (!isAsesorComplete) {
+        showAlert('warning', 'Data Belum Lengkap', 'Silakan tentukan Asesor Penguji untuk semua asesi terlebih dahulu di Pembagian Asesi.');
+        return;
+      }
+    }
+
+    if (activeSubMenu === 'Administrasi Pleno' || doc.code?.startsWith('PLN')) {
+      const activeSurat = antreanSurat.find(s => s.idUjk === targetUjk?.surat?.idUjk);
+      const activeSkema = activeSurat?.skemaList.find(s => s.idSkema === targetUjk?.skema?.idSkema);
+      const isComplete = activeSkema?.peserta && activeSkema?.peserta.length > 0 && activeSkema?.peserta.every(p => p.asesor_id && (p.keputusan_uji === 'kompeten' || p.keputusan_uji === 'belum kompeten'));
+      if (!isComplete) {
+        showAlert('warning', 'Data Belum Lengkap', 'Silakan tentukan Asesor Penguji dan Keputusan Uji untuk semua asesi terlebih dahulu di Pembagian Asesi.');
+        return;
+      }
+    }
+
     setFormType(activeSubMenu);
     setActiveDocKey(doc.code);
     setSelectedSubDoc(doc);
@@ -454,8 +497,8 @@ const SuratMenyurat = () => {
     const ttdSuffix = isTtd ? '-ttd' : '';
     const map = {
       'balasan': `/staf-lsp/cetak-surat-balasan${ttdSuffix}/${pengajuanId}`,
-      'SPT.01': `/staf-lsp/cetak-surat-spt-asesor1${ttdSuffix}/${skemaId}`,
-      'SPT.02': `/staf-lsp/cetak-surat-spt-asesor2${ttdSuffix}/${skemaId}`,
+      'SPT.01': `/staf-lsp/cetak-surat-spt-asesor${ttdSuffix}/${skemaId}`,
+      'SPT.02': `/staf-lsp/cetak-surat-spt-asesor${ttdSuffix}/${skemaId}`,
       'SPT.03': `/staf-lsp/cetak-surat-spt-penyilia${ttdSuffix}/${skemaId}`,
       'SPM.01': `/staf-lsp/cetak-surat-permohonan-asesor1${ttdSuffix}/${skemaId}`,
       'SPM.02': `/staf-lsp/cetak-surat-permohonan-asesor2${ttdSuffix}/${skemaId}`,
@@ -554,6 +597,26 @@ const SuratMenyurat = () => {
   };
 
   const markDocAsDone = (idUjk, idSkema, docTypeKey, docCode) => {
+    // Persist to localStorage
+    const localKey = `downloaded_docs_${idSkema}`;
+    const localData = localStorage.getItem(localKey);
+    const parsed = localData ? JSON.parse(localData) : {
+      permohonan: [],
+      tugas: [],
+      administrasi: [],
+      administrasiPleno: []
+    };
+
+    if (['administrasi', 'administrasiPleno', 'tugas', 'permohonan'].includes(docTypeKey)) {
+      if (!parsed[docTypeKey]) parsed[docTypeKey] = [];
+      if (!parsed[docTypeKey].includes(docCode)) {
+        parsed[docTypeKey].push(docCode);
+      }
+    } else {
+      parsed[docTypeKey] = true;
+    }
+    localStorage.setItem(localKey, JSON.stringify(parsed));
+
     setAntreanSurat(prev => prev.map(surat => {
       if (surat.idUjk === idUjk) {
         return {
@@ -716,12 +779,21 @@ const SuratMenyurat = () => {
 
                 return filteredList.map(doc => {
                   const isPrinted = checkIsPrintedSafe(activeSkema, activeSubMenuKey, doc.code);
-                  const isUnlocked = activeSkema?.isPlotted;
+                  const hasAllAsesor = activeSkema?.peserta && activeSkema?.peserta.length > 0 && activeSkema?.peserta.every(p => p.asesor_id);
+                  const hasAllAsesorAndKeputusan = activeSkema?.peserta && activeSkema?.peserta.length > 0 && activeSkema?.peserta.every(p => p.asesor_id && (p.keputusan_uji === 'kompeten' || p.keputusan_uji === 'belum kompeten'));
+
+                  let isUnlocked = activeSkema?.isPlotted;
+                  if (doc.code === 'DOC.01') {
+                    isUnlocked = activeSkema?.isPlotted && hasAllAsesor;
+                  } else if (activeSubMenu === 'Administrasi Pleno' || doc.code?.startsWith('PLN')) {
+                    isUnlocked = activeSkema?.isPlotted && hasAllAsesorAndKeputusan;
+                  }
+
                   const style = getDocButtonStyle(isUnlocked, isPrinted);
                   const icon = getDocIconInfo(isUnlocked, isPrinted);
                   
                   return (
-                    <button key={doc.code} type="button" disabled={!isUnlocked} onClick={() => handleSubMenuClick(doc)} style={{ background: '#fff', border: style.border, borderRadius: '12px', padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', cursor: style.cursor, transition: 'all 0.2s ease', boxShadow: isPrinted ? '0 4px 6px rgba(16, 185, 129, 0.1)' : '0 2px 4px rgba(0,0,0,0.02)', outline: 'none', width: '100%', opacity: style.opacity }}>
+                    <button key={doc.code} type="button" disabled={!activeSkema?.isPlotted} onClick={() => handleSubMenuClick(doc)} style={{ background: '#fff', border: style.border, borderRadius: '12px', padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', cursor: style.cursor, transition: 'all 0.2s ease', boxShadow: isPrinted ? '0 4px 6px rgba(16, 185, 129, 0.1)' : '0 2px 4px rgba(0,0,0,0.02)', outline: 'none', width: '100%', opacity: style.opacity }}>
                       <div style={{ background: icon.bg, color: icon.color, width: '55px', height: '55px', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '1.5rem', transition: 'all 0.2s ease' }}><i className={`fas ${icon.class}`}></i></div>
                       <div style={{ textAlign: 'center' }}><div style={{ fontSize: '1.05rem', color: '#0f172a', fontWeight: '600' }}>{doc.name}</div></div>
                     </button>
@@ -970,11 +1042,12 @@ const SuratMenyurat = () => {
                           { id: 'administrasi', title: 'Kelompok Berita Acara & Absen', status: isAdministrasiDone, key: 'administrasi', type: 'Administrasi' },
                           { id: 'administrasiPleno', title: 'Administrasi Sidang Pleno', status: isPlenoDone, key: 'administrasiPleno', type: 'Administrasi Pleno' }
                         ].map(doc => {
-                          const isLocked = !isFullyPlotted;
+                          const hasAllAsesorAndKeputusan = skema.peserta && skema.peserta.length > 0 && skema.peserta.every(p => p.asesor_id && (p.keputusan_uji === 'kompeten' || p.keputusan_uji === 'belum kompeten'));
+                          const isLocked = !isFullyPlotted || (doc.id === 'administrasiPleno' && !hasAllAsesorAndKeputusan);
                           const style = getDocButtonStyle(!isLocked, doc.status);
                           const icon = getDocIconInfo(!isLocked, doc.status);
                           return (
-                            <button key={doc.id} disabled={isLocked} onClick={() => handleDocClick(doc.type, activeSurat, skema, doc.key)} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 15px', borderRadius: '8px', transition: '0.2s', ...style, outline: 'none' }}>
+                            <button key={doc.id} disabled={!isFullyPlotted} onClick={() => handleDocClick(doc.type, activeSurat, skema, doc.key)} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 15px', borderRadius: '8px', transition: '0.2s', ...style, outline: 'none' }}>
                               <div style={{ width: '32px', height: '32px', borderRadius: '6px', background: icon.bg, color: icon.color, display: 'flex', justifyContent: 'center', alignItems: 'center' }}><i className={`fas ${icon.class}`}></i></div>
                               <span style={{ fontSize: '0.85rem', fontWeight: '800' }}>{doc.title}</span>
                             </button>
@@ -1150,11 +1223,37 @@ const SuratMenyurat = () => {
                       <div style={{ display: 'flex', gap: '10px' }}>
                         <div style={{ flex: 1 }}>
                           <label style={{fontWeight:'bold', fontSize:'0.75rem', color:'#475569', marginBottom: '6px', display: 'block'}}>Nama Komite 2 <span style={{color:'red'}}>*</span></label>
-                          <input type="text" style={{width:'100%', border:'1px solid #cbd5e1', borderRadius:'6px', padding: '10px'}} name="komite2" value={formData.komite2 || ''} onChange={handleInputChange} required placeholder="Sesuai Data Penyelia" />
+                          <select 
+                            style={{width:'100%', border:'1px solid #cbd5e1', borderRadius:'6px', padding: '10px', backgroundColor: 'white'}} 
+                            name="komite2" 
+                            value={formData.komite2 || ''} 
+                            onChange={handleInputChange} 
+                            required
+                          >
+                            <option value="">-- Pilih Penyelia --</option>
+                            {daftarPenyelia.map((p) => (
+                              <option key={p.id} value={p.namaPenyilia}>
+                                {p.namaPenyilia}
+                              </option>
+                            ))}
+                          </select>
                         </div>
                         <div style={{ flex: 1 }}>
                           <label style={{fontWeight:'bold', fontSize:'0.75rem', color:'#475569', marginBottom: '6px', display: 'block'}}>Nama Komite 3 <span style={{color:'red'}}>*</span></label>
-                          <input type="text" style={{width:'100%', border:'1px solid #cbd5e1', borderRadius:'6px', padding: '10px'}} name="komite3" value={formData.komite3 || ''} onChange={handleInputChange} required placeholder="Sesuai Data Penyelia" />
+                          <select 
+                            style={{width:'100%', border:'1px solid #cbd5e1', borderRadius:'6px', padding: '10px', backgroundColor: 'white'}} 
+                            name="komite3" 
+                            value={formData.komite3 || ''} 
+                            onChange={handleInputChange} 
+                            required
+                          >
+                            <option value="">-- Pilih Penyelia --</option>
+                            {daftarPenyelia.map((p) => (
+                              <option key={p.id} value={p.namaPenyilia}>
+                                {p.namaPenyilia}
+                              </option>
+                            ))}
+                          </select>
                         </div>
                       </div>
                     )}

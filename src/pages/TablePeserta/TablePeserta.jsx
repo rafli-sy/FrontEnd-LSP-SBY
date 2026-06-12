@@ -9,6 +9,7 @@ const TablePeserta = ({ dataPeserta, detail_id, skemaName, asesorList, isAdmin, 
   const [peserta, setPeserta] = useState([]);
   const [alertConfig, setAlertConfig] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDecisionChanged, setIsDecisionChanged] = useState(false);
 
   // Konfigurasi API
   const token = sessionStorage.getItem('auth_token') || localStorage.getItem('access_token');
@@ -49,6 +50,10 @@ const TablePeserta = ({ dataPeserta, detail_id, skemaName, asesorList, isAdmin, 
     if (field === 'asesor_id' && !isAdmin && !isStaffAsesorActive) return;
     if (field === 'keputusan' && !isAdmin) return;
     
+    if (field === 'keputusan') {
+      setIsDecisionChanged(true);
+    }
+    
     const newData = [...peserta];
     newData[index][field] = value;
     setPeserta(newData);
@@ -71,14 +76,17 @@ const TablePeserta = ({ dataPeserta, detail_id, skemaName, asesorList, isAdmin, 
           };
           await axios.post(`${baseUrl}/admin-lsp/simpan-plotting-peserta/${detail_id}`, payloadPlotting, config);
 
-          // 2. Simpan Keputusan Uji
-          const payloadKeputusan = {
-            hasil_uji: peserta.map(p => ({
-              peserta_id: p.id,
-              keputusan_uji: p.keputusan === 'K' ? 'kompeten' : (p.keputusan === 'BK' ? 'belum kompeten' : 'belum kompeten')
-            }))
-          };
-          await axios.put(`${baseUrl}/admin-lsp/keputusan-uji/${detail_id}`, payloadKeputusan, config);
+          // 2. Simpan Keputusan Uji (hanya jika keputusan diubah atau sudah ada keputusan sebelumnya)
+          const shouldSaveKeputusan = isDecisionChanged || (dataPeserta && dataPeserta.some(p => p.keputusan_uji !== null && p.keputusan_uji !== ''));
+          if (shouldSaveKeputusan) {
+            const payloadKeputusan = {
+              hasil_uji: peserta.map(p => ({
+                peserta_id: p.id,
+                keputusan_uji: p.keputusan === 'K' ? 'kompeten' : 'belum kompeten'
+              }))
+            };
+            await axios.put(`${baseUrl}/admin-lsp/keputusan-uji/${detail_id}`, payloadKeputusan, config);
+          }
 
           setAlertConfig({
             type: 'success',
@@ -86,6 +94,7 @@ const TablePeserta = ({ dataPeserta, detail_id, skemaName, asesorList, isAdmin, 
             text: 'Data berhasil diperbarui di server.',
             onConfirm: () => {
               setAlertConfig(null);
+              setIsDecisionChanged(false);
               if (onSave) onSave();
             }
           });
@@ -154,9 +163,8 @@ const TablePeserta = ({ dataPeserta, detail_id, skemaName, asesorList, isAdmin, 
                 {showAsesorKeputusan && (
                   <td>
                     <select value={item.keputusan || ''} onChange={(e) => handleUpdatePeserta(index, 'keputusan', e.target.value)} className="form-select">
-                      <option value="">Status...</option>
-                      <option value="K">Kompeten</option>
                       <option value="BK">Belum Kompeten</option>
+                      <option value="K">Kompeten</option>
                     </select>
                   </td>
                 )}

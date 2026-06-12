@@ -18,6 +18,24 @@ const Sidebar = (props) => {
   // State baru untuk menampung URL foto hasil fetch biner di Sidebar
   const [sidebarPhotoUrl, setSidebarPhotoUrl] = useState('');
 
+  const [isMasterDataOpen, setIsMasterDataOpen] = useState(() => {
+    return currentPath.startsWith('/admin-lsp/skema') ||
+           currentPath.startsWith('/admin-lsp/asesor') ||
+           currentPath.startsWith('/admin-lsp/penyelia') ||
+           currentPath.startsWith('/admin-lsp/tuk');
+  });
+
+  useEffect(() => {
+    if (
+      currentPath.startsWith('/admin-lsp/skema') ||
+      currentPath.startsWith('/admin-lsp/asesor') ||
+      currentPath.startsWith('/admin-lsp/penyelia') ||
+      currentPath.startsWith('/admin-lsp/tuk')
+    ) {
+      setIsMasterDataOpen(true);
+    }
+  }, [currentPath]);
+
   const actualIsOpen = isMobileOpen !== undefined ? isMobileOpen : isOpen;
   const isDesktopClosed = isDesktopOpen !== undefined ? !isDesktopOpen : !isOpen;
 
@@ -189,11 +207,35 @@ const Sidebar = (props) => {
                   <Link to="/admin-lsp/sertifikat" className={getActiveClass('/admin-lsp/sertifikat')} onClick={handleMenuClick}><i className="fas fa-certificate"></i> Sertifikat</Link>
                   <p className="menu-label">Manajemen UJK</p>
                   <Link to="/admin-lsp/penugasan" className={getActiveClass('/admin-lsp/penugasan')} onClick={handleMenuClick}><i className="fas fa-tasks"></i> Penugasan & Dokumen</Link>
-                  <p className="menu-label">Master Data</p>
-                  <Link to="/admin-lsp/skema" className={getActiveClass('/admin-lsp/skema')} onClick={handleMenuClick}><i className="fas fa-file-code"></i> Data Skema</Link>
-                  <Link to="/admin-lsp/asesor" className={getActiveClass('/admin-lsp/asesor')} onClick={handleMenuClick}><i className="fas fa-user-tie"></i> Data Asesor</Link>
-                  <Link to="/admin-lsp/penyelia" className={getActiveClass('/admin-lsp/penyelia')} onClick={handleMenuClick}><i className="fas fa-user-shield"></i> Data Penyelia</Link>
-                  <Link to="/admin-lsp/tuk" className={getActiveClass('/admin-lsp/tuk')} onClick={handleMenuClick}><i className="fas fa-map-marker-alt"></i> Data TUK</Link>
+                  <div 
+                    onClick={() => setIsMasterDataOpen(!isMasterDataOpen)} 
+                    style={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center', 
+                      cursor: 'pointer', 
+                      paddingRight: '30px'
+                    }}
+                  >
+                    <p className="menu-label" style={{ margin: 0 }}>Master Data</p>
+                    <i 
+                      className={`fas fa-chevron-${isMasterDataOpen ? 'down' : 'right'}`} 
+                      style={{ 
+                        fontSize: '0.8rem', 
+                        color: '#94a3b8', 
+                        marginTop: '10px',
+                        transition: 'transform 0.2s ease'
+                      }}
+                    ></i>
+                  </div>
+                  {isMasterDataOpen && (
+                    <div className="submenu-container">
+                      <Link to="/admin-lsp/skema" className={`${getActiveClass('/admin-lsp/skema')} submenu-link`} onClick={handleMenuClick}><i className="fas fa-file-code"></i> Data Skema</Link>
+                      <Link to="/admin-lsp/asesor" className={`${getActiveClass('/admin-lsp/asesor')} submenu-link`} onClick={handleMenuClick}><i className="fas fa-user-tie"></i> Data Asesor</Link>
+                      <Link to="/admin-lsp/penyelia" className={`${getActiveClass('/admin-lsp/penyelia')} submenu-link`} onClick={handleMenuClick}><i className="fas fa-user-shield"></i> Data Penyelia</Link>
+                      <Link to="/admin-lsp/tuk" className={`${getActiveClass('/admin-lsp/tuk')} submenu-link`} onClick={handleMenuClick}><i className="fas fa-map-marker-alt"></i> Data TUK</Link>
+                    </div>
+                  )}
                 </>
               )}
               {primaryRole === 'staff-lsp' && (
