@@ -266,6 +266,8 @@ const ManajemenAkunAsesor = () => {
   // --- AMBIL LINK FOTO AKTIF (SINKRON DENGAN SIDEBAR) ---
   const [fotoProfilUrl, setFotoProfilUrl] = useState('');
   const fotoProfilAktif = asesorData?.user?.foto || asesorData?.foto || userData?.foto;
+  const fallbackAvatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(userData?.namaLengkap || asesorData?.user?.namaLengkap || userData?.username || 'User')}&background=random&color=fff&size=150`;
+
   const fetchPorfilAktif = async () => {
     const token = sessionStorage.getItem('auth_token');
     
@@ -336,11 +338,15 @@ const ManajemenAkunAsesor = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
             <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
                <div style={{ width: '60px', height: '60px', borderRadius: '50%', backgroundColor: '#eff6ff', color: '#3b82f6', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '1.5rem', fontWeight: 'bold', overflow: 'hidden', border: '2px solid #e2e8f0' }}>
-                  {fotoProfilUrl ? (
-                    <img src={fotoProfilUrl} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    userData?.namaLengkap?.charAt(0) || asesorData?.user?.namaLengkap?.charAt(0) || 'A'
-                  )}
+                  <img 
+                    src={fotoProfilUrl || fallbackAvatarUrl} 
+                    alt="Profile" 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                    onError={(e) => { 
+                      e.target.onerror = null; 
+                      e.target.src = fallbackAvatarUrl; 
+                    }} 
+                  />
                </div>
                <div>
                   <h4 style={{ margin: '0 0 4px 0', fontSize: '1.1rem', color: '#1e293b' }}>{userData?.namaLengkap || asesorData?.user?.namaLengkap || userData?.username}</h4>

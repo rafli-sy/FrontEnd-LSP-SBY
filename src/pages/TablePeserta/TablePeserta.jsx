@@ -13,9 +13,10 @@ const TablePeserta = ({ dataPeserta, detail_id, skemaName, asesorList, isAdmin, 
 
   // Konfigurasi API
   const token = sessionStorage.getItem('auth_token') || localStorage.getItem('access_token');
-  const baseUrl = `${import.meta.env.VITE_API_BASE_URL}/api`;
+  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'https://lspblksurabaya.id').trim();
+  const baseUrl = `${apiBaseUrl}/api`;
   const config = useMemo(() => ({
-    headers: { 'ngrok-skip-browser-warning': 'true', 'Authorization': `Bearer ${token}` }
+    headers: { 'ngrok-skip-browser-warning': 'true', 'Accept': 'application/json', 'Authorization': `Bearer ${token}` }
   }), [token]);
 
   const showAsesorKeputusan = isAdmin || isStaffAsesorActive;
@@ -60,6 +61,18 @@ const TablePeserta = ({ dataPeserta, detail_id, skemaName, asesorList, isAdmin, 
   };
 
   const handleSimpanData = async () => {
+    // Validasi frontend: Pastikan semua peserta sudah diplot asesornya
+    const hasEmptyAsesor = peserta.some(p => !p.asesor_id || p.asesor_id === '');
+    if (hasEmptyAsesor) {
+      setAlertConfig({
+        type: 'warning',
+        title: 'Data Belum Lengkap',
+        text: 'Harap pilih Asesor Penguji untuk semua peserta terlebih dahulu sebelum menyimpan.',
+        onConfirm: () => setAlertConfig(null)
+      });
+      return;
+    }
+
     setAlertConfig({
       type: 'save',
       title: 'Simpan Data Asesi?',

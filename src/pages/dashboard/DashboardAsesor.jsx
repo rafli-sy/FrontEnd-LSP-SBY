@@ -81,7 +81,7 @@ const DashboardAsesor = () => {
       const idTarget = item.pengajuan_ujk_detail_id || item.detail_id || item.id_skema || item.id_penugasan; 
 
       // 1. Ambil data informasi dokumen dari API
-      const res = await fetch(`${apiUrl}/api/asesor/dokumen/${idTarget}`, { 
+      const res = await fetch(`${apiUrl}/api/asesor/dokumen/${idTarget}?t=${new Date().getTime()}`, { 
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -104,8 +104,8 @@ const DashboardAsesor = () => {
 
       if (dokDitemukan) {
         
-        // 🔥 JURUS PAMUNGKAS: Kita tembak API Proxy yang dibuat Backend, BUKAN url_download/storage
-        const proxyApiUrl = `${apiUrl}/api/asesor/download-file/${dokDitemukan.id}`;
+        // Gunakan url_download bawaan API untuk menghindari cache dari backend proxy
+        const proxyApiUrl = `${dokDitemukan.url_download}?t=${new Date().getTime()}`;
 
         const pdfResponse = await fetch(proxyApiUrl, {
           method: 'GET',

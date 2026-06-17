@@ -23,7 +23,7 @@ const CekSertifikat = () => {
     try {
       // FIX 1: Ganti ?query= menjadi ?keyword= dan tambah header untuk bypass warning ngrok
       const response = await fetch(
-        `https://untracked-exponent-oboe.ngrok-free.dev/api/sertifikat/cek-sertifikat?keyword=${encodeURIComponent(searchQuery)}`,
+        `https://lspblksurabaya.id/api/sertifikat/cek-sertifikat?keyword=${encodeURIComponent(searchQuery)}`,
         {
           headers: {
             "ngrok-skip-browser-warning": "69420"
