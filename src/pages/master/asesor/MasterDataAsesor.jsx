@@ -1,5 +1,31 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import axios from 'axios';
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return '-';
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+};
+
+const getSertifikatStatus = (tanggal) => {
+  if (!tanggal) return { text: 'Belum Ada', color: '#64748b', bg: '#f1f5f9', icon: 'fa-minus-circle' };
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const expDate = new Date(tanggal);
+  expDate.setHours(0, 0, 0, 0);
+  
+  const diffTime = expDate - today;
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  if (diffDays < 0) {
+    return { text: 'Kadaluarsa', color: '#ef4444', bg: '#fee2e2', icon: 'fa-times-circle' };
+  } else if (diffDays <= 30) {
+    return { text: 'Akan Habis', color: '#f59e0b', bg: '#fef3c7', icon: 'fa-exclamation-triangle' };
+  } else {
+    return { text: 'Aktif', color: '#10b981', bg: '#d1fae5', icon: 'fa-check-circle' };
+  }
+};
 import Button from '../../../components/ui/Button';
 import AlertPopup from '../../../components/ui/AlertPopup';
 import Pagination from '../../../components/ui/Pagination';
@@ -34,7 +60,8 @@ const MasterDataAsesor = () => {
         bidang: item.skema ? [...new Set(item.skema.map(s => s.bidang?.namaBidang).filter(Boolean))] : [],
         profesi: item.profesi || '-',
         institusi: item.user?.asalInstansi || '-',
-        status: item.user?.status || 'Non-aktif'
+        status: item.user?.status || 'Non-aktif',
+        masaBerlaku: item.masa_berlaku_sertifikat || null
       }));
       setAsesorList(mapped);
     } catch (error) {
@@ -129,11 +156,12 @@ const MasterDataAsesor = () => {
                 <th>Kontak & Alamat</th>
                 <th style={{ textAlign: 'center' }}>No Registrasi (MET)</th>
                 <th>Bidang & Skema Uji</th>
+                <th style={{ textAlign: 'center', width: '120px' }}>Masa Berlaku</th>
                 <th style={{ textAlign: 'center', width: '130px' }}>Status</th>
               </tr>
             </thead>
             <tbody>
-              {isLoading ? <tr><td colSpan="6" style={{textAlign: 'center', padding: '30px', color:'#94a3b8'}}><i className="fas fa-spinner fa-spin fa-2x"></i><br/>Memuat Data...</td></tr> : paginatedAsesor.length > 0 ? paginatedAsesor.map((asesor, index) => (
+              {isLoading ? <tr><td colSpan="7" style={{textAlign: 'center', padding: '30px', color:'#94a3b8'}}><i className="fas fa-spinner fa-spin fa-2x"></i><br/>Memuat Data...</td></tr> : paginatedAsesor.length > 0 ? paginatedAsesor.map((asesor, index) => (
                 <tr key={asesor.id}>
                   <td style={{ textAlign: 'center', color: '#64748b' }}>{(currentPage - 1) * itemsPerPage + index + 1}</td>
                   <td>
@@ -178,6 +206,34 @@ const MasterDataAsesor = () => {
                     </div>
                   </td>
                   <td style={{ textAlign: 'center' }}>
+                    {(() => {
+                      const statusSertifikat = getSertifikatStatus(asesor.masaBerlaku);
+                      return (
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontSize: '0.85rem', fontWeight: '600', color: '#334155', whiteSpace: 'nowrap' }}>
+                            {formatDate(asesor.masaBerlaku)}
+                          </span>
+                          <span style={{ 
+                            backgroundColor: statusSertifikat.bg, 
+                            color: statusSertifikat.color, 
+                            fontSize: '0.7rem', 
+                            fontWeight: '700', 
+                            padding: '4px 8px', 
+                            borderRadius: '6px',
+                            border: `1px solid ${statusSertifikat.color}40`,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            whiteSpace: 'nowrap'
+                          }}>
+                            {statusSertifikat.icon && <i className={`fas ${statusSertifikat.icon}`}></i>}
+                            {statusSertifikat.text}
+                          </span>
+                        </div>
+                      );
+                    })()}
+                  </td>
+                  <td style={{ textAlign: 'center' }}>
                     <button 
                       onClick={() => handleToggleStatus(asesor)}
                       className={`badge ${asesor.status === 'Aktif' ? 'success' : 'danger'}`}
@@ -187,7 +243,7 @@ const MasterDataAsesor = () => {
                     </button>
                   </td>
                 </tr>
-              )) : <tr><td colSpan="6" style={{textAlign:'center', padding:'30px', color:'#94a3b8'}}>Data tidak ditemukan.</td></tr>}
+              )) : <tr><td colSpan="7" style={{textAlign:'center', padding:'30px', color:'#94a3b8'}}>Data tidak ditemukan.</td></tr>}
             </tbody>
           </table>
         </div>
