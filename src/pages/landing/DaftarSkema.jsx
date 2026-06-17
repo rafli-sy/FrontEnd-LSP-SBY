@@ -50,8 +50,8 @@ const DaftarSkema = () => {
         };
 
         const [resSkema, resBidang] = await Promise.all([
-          fetch('https://untracked-exponent-oboe.ngrok-free.dev/api/master/skema', { method: 'GET', headers }),
-          fetch('https://untracked-exponent-oboe.ngrok-free.dev/api/master/bidang', { method: 'GET', headers })
+          fetch('https://lspblksurabaya.id/api/master/skema', { method: 'GET', headers }),
+          fetch('https://lspblksurabaya.id/api/master/bidang', { method: 'GET', headers })
         ]);
         
         if (!resSkema.ok || !resBidang.ok) {

@@ -16,7 +16,7 @@ const ProfilPage = () => {
   
   const [profilePhotoUrl, setProfilePhotoUrl] = useState('');
 
-  const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://untracked-exponent-oboe.ngrok-free.dev';
+  const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://lspblksurabaya.id';
   
   // Ambil token untuk mendeteksi perubahan sesi (ganti akun)
   const authToken = sessionStorage.getItem('auth_token');
@@ -177,6 +177,8 @@ const ProfilPage = () => {
             email: tempData.email,
             tanggalLahir: tempData.tanggalLahir,
             jenisKelamin: tempData.jenisKelamin === 'Laki-laki' ? 'L' : (tempData.jenisKelamin === 'Perempuan' ? 'P' : tempData.jenisKelamin),
+            asalDaerah: tempData.asalDaerah,
+            asal_daerah: tempData.asalDaerah,
           };
 
           const resProfile = await fetch(`${apiUrl}/api/profile/update`, { 
@@ -354,6 +356,11 @@ const ProfilPage = () => {
                   <option value="Laki-laki">Laki-laki</option>
                   <option value="Perempuan">Perempuan</option>
                 </select>
+              </div>
+
+              <div>
+                <label style={labelStyle}>Asal Daerah</label>
+                <input type="text" name="asalDaerah" value={tempData.asalDaerah || tempData.asal_daerah || ''} onChange={handleChange} disabled={!isEditing || isLoading} style={{ ...inputStyle, backgroundColor: !isEditing ? '#f8fafc' : '#fff', cursor: !isEditing ? 'not-allowed' : 'text' }} placeholder="Contoh: Surabaya" required />
               </div>
             </div>
 

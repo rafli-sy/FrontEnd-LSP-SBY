@@ -92,7 +92,7 @@ const SuratMenyurat = () => {
   const [submitMode, setSubmitMode] = useState('normal'); 
 
   // --- PERBAIKAN: SESUAIKAN AWALAN STATE KOMITE ---
-  const [formData, setFormData] = useState({ noSurat: '', tanggalSurat: '', noDokumen: '', edisiRevisi: '', tanggalBerlaku: '', halaman: '', tanggalVerif: '', noSptAsesor: '', noSptPenyelia: '', komite2: '', komite3: '' });
+  const [formData, setFormData] = useState({ noSurat: '', tanggalSurat: '', noDokumen: '', edisiRevisi: '', tanggalBerlaku: '', halaman: '', tanggalVerif: '', noSptAsesor: '', noSptPenyelia: '', komite2: '', komite3: '', penanggungJawab: '', pengadministrasi: '', noSuratLampiran: '' });
   const [previewDokumen, setPreviewDokumen] = useState(null);
 
   const [filterStatus, setFilterStatus] = useState('Semua');
@@ -119,7 +119,7 @@ const SuratMenyurat = () => {
   const listAdministrasi = [ { code: 'DOC.01', name: 'Laporan Penyelia', icon: 'fa-user-tie' }, { code: 'DOC.02', name: 'Berita Acara Pelaksanaan', icon: 'fa-file-contract' }, { code: 'DOC.03', name: 'Penerapan TUK', icon: 'fa-building' }, { code: 'DOC.04', name: 'SK Penyelenggara', icon: 'fa-certificate' }, { code: 'DOC.05', name: 'Lampiran SK', icon: 'fa-paperclip' }, { code: 'DOC.06', name: 'Daftar Hadir Pra-Asesmen', icon: 'fa-clipboard-list' }, { code: 'DOC.07', name: 'Daftar Hadir Asesmen H1', icon: 'fa-clipboard-check' }, { code: 'DOC.08', name: 'Daftar Hadir Asesmen H2', icon: 'fa-clipboard-check' }, { code: 'DOC.09', name: 'Tanda Terima Dokumen', icon: 'fa-handshake' }, { code: 'DOC.10', name: 'Pernyataan Asesor 1', icon: 'fa-user-lock' }, { code: 'DOC.11', name: 'Pernyataan Asesor 2', icon: 'fa-user-lock' }, { code: 'DOC.12', name: 'Pengembalian Dokumen', icon: 'fa-undo' }, { code: 'DOC.13', name: 'Rencana Verifikasi TUK', icon: 'fa-search-location' } ];
   const listAdministrasiPleno = [ { code: 'PLN.01', name: 'SK Pleno', icon: 'fa-certificate' }, { code: 'PLN.02', name: 'BA Pleno', icon: 'fa-file-signature' }, { code: 'PLN.03', name: 'Hasil Sidang Pleno', icon: 'fa-users' }, { code: 'PLN.04', name: 'SK Penetapan Hasil', icon: 'fa-file-contract' }, { code: 'PLN.05', name: 'Hasil Final', icon: 'fa-check-double' } ];
 
-  const docsWithForm = ['SPT.01', 'SPT.02', 'SPT.03', 'SPM.01', 'SPM.02', 'SPM.03', 'balasan', 'DOC.02', 'DOC.06', 'DOC.07', 'DOC.08', 'DOC.10', 'DOC.11', 'DOC.13', 'PLN.01', 'PLN.02', 'PLN.04'];
+  const docsWithForm = ['SPT.01', 'SPT.02', 'SPT.03', 'SPM.01', 'SPM.02', 'SPM.03', 'balasan', 'DOC.03', 'DOC.04', 'DOC.05', 'DOC.06', 'DOC.07', 'DOC.08', 'DOC.10', 'DOC.11', 'DOC.13', 'PLN.01', 'PLN.02', 'PLN.03', 'PLN.04', 'PLN.05'];
   const docsWithTtd = ['balasan', 'SPT.01', 'SPT.02', 'SPT.03', 'SPM.01', 'SPM.02'];
 
   const cekSuratBalasan = (pengajuanParent) => {
@@ -132,7 +132,7 @@ const SuratMenyurat = () => {
   };
   const getDokumenDetailUrl = (skemaDetail, jenis) => {
     const doc = skemaDetail?.dokumen_upload_lsp?.find(d => d.jenis_dokumen === jenis);
-    return doc ? `${storageUrl}/${doc.path_file}` : '#';
+    return doc ? `${storageUrl}/${doc.path_file}?t=${new Date().getTime()}` : '#';
   };
 
   const showAlert = (type, title, text, action = null) => {
@@ -482,7 +482,10 @@ const SuratMenyurat = () => {
       noSptAsesor: '',
       noSptPenyelia: '',
       komite2: '',
-      komite3: ''
+      komite3: '',
+      penanggungJawab: '',
+      pengadministrasi: '',
+      noSuratLampiran: ''
     };
     
     setFormData(initialForm);
@@ -540,7 +543,7 @@ const SuratMenyurat = () => {
       const endpoint = mapPdfEndpoint(docKey, skemaId, pengajuanId, isTtd);
       if(!endpoint) throw new Error("Endpoint surat staff scope tidak terdaftar");
 
-      // --- PERBAIKAN: API URL PARAMS KOMITE_2 & KOMITE_3 ---
+      // --- PERBAIKAN: API URL PARAMS KOMITE_2 & KOMITE_3 & LAMPIRAN ---
       const queryParams = new URLSearchParams({
         nomor_surat: formToSave.noSurat || '',
         tanggal_surat: formToSave.tanggalSurat || '',
@@ -548,7 +551,10 @@ const SuratMenyurat = () => {
         nomor_spt_penyilia: formToSave.noSptPenyelia || '',
         tanggal_rencana_verif_tuk: formToSave.tanggalVerif || '',
         komite_2_nama: formToSave.komite2 || '', 
-        komite_3_nama: formToSave.komite3 || ''  
+        komite_3_nama: formToSave.komite3 || '',
+        penanggung_jawab: formToSave.penanggungJawab || '',
+        pengadministrasi: formToSave.pengadministrasi || '',
+        nomor_surat_lampiran: formToSave.noSuratLampiran || ''
       }).toString();
 
       const res = await axios.get(`${baseUrl}${endpoint}?${queryParams}`, { ...config, responseType: 'blob' });
@@ -667,13 +673,15 @@ const SuratMenyurat = () => {
   const docCodeActive = selectedSubDoc?.code || activeDocKey;
   const isKelompokDH = ['DOC.06', 'DOC.07', 'DOC.08'].includes(docCodeActive);
   const isVerifTuk = docCodeActive === 'DOC.13';
-  const isOnlyTanggal = ['DOC.02', 'DOC.10', 'DOC.11'].includes(docCodeActive);
-  const isSuratForm = ['SPT.01', 'SPT.02', 'SPT.03', 'SPM.01', 'SPM.02', 'SPM.03', 'balasan', 'PLN.01', 'PLN.02', 'PLN.04'].includes(docCodeActive);
+  const docsWithNoSurat = ['balasan', 'SPT.01', 'SPT.02', 'SPT.03', 'SPM.01', 'SPM.02', 'SPM.03', 'DOC.03', 'DOC.04', 'DOC.05', 'DOC.13', 'PLN.01', 'PLN.02', 'PLN.03', 'PLN.04', 'PLN.05'];
+  const docsWithTanggal = [...docsWithNoSurat, 'DOC.10', 'DOC.11'];
 
-  const showNoSurat = isVerifTuk || isSuratForm;
-  const showTanggalSurat = isVerifTuk || isOnlyTanggal || isSuratForm;
+  const showNoSurat = docsWithNoSurat.includes(docCodeActive);
+  const showTanggalSurat = docsWithTanggal.includes(docCodeActive);
   const showSptFields = isKelompokDH;
   const showTglVerif = isVerifTuk;
+  const showLampiranSkFields = docCodeActive === 'DOC.05';
+  const showLampiranPleno = ['PLN.03', 'PLN.05'].includes(docCodeActive);
   const isLandscapeDoc = ['PLN.03', 'DOC.06', 'DOC.07', 'DOC.08'].includes(previewDokumen?.subDoc?.code || previewDokumen?.docKey);
 
   return (
@@ -1217,6 +1225,10 @@ const SuratMenyurat = () => {
                       <div><label style={{fontWeight:'bold', fontSize:'0.85rem', color:'#475569', marginBottom: '6px', display: 'block'}}>Tanggal Verifikasi TUK <span style={{color:'red'}}>*</span></label>
                       <input type="date" style={{width:'100%', border:'1px solid #cbd5e1', borderRadius:'6px', padding: '10px'}} name="tanggalVerif" value={formData.tanggalVerif || ''} onChange={handleInputChange} required /></div>
                     )}
+
+
+
+
                     
                     {/* --- POP-UP KOMITE UNTUK SK & BA PLENO --- */}
                     {['PLN.01', 'PLN.02'].includes(docCodeActive) && (

@@ -34,6 +34,7 @@ const LandingPage = () => {
   const [isStatsVisible, setIsStatsVisible] = useState(false);
   const statsRef = useRef(null);
   const [selectedSkema, setSelectedSkema] = useState(null);
+  const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://lspblksurabaya.id';
 
   // =========================================================
   // STATE DATA DINAMIS DARI API
@@ -48,19 +49,15 @@ const LandingPage = () => {
   // =========================================================
   // DATA GRAFIK (SUDAH DISESUAIKAN DENGAN ISI DATABASE SQL LU)
   // =========================================================
-  const [topSkema, setTopSkema] = useState([
-    { nama: "Batik Tulis", icon: "fa-tshirt", color: "#0056b3", asesi: 64, percentage: 100 },
-    { nama: "Barista", icon: "fa-concierge-bell", color: "#10b981", asesi: 16, percentage: 25 },
-    { nama: "Adm. Perkantoran", icon: "fa-briefcase", color: "#f59e0b", asesi: 16, percentage: 25 }
-  ]);
+  const [topSkema, setTopSkema] = useState([]);
 
   const [grafikBulan, setGrafikBulan] = useState([
     { bulan: 'Jan', total: 0 },
     { bulan: 'Feb', total: 0 },
     { bulan: 'Mar', total: 0 },
     { bulan: 'Apr', total: 0 },
-    { bulan: 'Mei', total: 64 },
-    { bulan: 'Jun', total: 48 },
+    { bulan: 'Mei', total: 0 },
+    { bulan: 'Jun', total: 0 },
     { bulan: 'Jul', total: 0 },
     { bulan: 'Agt', total: 0 },
     { bulan: 'Sep', total: 0 },
@@ -100,11 +97,12 @@ const LandingPage = () => {
           'Content-Type': 'application/json'
         };
 
-        const [resSkema, resBidang, resJejaring, resAsesor] = await Promise.all([
-          fetch('https://untracked-exponent-oboe.ngrok-free.dev/api/master/skema', { method: 'GET', headers }),
-          fetch('https://untracked-exponent-oboe.ngrok-free.dev/api/master/bidang', { method: 'GET', headers }),
-          fetch('https://untracked-exponent-oboe.ngrok-free.dev/api/master/jejaring', { method: 'GET', headers }),
-          fetch('https://untracked-exponent-oboe.ngrok-free.dev/api/master/asesor', { method: 'GET', headers })
+        const [resSkema, resBidang, resJejaring, resAsesor, resStats] = await Promise.all([
+          fetch(`${apiUrl}/api/master/skema`, { method: 'GET', headers }),
+          fetch(`${apiUrl}/api/master/bidang`, { method: 'GET', headers }),
+          fetch(`${apiUrl}/api/master/jejaring`, { method: 'GET', headers }),
+          fetch(`${apiUrl}/api/master/asesor`, { method: 'GET', headers }),
+          fetch(`${apiUrl}/api/master/statistik-landing`, { method: 'GET', headers })
         ]);
         
         if (!resSkema.ok || !resBidang.ok) throw new Error("Gagal menarik data utama dari API");
@@ -122,6 +120,40 @@ const LandingPage = () => {
         setTotalSkemaDinamis(Array.isArray(arrSkema) ? arrSkema.length : 0);
         setTotalTuk(Array.isArray(arrJejaring) ? arrJejaring.length : 0);
         setTotalAsesor(Array.isArray(arrAsesor) ? arrAsesor.length : 0);
+
+        // Map and update topSkema & grafikBulan dynamically
+        if (resStats.ok) {
+          const jsonStats = await resStats.json();
+          if (jsonStats.status === 'success' && jsonStats.data) {
+            const rawTop = jsonStats.data.top_skema || [];
+            const maxAsesi = rawTop.length > 0 ? Math.max(...rawTop.map(item => Number(item.asesi || 0))) : 0;
+            const colors = ["#0056b3", "#10b981", "#f59e0b"];
+            const mappedTop = rawTop.map((item, idx) => {
+              const nameClean = item.nama || "Skema Lainnya";
+              let icon = "fa-award";
+              const lowerName = nameClean.toLowerCase();
+              if (lowerName.includes('batik') || lowerName.includes('tshirt') || lowerName.includes('busana')) icon = "fa-tshirt";
+              else if (lowerName.includes('barista') || lowerName.includes('kopi') || lowerName.includes('boga')) icon = "fa-concierge-bell";
+              else if (lowerName.includes('admin') || lowerName.includes('perkantoran') || lowerName.includes('komputer') || lowerName.includes('office')) icon = "fa-briefcase";
+              else if (lowerName.includes('las') || lowerName.includes('welding')) icon = "fa-fire";
+              else if (lowerName.includes('it') || lowerName.includes('software') || lowerName.includes('programming')) icon = "fa-laptop-code";
+
+              return {
+                nama: nameClean,
+                icon: icon,
+                color: colors[idx] || "#64748b",
+                asesi: Number(item.asesi || 0),
+                percentage: maxAsesi > 0 ? Math.round((Number(item.asesi || 0) / maxAsesi) * 100) : 0
+              };
+            });
+            setTopSkema(mappedTop);
+
+            const rawMonthly = jsonStats.data.grafik_bulanan || [];
+            if (rawMonthly.length === 12) {
+              setGrafikBulan(rawMonthly);
+            }
+          }
+        }
 
         const kamusBidang = {};
         if (Array.isArray(arrBidang)) {
@@ -300,7 +332,7 @@ const LandingPage = () => {
               <h4>Skema Paling Banyak Diuji</h4>
               <p style={{ fontSize: '0.85rem', marginBottom: '20px', marginTop: '-5px' }}>Distribusi asesi terbanyak berdasarkan peminatan.</p>
               <div className="bars-list" style={{ gap: '22px' }}>
-                {topSkema.map((item, idx) => (
+                {topSkema.length > 0 ? topSkema.map((item, idx) => (
                   <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: '600' }}>
                       <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -312,7 +344,11 @@ const LandingPage = () => {
                       <div className="bars-fill" style={{ width: isStatsVisible ? `${item.percentage}%` : '0%', backgroundColor: item.color, transition: `width 1.5s ease-out 0.${4 + (idx * 2)}s` }}></div>
                     </div>
                   </div>
-                ))}
+                )) : (
+                  <div style={{ textAlign: 'center', padding: '15px 0', color: '#94a3b8', fontSize: '0.9rem', fontStyle: 'italic' }}>
+                    Belum ada data uji kompetensi
+                  </div>
+                )}
               </div>
             </div>
 
