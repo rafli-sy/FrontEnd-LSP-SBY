@@ -112,6 +112,27 @@ const ProfilPage = () => {
     }
   };
 
+  const fetchProfileData = async () => {
+    if (!authToken) return;
+    try {
+      const response = await fetch(`${apiUrl}/api/getProfile`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Accept': 'application/json',
+          'ngrok-skip-browser-warning': '69420'
+        }
+      });
+      if (response.ok) {
+        const resData = await response.json();
+        if (resData.status === 'success' && resData.data) {
+          updateUserData(resData.data);
+        }
+      }
+    } catch (error) {
+      console.error("Gagal memuat data profil:", error);
+    }
+  };
+
   useEffect(() => {
     if (!isEditing) {
       setTempData({ ...userData });
@@ -121,6 +142,7 @@ const ProfilPage = () => {
 
   // PERBAIKAN 3: Dependency diubah menjadi authToken agar foto di-fetch ulang saat user berganti
   useEffect(() => {
+    fetchProfileData();
     fetchProfilePhoto();
 
     return () => {
@@ -306,7 +328,8 @@ const ProfilPage = () => {
             <div style={{ marginTop: '10px' }}>
               <h3 style={{ margin: '0 0 10px 0', color: '#0f172a', fontSize: '1.25rem', fontWeight: '800' }}>{tempData.namaLengkap || 'Nama Belum Diisi'}</h3>
               <span style={{ backgroundColor: '#eff6ff', color: '#3b82f6', padding: '6px 14px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '600' }} title="Instansi ditentukan oleh Super Admin">
-                <i className="fas fa-building" style={{ marginRight: '5px' }}></i> {tempData.instansi || 'Belum ada instansi'}
+                <i className="fas fa-building" style={{ marginRight: '5px' }}></i> 
+                  {tempData.instansi?.namaInstitusi || 'Belum ada instansi'}
               </span>
             </div>
           </div>
@@ -322,7 +345,7 @@ const ProfilPage = () => {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
               <div>
                 <label style={labelStyle}>Nama Lengkap</label>
-                <input type="text" name="namaLengkap" value={tempData.namaLengkap || ''} onChange={handleChange} disabled={!isEditing || isLoading} style={{ ...inputStyle, backgroundColor: !isEditing ? '#f8fafc' : '#fff', cursor: !isEditing ? 'not-allowed' : 'text' }} required />
+                <input type="text" name="namaLengkap" value={tempData.namaLengkap || ''} onChange={handleChange} disabled={!isEditing || isLoading} style={{ ...inputStyle, backgroundColor: !isEditing ? '#f8fafc' : '#fff', cursor: !isEditing ? 'not-allowed' : 'text' }} />
               </div>
               
               <div>
@@ -330,28 +353,28 @@ const ProfilPage = () => {
                 <input 
                   type="text" name="username" value={tempData.username || ''} onChange={handleChange} disabled={!isEditing || isLoading || !isSuperAdmin} 
                   style={{ ...inputStyle, backgroundColor: (!isEditing || !isSuperAdmin) ? '#f8fafc' : '#fff', cursor: (!isEditing || !isSuperAdmin) ? 'not-allowed' : 'text' }} 
-                  title={!isSuperAdmin ? "Hanya Super Admin yang dapat mengubah Username" : ""} required 
+                  title={!isSuperAdmin ? "Hanya Super Admin yang dapat mengubah Username" : ""} 
                 />
               </div>
 
               <div>
                 <label style={labelStyle}>Email</label>
-                <input type="email" name="email" value={tempData.email || ''} onChange={handleChange} disabled={!isEditing || isLoading} style={{ ...inputStyle, backgroundColor: !isEditing ? '#f8fafc' : '#fff', cursor: !isEditing ? 'not-allowed' : 'text' }} required />
+                <input type="email" name="email" value={tempData.email || ''} onChange={handleChange} disabled={!isEditing || isLoading} style={{ ...inputStyle, backgroundColor: !isEditing ? '#f8fafc' : '#fff', cursor: !isEditing ? 'not-allowed' : 'text' }} />
               </div>
 
               <div>
                 <label style={labelStyle}>No. Telepon / WhatsApp</label>
-                <input type="tel" name="nomorTelpon" value={tempData.nomorTelpon || ''} onChange={handleChange} disabled={!isEditing || isLoading} style={{ ...inputStyle, backgroundColor: !isEditing ? '#f8fafc' : '#fff', cursor: !isEditing ? 'not-allowed' : 'text' }} required />
+                <input type="tel" name="nomorTelpon" value={tempData.nomorTelpon || ''} onChange={handleChange} disabled={!isEditing || isLoading} style={{ ...inputStyle, backgroundColor: !isEditing ? '#f8fafc' : '#fff', cursor: !isEditing ? 'not-allowed' : 'text' }} />
               </div>
 
               <div>
                 <label style={labelStyle}>Tanggal Lahir</label>
-                <input type="date" name="tanggalLahir" value={tempData.tanggalLahir || ''} onChange={handleChange} disabled={!isEditing || isLoading} style={{ ...inputStyle, backgroundColor: !isEditing ? '#f8fafc' : '#fff', cursor: !isEditing ? 'not-allowed' : 'text' }} required />
+                <input type="date" name="tanggalLahir" value={tempData.tanggalLahir || ''} onChange={handleChange} disabled={!isEditing || isLoading} style={{ ...inputStyle, backgroundColor: !isEditing ? '#f8fafc' : '#fff', cursor: !isEditing ? 'not-allowed' : 'text' }} />
               </div>
 
               <div>
                 <label style={labelStyle}>Jenis Kelamin</label>
-                <select name="jenisKelamin" value={tempData.jenisKelamin === 'L' ? 'Laki-laki' : (tempData.jenisKelamin === 'P' ? 'Perempuan' : (tempData.jenisKelamin || ''))} onChange={handleChange} disabled={!isEditing || isLoading} style={{ ...inputStyle, backgroundColor: !isEditing ? '#f8fafc' : '#fff', cursor: !isEditing ? 'not-allowed' : 'pointer' }} required>
+                <select name="jenisKelamin" value={tempData.jenisKelamin === 'L' ? 'Laki-laki' : (tempData.jenisKelamin === 'P' ? 'Perempuan' : (tempData.jenisKelamin || ''))} onChange={handleChange} disabled={!isEditing || isLoading} style={{ ...inputStyle, backgroundColor: !isEditing ? '#f8fafc' : '#fff', cursor: !isEditing ? 'not-allowed' : 'pointer' }}>
                   <option value="" disabled>Pilih Jenis Kelamin</option>
                   <option value="Laki-laki">Laki-laki</option>
                   <option value="Perempuan">Perempuan</option>
@@ -360,14 +383,14 @@ const ProfilPage = () => {
 
               <div>
                 <label style={labelStyle}>Asal Daerah</label>
-                <input type="text" name="asalDaerah" value={tempData.asalDaerah || tempData.asal_daerah || ''} onChange={handleChange} disabled={!isEditing || isLoading} style={{ ...inputStyle, backgroundColor: !isEditing ? '#f8fafc' : '#fff', cursor: !isEditing ? 'not-allowed' : 'text' }} placeholder="Contoh: Surabaya" required />
+                <input type="text" name="asalDaerah" value={tempData.asalDaerah || tempData.asal_daerah || ''} onChange={handleChange} disabled={!isEditing || isLoading} style={{ ...inputStyle, backgroundColor: !isEditing ? '#f8fafc' : '#fff', cursor: !isEditing ? 'not-allowed' : 'text' }} placeholder="Contoh: Surabaya" />
               </div>
             </div>
 
             <div style={{ marginTop: '20px' }}>
               <label style={labelStyle}>Alamat Lengkap Domisili</label>
               <textarea 
-                name="alamatDomisili" value={tempData.alamatDomisili || ''} onChange={handleChange} disabled={!isEditing || isLoading} required rows="3" 
+                name="alamatDomisili" value={tempData.alamatDomisili || ''} onChange={handleChange} disabled={!isEditing || isLoading} rows="3" 
                 style={{ ...inputStyle, backgroundColor: !isEditing ? '#f8fafc' : '#fff', resize: 'none', fontFamily: 'inherit', cursor: !isEditing ? 'not-allowed' : 'text' }}
               ></textarea>
             </div>

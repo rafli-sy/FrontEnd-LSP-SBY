@@ -149,6 +149,33 @@ const ManajemenAkunAsesor = () => {
     setFileSertifikat(e.target.files[0]);
   };
 
+  const handleLihatSertifikat = async (e, pathFile) => {
+    e.preventDefault();
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const response = await fetch(`${apiUrl}/api/asesor/sertifikat/${pathFile}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'ngrok-skip-browser-warning': '69420'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Sertifikat tidak ditemukan atau Anda tidak memiliki akses.');
+      }
+
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, '_blank');
+      
+      // Bersihkan memory setelah beberapa saat
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+    } catch (error) {
+      console.error(error);
+      showAlert('error', 'Gagal Membuka Sertifikat', error.message);
+    }
+  };
+
   // --- REVISI TATA KELOLA MENGGUNAKAN CHECKBOX/CENTANG ---
   const handleBidangToggle = (bidangObj) => {
     const targetId = String(bidangObj.id);
@@ -385,7 +412,7 @@ const ManajemenAkunAsesor = () => {
             <div>
               <small style={{ color: '#64748b', display: 'block', marginBottom: '4px' }}>Sertifikat Asesor</small>
               {asesorData?.sertifikat ? (
-                <a href={`${apiUrl}/storage/${asesorData.sertifikat}`} target="_blank" rel="noreferrer" style={{ display: 'inline-block', padding: '6px 12px', background: '#ecfdf5', color: '#047857', borderRadius: '6px', fontSize: '0.85rem', border: '1px solid #10b981', textDecoration: 'none' }}>
+                <a href="#" onClick={(e) => handleLihatSertifikat(e, asesorData.sertifikat)} style={{ display: 'inline-block', padding: '6px 12px', background: '#ecfdf5', color: '#047857', borderRadius: '6px', fontSize: '0.85rem', border: '1px solid #10b981', textDecoration: 'none', cursor: 'pointer' }}>
                   <i className="fas fa-file-pdf" style={{ marginRight: '6px' }}></i> Lihat Sertifikat
                 </a>
               ) : (

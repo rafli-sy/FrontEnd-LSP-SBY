@@ -338,6 +338,7 @@ const DashboardSuperAdmin = () => {
           
           <select value={filterRole} onChange={(e) => {setFilterRole(e.target.value); setCurrentPage(1);}} style={{ padding: '12px 15px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', background: '#fff', cursor: 'pointer', fontWeight: '600', fontSize: '0.95rem' }}>
             <option value="Semua Role">Semua Role</option>
+            <option value="Super Admin">Super Admin</option>
             <option value="Admin LSP">Admin LSP</option>
             <option value="Staff LSP">Staff LSP</option>
             <option value="Admin BLK">Admin BLK</option>
@@ -465,6 +466,7 @@ const DashboardSuperAdmin = () => {
                     Pilih Role <span style={{color: 'red'}}>*</span>
                   </label>
                   <select name="role" value={formAccount.role} onChange={handleInputChange} style={{ width: '100%', padding: '14px 16px', border: '1px solid #cbd5e1', borderRadius: '10px', outline: 'none', backgroundColor: '#fff', cursor: 'pointer', fontWeight: '600', fontSize: '0.95rem', color: '#0f172a' }} required>
+                    <option value="superAdmin">Super Admin</option>
                     <option value="adminLsp">Admin LSP</option>
                     <option value="stafLsp">Staff LSP</option>
                     <option value="adminBlk">Admin BLK</option>
