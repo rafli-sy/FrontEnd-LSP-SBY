@@ -1,10 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import AOS from 'aos';
-import 'aos/dist/aos.css'; 
-import './LandingPage.css'; 
+import 'aos/dist/aos.css';
+import './LandingPage.css';
 import logoLSP from '../../assets/logo.png';
-import { LineChart, Line, XAxis, Tooltip, ResponsiveContainer, YAxis } from 'recharts'; // IMPORT RECHARTS DI SINI
+import { LineChart, Line, XAxis, Tooltip, ResponsiveContainer, YAxis } from 'recharts';
+
+// URL backend Flask Sentiment Analysis
+const SENTIMENT_API = 'https://api-sentiment-blk.vercel.app/api';
 
 const CountUp = ({ end, decimals = 0, duration = 1500, suffix = "", start = false }) => {
   const [count, setCount] = useState(0);
@@ -15,7 +18,7 @@ const CountUp = ({ end, decimals = 0, duration = 1500, suffix = "", start = fals
     const animate = (currentTime) => {
       if (!startTime) startTime = currentTime;
       const progress = Math.min((currentTime - startTime) / duration, 1);
-      const easeProgress = 1 - Math.pow(1 - progress, 4); 
+      const easeProgress = 1 - Math.pow(1 - progress, 4);
       setCount(easeProgress * end);
       if (progress < 1) {
         requestAnimationFrame(animate);
@@ -34,6 +37,8 @@ const LandingPage = () => {
   const [isStatsVisible, setIsStatsVisible] = useState(false);
   const statsRef = useRef(null);
   const [selectedSkema, setSelectedSkema] = useState(null);
+
+  // Gunakan Environment Variable untuk API Master Data
   const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://lspblksurabaya.id';
 
   // =========================================================
@@ -41,16 +46,15 @@ const LandingPage = () => {
   // =========================================================
   const [dataSkema, setDataSkema] = useState([]);
   const [totalSkemaDinamis, setTotalSkemaDinamis] = useState(0);
-  const [totalTuk, setTotalTuk] = useState(0); 
+  const [totalTuk, setTotalTuk] = useState(0);
   const [totalAsesor, setTotalAsesor] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [apiError, setApiError] = useState(null);
 
   // =========================================================
-  // DATA GRAFIK (SUDAH DISESUAIKAN DENGAN ISI DATABASE SQL LU)
+  // DATA GRAFIK
   // =========================================================
   const [topSkema, setTopSkema] = useState([]);
-
   const [grafikBulan, setGrafikBulan] = useState([
     { bulan: 'Jan', total: 0 },
     { bulan: 'Feb', total: 0 },
@@ -65,6 +69,132 @@ const LandingPage = () => {
     { bulan: 'Nov', total: 0 },
     { bulan: 'Des', total: 0 },
   ]);
+
+  // =========================================================
+  // STATE SENTIMENT ANALYSIS - PASTE KOMENTAR
+  // =========================================================
+  const [sentimentComments, setSentimentComments] = useState([]);
+  const [sentimentStats, setSentimentStats] = useState(null);
+  const [sentimentLoading, setSentimentLoading] = useState(true);
+  const [sentimentError, setSentimentError] = useState(null);
+  const [pasteText, setPasteText] = useState('');
+  const [pasteMode, setPasteMode] = useState(false);
+  const [pasteLoading, setPasteLoading] = useState(false);
+
+  // Load data demo saat pertama kali buka
+  const fetchDemoSentiment = useCallback(async () => {
+    setSentimentLoading(true);
+    setSentimentError(null);
+    try {
+      const [resComments, resStats] = await Promise.all([
+        fetch(`${SENTIMENT_API}/comments?n=15`),
+        fetch(`${SENTIMENT_API}/stats`),
+      ]);
+      if (!resComments.ok) throw new Error('Server analisis tidak bisa dijangkau.');
+      const dataComments = await resComments.json();
+      const dataStats = resStats.ok ? await resStats.json() : null;
+      setSentimentComments(dataComments.comments || []);
+      setSentimentStats(dataStats);
+    } catch (err) {
+      setSentimentError(err.message);
+    } finally {
+      setSentimentLoading(false);
+    }
+  }, []);
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // PARSER: Bersihkan teks copy-paste dari Instagram
+  // Otomatis hapus: "1 wReply", "4 d1 likeReply", "@mention", baris kosong, dll.
+  // ─────────────────────────────────────────────────────────────────────────
+  const parseInstagramPaste = (rawText) => {
+    const lines = rawText.split('\n');
+    const cleanComments = [];
+    let currentLines = [];
+
+    // Pola baris metadata Instagram yang harus DIABAIKAN
+    const SKIP_PATTERNS = [
+      /^\d+\s*[wdhms]\s*\d*\s*(like[s]?)?\s*Reply\s*$/i,   // "1 wReply", "4 d1 likeReply"
+      /^\d+\s*(like[s]?)\s*Reply\s*$/i,                      // "3 likesReply"
+      /^Reply\s*$/i,                                           // "Reply" saja
+      /^\d+\s*(like[s]?)\s*$/i,                              // "1 like", "5 likes"
+      /^@[a-zA-Z0-9._]+\s*$/,                                // "@username" saja
+      /^@[a-zA-Z0-9._]+\s*Reply\s*$/i,                      // "@username Reply"
+      /^\d+\s*[wdhms]\s*$/i,                                  // "1 w", "4 d" waktu saja
+      /^\d+\s*[wdhms]\s*\d+\s*(like[s]?)?\s*$/i,            // "4 d1 like"
+      /^\s*$/,                                                  // baris kosong
+    ];
+
+    // Kata tunggal yang pasti metadata
+    const SKIP_SINGLE = new Set(['reply', 'like', 'likes', 'likeReply', 'Suka']);
+
+    const isMetadata = (line) => {
+      const t = line.trim();
+      if (SKIP_SINGLE.has(t)) return true;
+      if (/^\d+$/.test(t)) return true; // angka murni
+      return SKIP_PATTERNS.some(p => p.test(t));
+    };
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (isMetadata(trimmed)) {
+        // Ketemu metadata → simpan komentar yang sudah terkumpul
+        if (currentLines.length > 0) {
+          const comment = currentLines.join(' ').trim();
+          if (comment.length > 1) cleanComments.push(comment);
+          currentLines = [];
+        }
+      } else if (trimmed.length > 0) {
+        currentLines.push(trimmed);
+      }
+    }
+    // Simpan komentar terakhir
+    if (currentLines.length > 0) {
+      const comment = currentLines.join(' ').trim();
+      if (comment.length > 1) cleanComments.push(comment);
+    }
+
+    // Deduplicate: buang komentar yang persis sama (edge case emoji parsing)
+    const seen = new Set();
+    return cleanComments.filter(c => {
+      if (seen.has(c)) return false;
+      seen.add(c);
+      return true;
+    });
+  };
+
+  // Analisis komentar yang di-paste user (auto-bersihkan metadata Instagram)
+  const analyzePastedComments = useCallback(async () => {
+    const cleanComments = parseInstagramPaste(pasteText);
+    if (cleanComments.length === 0) return;
+    setPasteLoading(true);
+    setSentimentError(null);
+    try {
+      const res = await fetch(`${SENTIMENT_API}/analyze-bulk`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ comments: cleanComments }),
+      });
+      if (!res.ok) throw new Error('Gagal analisis komentar.');
+      const data = await res.json();
+      setSentimentComments(data.results || []);
+      setSentimentStats(data.stats || null);
+      setPasteMode(true);
+    } catch (err) {
+      setSentimentError(err.message);
+    } finally {
+      setPasteLoading(false);
+    }
+  }, [pasteText]);
+
+  const resetToDemo = useCallback(() => {
+    setPasteMode(false);
+    setPasteText('');
+    fetchDemoSentiment();
+  }, [fetchDemoSentiment]);
+
+  useEffect(() => {
+    fetchDemoSentiment();
+  }, [fetchDemoSentiment]);
 
   const aliasNamaBidang = {
     "Teknologi Informasi": "IT & Software Development",
@@ -86,7 +216,7 @@ const LandingPage = () => {
     if (nama.includes('bisnis') || nama.includes('administrasi') || nama.includes('office') || nama.includes('akuntansi')) return 'fa-briefcase';
     if (nama.includes('pelatihan') || nama.includes('metodologi') || nama.includes('instruktur') || nama.includes('teacher')) return 'fa-chalkboard-teacher';
     if (nama.includes('rias') || nama.includes('kecantikan') || nama.includes('spa') || nama.includes('makeup')) return 'fa-spa';
-    return 'fa-award'; 
+    return 'fa-award';
   };
 
   useEffect(() => {
@@ -104,14 +234,14 @@ const LandingPage = () => {
           fetch(`${apiUrl}/api/master/asesor`, { method: 'GET', headers }),
           fetch(`${apiUrl}/api/master/statistik-landing`, { method: 'GET', headers })
         ]);
-        
+
         if (!resSkema.ok || !resBidang.ok) throw new Error("Gagal menarik data utama dari API");
 
         const jsonSkema = await resSkema.json();
         const jsonBidang = await resBidang.json();
         const jsonJejaring = resJejaring.ok ? await resJejaring.json() : { data: [] };
-        const jsonAsesor = resAsesor.ok ? await resAsesor.json() : { data: [] }; 
-        
+        const jsonAsesor = resAsesor.ok ? await resAsesor.json() : { data: [] };
+
         let arrSkema = Array.isArray(jsonSkema.data?.data) ? jsonSkema.data.data : (jsonSkema.data || jsonSkema);
         let arrBidang = Array.isArray(jsonBidang.data?.data) ? jsonBidang.data.data : (jsonBidang.data || jsonBidang);
         let arrJejaring = Array.isArray(jsonJejaring.data?.data) ? jsonJejaring.data.data : (jsonJejaring.data || jsonJejaring);
@@ -121,35 +251,39 @@ const LandingPage = () => {
         setTotalTuk(Array.isArray(arrJejaring) ? arrJejaring.length : 0);
         setTotalAsesor(Array.isArray(arrAsesor) ? arrAsesor.length : 0);
 
-        // Map and update topSkema & grafikBulan dynamically
         if (resStats.ok) {
           const jsonStats = await resStats.json();
+
           if (jsonStats.status === 'success' && jsonStats.data) {
             const rawTop = jsonStats.data.top_skema || [];
             const maxAsesi = rawTop.length > 0 ? Math.max(...rawTop.map(item => Number(item.asesi || 0))) : 0;
-            const colors = ["#0056b3", "#10b981", "#f59e0b"];
+            const colors = ['#0056b3', '#10b981', '#f59e0b'];
+
             const mappedTop = rawTop.map((item, idx) => {
-              const nameClean = item.nama || "Skema Lainnya";
-              let icon = "fa-award";
-              const lowerName = nameClean.toLowerCase();
-              if (lowerName.includes('batik') || lowerName.includes('tshirt') || lowerName.includes('busana')) icon = "fa-tshirt";
-              else if (lowerName.includes('barista') || lowerName.includes('kopi') || lowerName.includes('boga')) icon = "fa-concierge-bell";
-              else if (lowerName.includes('admin') || lowerName.includes('perkantoran') || lowerName.includes('komputer') || lowerName.includes('office')) icon = "fa-briefcase";
-              else if (lowerName.includes('las') || lowerName.includes('welding')) icon = "fa-fire";
-              else if (lowerName.includes('it') || lowerName.includes('software') || lowerName.includes('programming')) icon = "fa-laptop-code";
+              const nama = item.nama || 'Skema Lainnya';
+              const lower = nama.toLowerCase();
+
+              let icon = 'fa-award';
+
+              if (lower.includes('batik') || lower.includes('busana') || lower.includes('tshirt')) icon = 'fa-tshirt';
+              else if (lower.includes('barista') || lower.includes('kopi') || lower.includes('boga')) icon = 'fa-concierge-bell';
+              else if (lower.includes('admin') || lower.includes('perkantoran') || lower.includes('office') || lower.includes('komputer')) icon = 'fa-briefcase';
+              else if (lower.includes('las') || lower.includes('welding')) icon = 'fa-fire';
+              else if (lower.includes('it') || lower.includes('software') || lower.includes('programming')) icon = 'fa-laptop-code';
 
               return {
-                nama: nameClean,
-                icon: icon,
-                color: colors[idx] || "#64748b",
+                nama,
+                icon,
+                color: colors[idx] || '#64748b',
                 asesi: Number(item.asesi || 0),
                 percentage: maxAsesi > 0 ? Math.round((Number(item.asesi || 0) / maxAsesi) * 100) : 0
               };
             });
+
             setTopSkema(mappedTop);
 
             const rawMonthly = jsonStats.data.grafik_bulanan || [];
-            if (rawMonthly.length === 12) {
+            if (rawMonthly.length > 0) {
               setGrafikBulan(rawMonthly);
             }
           }
@@ -185,7 +319,7 @@ const LandingPage = () => {
         }, []);
 
         groupedData.sort((a, b) => a.kategori.localeCompare(b.kategori));
-        setDataSkema(groupedData); 
+        setDataSkema(groupedData);
         setIsLoading(false);
 
       } catch (error) {
@@ -196,7 +330,7 @@ const LandingPage = () => {
     };
 
     fetchLandingData();
-  }, []);
+  }, [apiUrl]);
 
   useEffect(() => {
     AOS.init({ duration: 1000, once: true });
@@ -212,7 +346,7 @@ const LandingPage = () => {
     if (selectedSkema) {
       document.documentElement.style.overflow = 'hidden';
       document.body.style.overflow = 'hidden';
-      document.body.style.touchAction = 'none'; 
+      document.body.style.touchAction = 'none';
     } else {
       document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
@@ -230,8 +364,7 @@ const LandingPage = () => {
   const openModal = (item) => setSelectedSkema(item);
   const closeModal = () => setSelectedSkema(null);
 
-  // Cari angka tertinggi dari grafik bulanan biar line chart-nya proporsional
-  const maxTotalBulanan = Math.max(...grafikBulan.map(d => d.total));
+  const maxTotalBulanan = grafikBulan.length > 0 ? Math.max(...grafikBulan.map(d => d.total)) : 0;
 
   return (
     <div className="landing-page-container">
@@ -249,6 +382,7 @@ const LandingPage = () => {
               <li><a href="#hero" onClick={closeMenu}>Beranda</a></li>
               <li><a href="#tentang" onClick={closeMenu}>Tentang Lembaga</a></li>
               <li><a href="#skema" onClick={closeMenu}>Informasi Skema</a></li>
+              <li><a href="#sentimen" onClick={closeMenu}>Sentimen Publik</a></li>
               <li><Link to="/cek-sertifikat" onClick={closeMenu}>Verifikasi Sertifikat</Link></li>
             </ul>
             <div className="nav-login">
@@ -364,26 +498,25 @@ const LandingPage = () => {
                   </span>
                 </div>
               </div>
-              
+
               <div className="line-chart-box" style={{ width: '100%', height: '220px', paddingLeft: '0', background: 'transparent' }}>
-                {/* GRAFIK RECHARTS YANG BARU */}
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={grafikBulan} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <XAxis dataKey="bulan" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
                     <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} domain={[0, maxTotalBulanan + 20]} />
-                    <Tooltip 
+                    <Tooltip
                       cursor={{ stroke: '#e2e8f0', strokeWidth: 2, strokeDasharray: '5 5' }}
                       contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
                       labelStyle={{ fontWeight: 'bold', color: '#0f172a', marginBottom: '5px' }}
                     />
-                    <Line 
-                      type="monotone" 
-                      dataKey="total" 
+                    <Line
+                      type="monotone"
+                      dataKey="total"
                       name="Total Asesi"
-                      stroke="#0056b3" 
-                      strokeWidth={3} 
-                      dot={{ r: 4, fill: '#10b981', strokeWidth: 2, stroke: '#fff' }} 
-                      activeDot={{ r: 6, fill: '#0056b3', stroke: '#fff', strokeWidth: 2 }} 
+                      stroke="#0056b3"
+                      strokeWidth={3}
+                      dot={{ r: 4, fill: '#10b981', strokeWidth: 2, stroke: '#fff' }}
+                      activeDot={{ r: 6, fill: '#0056b3', stroke: '#fff', strokeWidth: 2 }}
                       animationDuration={2000}
                     />
                   </LineChart>
@@ -435,7 +568,7 @@ const LandingPage = () => {
           {isLoading ? (
             <div style={{ textAlign: 'center', padding: '40px 0', width: '100%' }}>
               <h3 style={{ color: '#64748b' }}>
-                <i className="fas fa-circle-notch fa-spin" style={{ marginRight: '10px' }}></i> 
+                <i className="fas fa-circle-notch fa-spin" style={{ marginRight: '10px' }}></i>
                 Mengambil data dari server...
               </h3>
             </div>
@@ -469,9 +602,198 @@ const LandingPage = () => {
 
           <div style={{ marginTop: '50px', textAlign: 'center' }} data-aos="fade-up">
             <Link to="/daftar-skema" className="btn-main" style={{ padding: '14px 32px', fontSize: '1.1rem', borderRadius: '50px', display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
-             Lihat Semua Skema
+              Lihat Semua Skema
             </Link>
           </div>
+        </div>
+      </section>
+
+      {/* ================================================================
+          SECTION: ANALISIS SENTIMEN KOMENTAR @uptblksurabaya
+          ================================================================ */}
+      <section id="sentimen" className="sentiment-section section-padding">
+        <div className="container">
+          <div data-aos="fade-up" style={{ textAlign: 'center', marginBottom: '40px' }}>
+            <span className="skema-badge" style={{ marginBottom: '15px', display: 'inline-flex' }}>
+              <i className="fas fa-robot" style={{ marginRight: '8px' }}></i>
+              Analisis Sentimen NLP — Program Pelatihan BLK
+            </span>
+            <h2 className="section-title">Apa Kata Masyarakat?</h2>
+            <p className="section-subtitle" style={{ maxWidth: '680px', margin: '0 auto 30px' }}>
+              Sistem NLP (Natural Language Processing) untuk menganalisis persepsi publik
+              terhadap program pelatihan <strong>UPT BLK Surabaya</strong>.
+              Tempel komentar Instagram di bawah untuk dianalisis secara otomatis.
+            </p>
+          </div>
+
+          <div className="sentiment-paste-box" data-aos="fade-up">
+            <div className="paste-box-header">
+              <span className="paste-box-title">
+                <i className="fas fa-paste" style={{ marginRight: '8px', color: '#0056b3' }}></i>
+                {pasteMode ? 'Hasil Analisis Komentar' : 'Tempel Komentar Instagram'}
+              </span>
+              {pasteMode && (
+                <button className="paste-reset-btn" onClick={resetToDemo}>
+                  <i className="fas fa-arrow-left" style={{ marginRight: '6px' }}></i>
+                  Kembali ke Demo
+                </button>
+              )}
+            </div>
+
+            {!pasteMode && (
+              <div className="paste-input-area">
+                <textarea
+                  className="paste-textarea"
+                  placeholder={`Tempel semua komentar Instagram di sini — langsung select all & paste!\n\n`}
+                  value={pasteText}
+                  onChange={e => setPasteText(e.target.value)}
+                  rows={7}
+                />
+                <div className="paste-action-row">
+                  <span className="paste-hint">
+                    <i className="fas fa-magic"></i>
+                    {(() => {
+                      const n = parseInstagramPaste(pasteText).length;
+                      return n > 0
+                        ? `${n} komentar terdeteksi (metadata IG otomatis dibersihkan)`
+                        : 'Tempel komentar Instagram di atas';
+                    })()}
+                  </span>
+                  <button
+                    className="paste-analyze-btn"
+                    onClick={analyzePastedComments}
+                    disabled={pasteLoading || parseInstagramPaste(pasteText).length === 0}
+                  >
+                    {pasteLoading
+                      ? <><i className="fas fa-spinner fa-spin" style={{ marginRight: '8px' }}></i>Menganalisis...</>
+                      : <><i className="fas fa-brain" style={{ marginRight: '8px' }}></i>Analisis Komentar</>
+                    }
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {sentimentError ? (
+            <div className="sentiment-error-box" data-aos="fade-up">
+              <i className="fas fa-exclamation-triangle"></i>
+              <p>Server analisis tidak terjangkau. Pastikan <code>api.py</code> sedang berjalan.</p>
+              <p style={{ fontSize: '0.8rem', opacity: 0.7 }}>{sentimentError}</p>
+              <button className="btn-see-more" style={{ marginTop: '12px', maxWidth: '200px' }} onClick={fetchDemoSentiment}>
+                Coba Lagi
+              </button>
+            </div>
+          ) : sentimentLoading ? (
+            <div className="sentiment-loading-box" data-aos="fade-up">
+              <div className="sentiment-spinner"></div>
+              <p>Memuat data komentar...</p>
+            </div>
+          ) : (
+            <>
+              {sentimentStats && (
+                <div className="sentiment-stats-row" data-aos="fade-up">
+                  <div className="sentiment-stat-card sentiment-total">
+                    <div className="sent-icon-wrap" style={{ background: '#e7f1ff' }}>
+                      <i className="fas fa-comments" style={{ color: '#0056b3' }}></i>
+                    </div>
+                    <div className="sent-stat-number" style={{ color: '#0056b3' }}>{sentimentStats.total_comments}</div>
+                    <div className="sent-stat-label">Total Komentar Dianalisis</div>
+                  </div>
+                  <div className="sentiment-stat-card sentiment-pos">
+                    <div className="sent-icon-wrap" style={{ background: '#d1fae5' }}>
+                      <i className="fas fa-thumbs-up" style={{ color: '#10b981' }}></i>
+                    </div>
+                    <div className="sent-stat-number" style={{ color: '#10b981' }}>{sentimentStats.positif}</div>
+                    <div className="sent-stat-label">Positif ({sentimentStats.persen_positif}%)</div>
+                  </div>
+                  <div className="sentiment-stat-card sentiment-neg">
+                    <div className="sent-icon-wrap" style={{ background: '#fee2e2' }}>
+                      <i className="fas fa-thumbs-down" style={{ color: '#ef4444' }}></i>
+                    </div>
+                    <div className="sent-stat-number" style={{ color: '#ef4444' }}>{sentimentStats.negatif}</div>
+                    <div className="sent-stat-label">Negatif ({sentimentStats.persen_negatif}%)</div>
+                  </div>
+                  <div className="sentiment-stat-card">
+                    <div className="sent-icon-wrap" style={{ background: '#f1f5f9' }}>
+                      <i className="fas fa-minus-circle" style={{ color: '#64748b' }}></i>
+                    </div>
+                    <div className="sent-stat-number" style={{ color: '#64748b' }}>{sentimentStats.netral ?? 0}</div>
+                    <div className="sent-stat-label">Netral ({sentimentStats.persen_netral ?? 0}%)</div>
+                  </div>
+                  <div className="sentiment-stat-card sentiment-overall">
+                    <div className="sent-icon-wrap" style={{ background: sentimentStats.sentiment_overall === 'positif' ? '#d1fae5' : sentimentStats.sentiment_overall === 'negatif' ? '#fee2e2' : '#f1f5f9' }}>
+                      <i className={`fas ${sentimentStats.sentiment_overall === 'positif' ? 'fa-smile' : sentimentStats.sentiment_overall === 'negatif' ? 'fa-frown' : 'fa-meh'}`}
+                        style={{ color: sentimentStats.sentiment_overall === 'positif' ? '#10b981' : sentimentStats.sentiment_overall === 'negatif' ? '#ef4444' : '#64748b' }}></i>
+                    </div>
+                    <div className="sent-stat-number" style={{ color: sentimentStats.sentiment_overall === 'positif' ? '#10b981' : sentimentStats.sentiment_overall === 'negatif' ? '#ef4444' : '#64748b', textTransform: 'capitalize', fontSize: '1.4rem' }}>
+                      {sentimentStats.sentiment_overall}
+                    </div>
+                    <div className="sent-stat-label">Sentimen Keseluruhan</div>
+                  </div>
+                </div>
+              )}
+
+              <div className="sentiment-main-grid" data-aos="fade-up" data-aos-delay="100">
+                {sentimentStats && (
+                  <div className="sentiment-donut-card">
+                    <h4><i className="fas fa-chart-pie" style={{ marginRight: '8px', color: '#0056b3' }}></i>Distribusi Sentimen</h4>
+                    <div className="donut-chart-wrap">
+                      <div className="css-donut" style={{
+                        background: `conic-gradient(
+                          #10b981 0 ${sentimentStats.persen_positif}%,
+                          #ef4444 ${sentimentStats.persen_positif}% ${sentimentStats.persen_positif + sentimentStats.persen_negatif}%,
+                          #94a3b8 ${sentimentStats.persen_positif + sentimentStats.persen_negatif}% 100%
+                        )`
+                      }}>
+                        <div className="css-donut-hole">
+                          <span className="donut-pct">{sentimentStats.persen_positif}%</span>
+                          <span className="donut-sub">Positif</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="donut-legend">
+                      <span><span className="legend-dot" style={{ background: '#10b981' }}></span>Positif ({sentimentStats.positif})</span>
+                      <span><span className="legend-dot" style={{ background: '#ef4444' }}></span>Negatif ({sentimentStats.negatif})</span>
+                      <span><span className="legend-dot" style={{ background: '#94a3b8' }}></span>Netral ({sentimentStats.netral ?? 0})</span>
+                    </div>
+                    <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '15px', textAlign: 'center' }}>
+                      <i className="fab fa-instagram" style={{ marginRight: '4px' }}></i>
+                      @uptblksurabaya
+                    </p>
+                  </div>
+                )}
+
+                <div className="sentiment-comments-card">
+                  <h4><i className="fas fa-comment-dots" style={{ marginRight: '8px', color: '#0056b3' }}></i>Komentar Terbaru</h4>
+                  <div className="sentiment-feed">
+                    {sentimentComments.length === 0 ? (
+                      <p style={{ textAlign: 'center', color: '#94a3b8', padding: '20px 0' }}>Belum ada komentar.</p>
+                    ) : (
+                      sentimentComments.map((c, idx) => (
+                        <div key={c.id || idx} className={`sentiment-comment-item ${c.sentiment.score === 1 ? 'item-pos' : c.sentiment.score === 0 ? 'item-neg' : ''}`}>
+                          <div className="comment-item-header">
+                            <span className="comment-item-user">
+                              <i className="fab fa-instagram" style={{ marginRight: '4px', fontSize: '0.8rem' }}></i>
+                              @{c.username}
+                            </span>
+                            <span className={`comment-item-badge ${c.sentiment.score === 1 ? 'badge-pos' : c.sentiment.score === 0 ? 'badge-neg' : 'badge-netral'}`}>
+                              {c.sentiment.score === 1 ? '✓ Positif' : c.sentiment.score === 0 ? '✗ Negatif' : '○ Netral'}
+                            </span>
+                          </div>
+                          <p className="comment-item-text">"{c.text}"</p>
+                          <div className="comment-item-footer">
+                            <span>{c.sentiment.confidence}% keyakinan</span>
+                            <span>{new Date(c.timestamp).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+              </div>
+            </>
+          )}
         </div>
       </section>
 
