@@ -49,9 +49,11 @@ const DaftarSkema = () => {
           'Content-Type': 'application/json'
         };
 
+        const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://lspblksurabaya.id';
+
         const [resSkema, resBidang] = await Promise.all([
-          fetch('https://lspblksurabaya.id/api/master/skema', { method: 'GET', headers }),
-          fetch('https://lspblksurabaya.id/api/master/bidang', { method: 'GET', headers })
+          fetch(`${apiUrl}/api/master/skema`, { method: 'GET', headers }),
+          fetch(`${apiUrl}/api/master/bidang`, { method: 'GET', headers })
         ]);
         
         if (!resSkema.ok || !resBidang.ok) {

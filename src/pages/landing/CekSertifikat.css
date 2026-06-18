@@ -5,34 +5,54 @@
   display: flex;
   flex-direction: column;
 }
+
 .cert-header {
   position: sticky;
   top: 0;
   z-index: 1000;
-  background-color: #fff;
-  border-bottom: 1px solid #e2e8f0;
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
   padding: 15px 20px;
   display: flex;
   justify-content: center;
 }
+
 .cert-container {
   flex: 1;
-  padding: 40px 20px;
+  padding: 50px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.cert-card-wrap {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-}
-.cert-card {
-  max-width: 600px;
+.cert-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  max-width: 1000px;
   width: 100%;
+}
+
+.cert-card {
   background: #fff;
-  padding: 45px;
   border-radius: 16px;
+  padding: 45px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
   border: 1px solid #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.cert-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 25px 50px rgba(29, 78, 216, 0.12);
+}
+
+/* Kiri: Form Verifikasi */
+.left-card {
+  justify-content: center;
 }
 
 .cert-icon {
@@ -41,6 +61,7 @@
   font-size: 3.5rem;
   color: #3b82f6;
 }
+
 .cert-title {
   color: #0f172a;
   font-size: 1.8rem;
@@ -48,6 +69,7 @@
   margin-bottom: 10px;
   text-align: center;
 }
+
 .cert-subtitle {
   color: #64748b;
   font-size: 0.95rem;
@@ -63,10 +85,13 @@
   border: 2px solid #e2e8f0;
   font-size: 1rem;
   outline: none;
+  box-sizing: border-box;
 }
+
 .cert-input:focus {
   border-color: #3b82f6;
 }
+
 .cert-btn {
   padding: 16px;
   font-size: 1.1rem;
@@ -80,13 +105,70 @@
   width: 100%;
 }
 
+/* Kanan: Petunjuk Sertifikat */
+.right-card {
+  text-align: center;
+  justify-content: flex-start;
+  padding: 35px 30px;
+}
+
+.right-card-title {
+  color: #1e293b;
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 25px;
+}
+
+.cert-image-wrapper {
+  background: #f1f5f9;
+  border-radius: 12px;
+  padding: 0; /* Remove padding to make image full width of wrapper */
+  margin-bottom: 20px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden; /* Hide zoomed parts */
+  cursor: zoom-in;
+  position: relative;
+}
+
+.cert-sample-img {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  object-fit: cover;
+  /* Animasi saat mouse dilepas (Zoom out cepat, tanpa delay) */
+  transition: transform 0.15s ease-out; 
+  transform-origin: center center;
+}
+
+.cert-image-wrapper:hover .cert-sample-img {
+  transform: scale(1.8); /* Magnify level */
+  /* Animasi saat hover (Zoom in lebih pelan, dengan delay) */
+  transition: transform 0.4s ease-out 0.25s;
+}
+
+.cert-instruction {
+  font-size: 0.9rem;
+  color: #64748b;
+  line-height: 1.6;
+}
+
 /* Hasil Pencarian */
 .cert-result {
   margin-top: 30px;
   padding: 25px;
   border-radius: 12px;
   border: 1px solid transparent;
+  animation: fadeIn 0.4s ease;
 }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .result-valid {
   border-color: #10b981;
   background: #ecfdf5;
@@ -102,7 +184,7 @@
   align-items: center;
   gap: 12px;
   font-size: 1.2rem;
-  font-weight: 700;
+  font-weight: 800;
   margin-bottom: 20px;
 }
 .result-valid .res-head {
@@ -121,7 +203,7 @@
 }
 .res-table td {
   padding: 12px 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
 }
 .res-table tr:last-child td {
   border-bottom: none;
@@ -133,4 +215,24 @@
 .res-table .value {
   font-weight: 700;
   color: #1e293b;
+}
+
+/* Responsive */
+@media (max-width: 860px) {
+  .cert-grid {
+    grid-template-columns: 1fr;
+    max-width: 600px;
+  }
+}
+
+@media (max-width: 480px) {
+  .cert-card {
+    padding: 30px 20px;
+  }
+  .cert-title {
+    font-size: 1.4rem;
+  }
+  .cert-input {
+    padding: 14px 15px;
+  }
 }

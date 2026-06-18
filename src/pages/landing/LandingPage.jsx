@@ -74,6 +74,8 @@ const LandingPage = () => {
   // STATE SENTIMENT ANALYSIS - PASTE KOMENTAR
   // =========================================================
   const [sentimentComments, setSentimentComments] = useState([]);
+  const [sentimentFilter, setSentimentFilter] = useState('all');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [sentimentStats, setSentimentStats] = useState(null);
   const [sentimentLoading, setSentimentLoading] = useState(true);
   const [sentimentError, setSentimentError] = useState(null);
@@ -677,7 +679,7 @@ const LandingPage = () => {
           {sentimentError ? (
             <div className="sentiment-error-box" data-aos="fade-up">
               <i className="fas fa-exclamation-triangle"></i>
-              <p>Server analisis tidak terjangkau. Pastikan <code>api.py</code> sedang berjalan.</p>
+              <p>Server analisis tidak terjangkau. Pastikan <code>index.py</code> sedang berjalan.</p>
               <p style={{ fontSize: '0.8rem', opacity: 0.7 }}>{sentimentError}</p>
               <button className="btn-see-more" style={{ marginTop: '12px', maxWidth: '200px' }} onClick={fetchDemoSentiment}>
                 Coba Lagi
@@ -764,12 +766,46 @@ const LandingPage = () => {
                 )}
 
                 <div className="sentiment-comments-card">
-                  <h4><i className="fas fa-comment-dots" style={{ marginRight: '8px', color: '#0056b3' }}></i>Komentar Terbaru</h4>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                    <h4 style={{ margin: 0 }}><i className="fas fa-comment-dots" style={{ marginRight: '8px', color: '#0056b3' }}></i>Komentar Terbaru</h4>
+                    <div className="sentiment-filter-wrapper">
+                      <button
+                        className="sentiment-filter-select"
+                        onClick={() => setIsFilterOpen(!isFilterOpen)}
+                      >
+                        <span>
+                          {sentimentFilter === 'all' ? 'Semua Sentimen' :
+                            sentimentFilter === 'positif' ? 'Positif' :
+                              sentimentFilter === 'negatif' ? 'Negatif' : 'Netral'}
+                        </span>
+                        <i className={`fas fa-chevron-down filter-icon ${isFilterOpen ? 'open' : ''}`}></i>
+                      </button>
+
+                      <div className={`custom-dropdown-menu ${isFilterOpen ? 'show' : ''}`}>
+                        <div className={`custom-dropdown-item ${sentimentFilter === 'all' ? 'active' : ''}`} onClick={() => { setSentimentFilter('all'); setIsFilterOpen(false); }}>Semua Sentimen</div>
+                        <div className={`custom-dropdown-item ${sentimentFilter === 'positif' ? 'active' : ''}`} onClick={() => { setSentimentFilter('positif'); setIsFilterOpen(false); }}>Positif</div>
+                        <div className={`custom-dropdown-item ${sentimentFilter === 'negatif' ? 'active' : ''}`} onClick={() => { setSentimentFilter('negatif'); setIsFilterOpen(false); }}>Negatif</div>
+                        <div className={`custom-dropdown-item ${sentimentFilter === 'netral' ? 'active' : ''}`} onClick={() => { setSentimentFilter('netral'); setIsFilterOpen(false); }}>Netral</div>
+                      </div>
+                    </div>
+                  </div>
                   <div className="sentiment-feed">
-                    {sentimentComments.length === 0 ? (
+                    {sentimentComments.filter(c => {
+                      if (sentimentFilter === 'all') return true;
+                      if (sentimentFilter === 'positif') return c.sentiment.score === 1;
+                      if (sentimentFilter === 'negatif') return c.sentiment.score === 0;
+                      if (sentimentFilter === 'netral') return c.sentiment.score === 2;
+                      return true;
+                    }).length === 0 ? (
                       <p style={{ textAlign: 'center', color: '#94a3b8', padding: '20px 0' }}>Belum ada komentar.</p>
                     ) : (
-                      sentimentComments.map((c, idx) => (
+                      sentimentComments.filter(c => {
+                        if (sentimentFilter === 'all') return true;
+                        if (sentimentFilter === 'positif') return c.sentiment.score === 1;
+                        if (sentimentFilter === 'negatif') return c.sentiment.score === 0;
+                        if (sentimentFilter === 'netral') return c.sentiment.score === 2;
+                        return true;
+                      }).map((c, idx) => (
                         <div key={c.id || idx} className={`sentiment-comment-item ${c.sentiment.score === 1 ? 'item-pos' : c.sentiment.score === 0 ? 'item-neg' : ''}`}>
                           <div className="comment-item-header">
                             <span className="comment-item-user">
