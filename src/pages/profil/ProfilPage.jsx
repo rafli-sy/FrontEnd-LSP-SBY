@@ -216,9 +216,18 @@ const ProfilPage = () => {
           const resultProfile = isJsonProfile ? await resProfile.json() : null;
 
           if (!resProfile.ok) { 
-            const isJson = resProfile.headers.get('content-type')?.includes('application/json');
-            const errData = isJson ? await resProfile.json() : null;
-            throw new Error(errData?.message || 'Gagal memperbarui data profil');
+            // 1. Ambil pesan default (kalau bukan error validasi)
+            let errorMsg = resultProfile?.message || 'Gagal memperbarui data profil';
+            
+            // 2. Trik nangkep custom message dari Backend (Laravel Validation)
+            if (resultProfile?.errors) {
+               // Ambil array error pertama yang dikirim Laravel (misal: asalDaerah)
+               const firstError = Object.values(resultProfile.errors)[0][0];
+               errorMsg = firstError; // Timpa pesannya dengan pesan dari backend lu
+            }
+            
+            // 3. Lempar errornya biar ditangkep sama try-catch dan masuk ke AlertPopup
+            throw new Error(errorMsg);
           }
 
           let updatedUserDariBackend = resultProfile.data;

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import './LandingPage.css'; 
 import './CekSertifikat.css'; 
 import logoLSP from '../../assets/logo.png';
+import sertifPlaceholder from '../../assets/placeholder-sertif.png'; 
 
 const CekSertifikat = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -21,9 +22,9 @@ const CekSertifikat = () => {
     setSearchResult(null);
 
     try {
-      // FIX 1: Ganti ?query= menjadi ?keyword= dan tambah header untuk bypass warning ngrok
+      const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://lspblksurabaya.id';
       const response = await fetch(
-        `https://lspblksurabaya.id/api/sertifikat/cek-sertifikat?keyword=${encodeURIComponent(searchQuery)}`,
+        `${apiUrl}/api/sertifikat/cek-sertifikat?keyword=${encodeURIComponent(searchQuery)}`,
         {
           headers: {
             "ngrok-skip-browser-warning": "69420"
@@ -31,15 +32,11 @@ const CekSertifikat = () => {
         }
       );
 
-      // Mengecek apakah response dari server sukses (status HTTP 200-299)
       if (response.ok) {
         const result = await response.json();
         
-        // Memastikan status JSON dari backend adalah success
         if (result.status === 'success') {
           const data = result.data;
-
-          // FIX 2: Sesuaikan properti dengan struktur JSON dari backend Laravel
           setSearchResult({ 
             status: 'valid', 
             nama: data.nama_peserta, 
@@ -52,15 +49,12 @@ const CekSertifikat = () => {
           setSearchResult({ status: 'invalid' });
         }
       } else {
-        // Jika data tidak ditemukan di database (misal error 404)
         setSearchResult({ status: 'invalid' });
       }
     } catch (error) {
-      // Menangkap error jika server down atau ada masalah koneksi internet
       console.error("Gagal mengambil data dari server:", error);
       setSearchResult({ status: 'invalid' });
     } finally {
-      // Menghentikan loading spinner setelah proses selesai (baik berhasil maupun gagal)
       setIsLoading(false);
     }
   };
@@ -81,8 +75,10 @@ const CekSertifikat = () => {
       </header>
 
       <div className="container cert-container">
-        <div className="cert-card-wrap fade-in-content">
-          <div className="cert-card">
+        <div className="cert-grid fade-in-content">
+          
+          {/* Kolom Kiri - Form Verifikasi */}
+          <div className="cert-card left-card">
             <div className="cert-icon">
               <i className="fas fa-certificate"></i>
             </div>
@@ -134,8 +130,35 @@ const CekSertifikat = () => {
                 )}
               </div>
             )}
-            
           </div>
+
+          {/* Kolom Kanan - Petunjuk */}
+          <div className="cert-card right-card">
+            <h3 className="right-card-title">Petunjuk Letak Nomor Registrasi</h3>
+            <div className="cert-image-wrapper">
+              <img 
+                src={sertifPlaceholder} 
+                alt="Contoh Sertifikat" 
+                className="cert-sample-img" 
+                onMouseEnter={(e) => {
+                  const { left, top, width, height } = e.target.getBoundingClientRect();
+                  const x = ((e.clientX - left) / width) * 100;
+                  const y = ((e.clientY - top) / height) * 100;
+                  e.target.style.transformOrigin = `${x}% ${y}%`;
+                }}
+                onMouseMove={(e) => {
+                  const { left, top, width, height } = e.target.getBoundingClientRect();
+                  const x = ((e.clientX - left) / width) * 100;
+                  const y = ((e.clientY - top) / height) * 100;
+                  e.target.style.transformOrigin = `${x}% ${y}%`;
+                }}
+              />
+            </div>
+            <p className="cert-instruction">
+              Perhatikan contoh sertifikat di atas untuk menemukan letak <strong>Nomor Registrasi BNSP</strong> atau <strong>NIK</strong> Anda.
+            </p>
+          </div>
+
         </div>
       </div>
     </div>
