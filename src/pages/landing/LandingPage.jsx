@@ -376,7 +376,7 @@ const LandingPage = () => {
             <img src={logoLSP} alt="Logo LSP BLK Surabaya" />
             <div className="logo-text">
               <span className="brand">LSP BLK SURABAYA</span>
-              <span className="tag">UPT Balai Kerja Surabaya</span>
+              <span className="tag">UPT Balai Latihan Kerja Surabaya</span>
             </div>
           </div>
           <div className={`nav-wrapper ${isMenuOpen ? 'active' : ''}`}>
@@ -403,7 +403,7 @@ const LandingPage = () => {
         <div className="container grid-2">
           <div className="hero-text" data-aos="fade-right">
             <h1>Portal Resmi <span className="blue">Verifikasi Sertifikat</span> Kompetensi</h1>
-            <p>Layanan terpadu bagi perusahaan dan instansi untuk memvalidasi keaslian sertifikat BNSP calon tenaga kerja lulusan UPT Pelatihan Kerja Surabaya secara instan dan akurat.</p>
+            <p>Layanan terpadu bagi perusahaan dan instansi untuk memvalidasi keaslian sertifikat BNSP calon tenaga kerja lulusan UPT Balai Latihan Kerja Surabaya secara instan dan akurat.</p>
             <div className="hero-actions" style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
               <Link to="/cek-sertifikat" className="btn-main">
                 <i className="fas fa-search-diploma" style={{ marginRight: '8px' }}></i> Cek Keaslian Sertifikat
@@ -421,7 +421,7 @@ const LandingPage = () => {
         <div className="container">
           <div className="stats-visual-header" data-aos="fade-up">
             <h2>Insight & Kapasitas Lembaga</h2>
-            <p>Gambaran analitik operasional pelaksanaan sertifikasi kompetensi di LSP UPT Pelatihan Kerja Surabaya.</p>
+            <p>Gambaran analitik operasional pelaksanaan sertifikasi kompetensi di LSP UPT Balai Latihan Kerja Surabaya.</p>
           </div>
 
           <div className="stats-visual-grid">
@@ -536,8 +536,8 @@ const LandingPage = () => {
             <img src="https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?q=80&w=1470&auto=format&fit=crop" alt="Kegiatan Asesmen" style={{ width: '100%', borderRadius: '12px', border: '5px solid white', boxShadow: '0 10px 30px rgba(0,0,0,0.08)' }} />
           </div>
           <div className="tentang-text" data-aos="fade-left">
-            <h4 style={{ color: '#0056b3', textTransform: 'uppercase', letterSpacing: '2px', margin: '0 0 10px 0' }}>Tentang Lembaga</h4>
-            <h2 className="section-title" style={{ textAlign: 'left', margin: '0 0 20px 0' }}>LSP BLK Surabaya</h2>
+            <h4 className="tentang-subtitle">Tentang Lembaga</h4>
+            <h2 className="section-title tentang-title">LSP BLK Surabaya</h2>
             <p style={{ lineHeight: '1.8', color: '#475569', marginBottom: '15px' }}>
               Lembaga Sertifikasi Profesi (LSP) BLK Surabaya adalah mitra strategis industri dalam menjamin mutu dan kompetensi calon tenaga kerja.
             </p>
@@ -862,7 +862,7 @@ const LandingPage = () => {
         </div>
         <div className="footer-bottom text-center">
           <div className="container">
-            <p>&copy; 2026 LSP UPT Pelatihan Kerja Surabaya - Dinas Tenaga Kerja dan Transmigrasi Provinsi Jawa Timur</p>
+            <p>&copy; 2026 LSP UPT Balai Latihan Kerja Surabaya - Dinas Tenaga Kerja dan Transmigrasi Provinsi Jawa Timur</p>
           </div>
         </div>
       </footer>

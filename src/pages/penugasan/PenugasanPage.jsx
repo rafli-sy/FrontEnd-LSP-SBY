@@ -514,6 +514,22 @@ const PenugasanPage = () => {
     });
   };
 
+  const handleHapusPengajuan = (pengajuanId) => {
+    setAlertConfig({
+      type: 'delete', title: 'Hapus Pengajuan?', text: 'Apakah Anda yakin ingin menghapus/membatalkan seluruh pengajuan ini? Tindakan ini tidak dapat dibatalkan.',
+      onConfirm: async () => {
+        try {
+          // Akan menggunakan DELETE method ke backend
+          await axios.delete(`${baseUrl}/${rolePath}/pengajuan/${pengajuanId}`, config);
+          showAlert('success', 'Berhasil', 'Data Pengajuan berhasil dihapus/dibatalkan.');
+          fetchPengajuan();
+        } catch (error) {
+          showAlert('error', 'Gagal Menghapus', error.response?.data?.message || 'Terjadi kesalahan sistem');
+        }
+      }
+    });
+  };
+
   const handleDocClick = (jenisSurat, suratItem, skemaItem, docKey) => {
     if (!suratItem || !suratItem.pengajuan_id) {
       showAlert('error', 'Kesalahan Data', 'ID Pengajuan tidak ditemukan pada baris ini.');
@@ -1403,7 +1419,7 @@ const PenugasanPage = () => {
                         </td>
 
                         <td style={{ textAlign: 'center', verticalAlign: 'top', paddingTop: '15px' }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center' }}>
                             <button
                               type="button"
                               onClick={() => { setSelectedPenugasan(item); setEditingId(null); }}
@@ -1419,6 +1435,27 @@ const PenugasanPage = () => {
                               }}
                             >
                               {isSemuaDiplot ? 'Kelola Dokumen' : 'Mulai Plotting'}
+                            </button>
+                            
+                            <button
+                              type="button"
+                              onClick={() => handleHapusPengajuan(item.pengajuan_id)}
+                              style={{
+                                backgroundColor: '#fff',
+                                color: '#ef4444',
+                                border: '1px solid #ef4444',
+                                padding: '8px 0',
+                                width: '100%',
+                                borderRadius: '6px',
+                                fontWeight: 'bold',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                gap: '8px'
+                              }}
+                            >
+                              <i className="fas fa-trash-alt"></i> Hapus
                             </button>
                           </div>
                         </td>

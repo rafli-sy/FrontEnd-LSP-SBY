@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import Button from '../../components/ui/Button';
 import Pagination from '../../components/ui/Pagination';
 import TablePeserta from '../TablePeserta/TablePeserta';
@@ -16,6 +17,7 @@ const DashboardAdminBLK = () => {
   const navigate = useNavigate();
   const [riwayatPengajuan, setRiwayatPengajuan] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [alertMsg, setAlertMsg] = useState(null);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('Semua');
@@ -25,6 +27,14 @@ const DashboardAdminBLK = () => {
 
   const token = sessionStorage.getItem('auth_token') || localStorage.getItem('access_token'); 
   const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://untracked-exponent-oboe.ngrok-free.dev';
+  const baseUrl = `${apiUrl}/api`;
+  const config = {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json',
+      'ngrok-skip-browser-warning': '69420'
+    }
+  };
 
   // --- FETCH DATA DARI BACKEND ---
   useEffect(() => {
@@ -74,7 +84,10 @@ const DashboardAdminBLK = () => {
             tuk: ds.tuk?.namaInstitusi || ds.tuk?.nama_lembaga || 'N/A',
             tanggal: `${formatTgl(ds.tanggal_mulai)} s/d ${formatTgl(ds.tanggal_selesai)}`,
             pesertaCount: ds.jumlah_peserta || 0,
-            peserta: ds.peserta_pengajuan_ujk || ds.pesertaPengajuanUjk || [] // Array peserta
+            peserta: ds.peserta_pengajuan_ujk || ds.pesertaPengajuanUjk || [],
+            statusSertifikat: ds.status_sertifikat_blk || 'belum dicetak',
+            noResi: ds.no_resi || null,
+            ttSertifikat: ds.status_tt_sertifikat === 'Selesai'
           }))
         }));
         setRiwayatPengajuan(formattedData);
@@ -132,6 +145,23 @@ const DashboardAdminBLK = () => {
     } catch (error) {
       console.error("Gagal memuat surat balasan:", error);
       alert("Terjadi kesalahan atau file diblokir oleh CORS Server.");
+    }
+  };
+
+  // Handler TT Sertifikat untuk Admin BLK
+  const handleTtSertifikat = async (skema) => {
+    const newStatus = skema.ttSertifikat ? 'Belum Selesai' : 'Selesai';
+    const label = newStatus === 'Selesai' ? 'Selesai (Diterima)' : 'Belum Selesai';
+    if (!window.confirm(`Ubah status Tanda Terima Sertifikat menjadi "${label}"?`)) return;
+    try {
+      await axios.patch(`${baseUrl}/admin-blk/pemantauan/${skema.idDetail}/tt-sertifikat`, { status: newStatus }, config);
+      setRiwayatPengajuan(prev => prev.map(item => ({
+        ...item,
+        skemaList: item.skemaList.map(s => s.idDetail === skema.idDetail ? { ...s, ttSertifikat: newStatus === 'Selesai' } : s)
+      })));
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || 'Gagal mengubah status TT Sertifikat.');
     }
   };
 
@@ -242,11 +272,13 @@ const DashboardAdminBLK = () => {
                <tr>
                 <th style={{ width: '4%', textAlign: 'center' }}>No.</th>
                 <th style={{ width: '15%' }}>Nomor Surat</th>
-                <th style={{ width: '20%' }}>Lokasi TUK</th>
-                <th style={{ width: '25%' }}>Skema & Tanggal</th>
+                <th style={{ width: '15%' }}>Lokasi TUK</th>
+                <th style={{ width: '20%' }}>Skema & Tanggal</th>
                 <th style={{ width: '10%', textAlign: 'center' }}>Peserta</th>
-                <th style={{ width: '10%', textAlign: 'center' }}>Status</th>
-                <th style={{ width: '10%', textAlign: 'center' }}>Balasan</th>
+                <th style={{ width: '8%', textAlign: 'center' }}>Status</th>
+                <th style={{ width: '12%', textAlign: 'center' }}>Sertifikat</th>
+                <th style={{ width: '10%', textAlign: 'center' }}>TT Sertifikat</th>
+                <th style={{ width: '6%', textAlign: 'center' }}>Balasan</th>
                </tr>
             </thead>
             <tbody>
@@ -290,6 +322,47 @@ const DashboardAdminBLK = () => {
                        <span className={`badge ${item.statusPengajuan === 'Disetujui' ? 'success' : item.statusPengajuan === 'Ditolak' ? 'danger' : 'warning'}`}>
                          {item.statusPengajuan}
                        </span>
+                    </td>
+                    <td style={{ textAlign: 'center', verticalAlign: 'top', paddingTop: '15px' }}>
+                      {item.skemaList.map((skema, i) => {
+                        let badgeColor = '#94a3b8'; // default
+                        let bgBadge = '#f1f5f9';
+                        if (skema.statusSertifikat === 'dicetak') { badgeColor = '#0284c7'; bgBadge = '#e0f2fe'; }
+                        else if (skema.statusSertifikat === 'di kirim') { badgeColor = '#16a34a'; bgBadge = '#dcfce3'; }
+                        else if (skema.statusSertifikat === 'di terima') { badgeColor = '#4f46e5'; bgBadge = '#e0e7ff'; }
+
+                        return (
+                          <div key={i} style={{ marginBottom: '10px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                            <span style={{ background: bgBadge, color: badgeColor, padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'capitalize' }}>
+                              {skema.statusSertifikat}
+                            </span>
+                            {skema.statusSertifikat === 'di kirim' && skema.noResi && (
+                              <small style={{ color: '#64748b', fontSize: '0.7rem' }}>Resi: {skema.noResi}</small>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </td>
+                     <td style={{ textAlign: 'center', verticalAlign: 'top', paddingTop: '15px' }}>
+                       {item.skemaList.map((skema, i) => (
+                         <div key={i} style={{ marginBottom: '10px' }}>
+                           {skema.ttSertifikat ? (
+                             <button
+                               onClick={() => handleTtSertifikat(skema)}
+                               style={{ background: '#ecfdf5', color: '#10b981', border: '1px solid #10b981', padding: '5px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '5px', width: '100%', justifyContent: 'center' }}
+                             >
+                               <i className="fas fa-check-circle"></i> Selesai
+                             </button>
+                           ) : (
+                             <button
+                               onClick={() => handleTtSertifikat(skema)}
+                               style={{ background: '#fef2f2', color: '#ef4444', border: '1px dashed #fca5a5', padding: '5px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '5px', width: '100%', justifyContent: 'center' }}
+                             >
+                               <i className="fas fa-times-circle"></i> Belum Selesai
+                             </button>
+                           )}
+                         </div>
+                       ))}
                     </td>
                     <td style={{ textAlign: 'center', verticalAlign: 'top', paddingTop: '15px' }}>
                       <button onClick={() => handleViewBalasan(item.id)} title="Lihat Surat Balasan" style={{ background: '#eff6ff', border: '1px solid #dbeafe', color: '#2563eb', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', transition: '0.2s' }}>
