@@ -98,7 +98,8 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
           dikirim: item.status_dikirim === 'Selesai',
           noResi: item.no_resi || '',
           diterima: item.status_diterima === 'Selesai',
-          ttSertifikat: item.status_tt_sertifikat === 'Selesai'
+          ttSertifikat: item.status_tt_sertifikat === 'Selesai',
+          created_at: item.pengajuan?.created_at || item.created_at || new Date().toISOString()
         };
       });
       setDataPemantauan(mappedData);
@@ -144,6 +145,23 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
     return () => window.removeEventListener('globalBackRequested', handleGlobalBack);
   }, [isInputModalOpen, viewPeserta]);
 
+  const [readPemantauan, setReadPemantauan] = useState(() => {
+    try {
+      const stored = localStorage.getItem('read_pemantauan_ids');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const handleMarkAsRead = (id) => {
+    if (!readPemantauan.includes(id)) {
+      const newRead = [...readPemantauan, id];
+      setReadPemantauan(newRead);
+      localStorage.setItem('read_pemantauan_ids', JSON.stringify(newRead));
+    }
+  };
+
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -171,7 +189,7 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
     if (filterBulan !== 'Semua') filtered = filtered.filter(item => item.hari1.split('-')[1] === filterBulan);
     if (filterTuk !== 'Semua') filtered = filtered.filter(item => item.tuk === filterTuk);
     if (filterPendanaan !== 'Semua') filtered = filtered.filter(item => item.pendanaan === filterPendanaan);
-    return filtered.sort((a, b) => new Date(b.hari1 || '1970-01-01') - new Date(a.hari1 || '1970-01-01'));
+    return filtered.sort((a, b) => new Date(b.created_at || b.hari1 || '1970-01-01') - new Date(a.created_at || a.hari1 || '1970-01-01'));
   }, [dataPemantauan, filterTahun, filterBulan, filterTuk, filterPendanaan]);
 
   const totalPages = Math.ceil(sortedDataPemantauan.length / itemsPerPage);
@@ -438,40 +456,49 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
                   e.preventDefault();
                   const { id, keyName, value, title } = inputModalData;
 
-                  if (keyName === 'dikirim') {
-                    // Klik "Di Kirim": simpan status dikirim + no_resi ke backend sekaligus
-                    try {
-                      const rolePath = isAdminView ? 'admin-lsp' : 'staf-lsp';
-                      await axios.patch(`${baseUrl}/${rolePath}/pemantauan/${id}/status`, {
-                        jenis_status: 'dikirim',
-                        status: 'Selesai',
-                        no_resi: value
-                      }, config);
-                      // Update state: kolom "Di Kirim" jadi true (Selesai) DAN kolom "No Resi" otomatis terisi
-                      setDataPemantauan(prev => prev.map(item => item.id === id ? { ...item, dikirim: true, noResi: value } : item));
-                      setIsInputModalOpen(false);
-                      showAlert('success', 'Berhasil Disimpan', `Status dikirim dan nomor resi berhasil disimpan.`);
-                    } catch (err) {
-                      console.error(err);
-                      showAlert('error', 'Gagal', err.response?.data?.message || 'Gagal menyimpan data.');
-                    }
-                  } else if (keyName === 'noResi') {
-                    // Edit resi: hanya update no_resi di backend, kolom "Di Kirim" tidak berubah
-                    try {
-                      const rolePath = isAdminView ? 'admin-lsp' : 'staf-lsp';
-                      await axios.post(`${baseUrl}/${rolePath}/pemantauan/${id}/resi`, { no_resi: value }, config);
-                      setDataPemantauan(prev => prev.map(item => item.id === id ? { ...item, noResi: value } : item));
-                      setIsInputModalOpen(false);
-                      showAlert('success', 'Berhasil Disimpan', `Nomor Resi berhasil diperbarui.`);
-                    } catch (err) {
-                      console.error(err);
-                      showAlert('error', 'Gagal', err.response?.data?.message || 'Gagal menyimpan Nomor Resi.');
-                    }
-                  } else {
-                    setDataPemantauan(prev => prev.map(item => item.id === id ? { ...item, [keyName]: value } : item));
-                    setIsInputModalOpen(false);
-                    showAlert('success', 'Berhasil Disimpan', `Data ${title} telah diperbarui di UI.`);
-                  }
+                  setAlertConfig({
+                    type: 'save',
+                    title: (keyName === 'noResi' || keyName === 'dikirim') ? 'Konfirmasi Simpan Resi' : `Konfirmasi Simpan ${title}`,
+                    text: (keyName === 'noResi' || keyName === 'dikirim') ? 'Apakah no resi sudah sesuai? Jika iya, resi akan disimpan ke sistem.' : `Pastikan data ${title} yang dimasukkan sudah benar. Simpan sekarang?`,
+                    onConfirm: async () => {
+                      setAlertConfig(null);
+                      if (keyName === 'dikirim') {
+                        // Klik "Di Kirim": simpan status dikirim + no_resi ke backend sekaligus
+                        try {
+                          const rolePath = isAdminView ? 'admin-lsp' : 'staf-lsp';
+                          await axios.patch(`${baseUrl}/${rolePath}/pemantauan/${id}/status`, {
+                            jenis_status: 'dikirim',
+                            status: 'Selesai',
+                            no_resi: value
+                          }, config);
+                          // Update state: kolom "Di Kirim" jadi true (Selesai) DAN kolom "No Resi" otomatis terisi
+                          setDataPemantauan(prev => prev.map(item => item.id === id ? { ...item, dikirim: true, noResi: value } : item));
+                          setIsInputModalOpen(false);
+                          showAlert('success', 'Berhasil Disimpan', `Status dikirim dan nomor resi berhasil disimpan.`);
+                        } catch (err) {
+                          console.error(err);
+                          showAlert('error', 'Gagal', err.response?.data?.message || 'Gagal menyimpan data.');
+                        }
+                      } else if (keyName === 'noResi') {
+                        // Edit resi: hanya update no_resi di backend, kolom "Di Kirim" tidak berubah
+                        try {
+                          const rolePath = isAdminView ? 'admin-lsp' : 'staf-lsp';
+                          await axios.post(`${baseUrl}/${rolePath}/pemantauan/${id}/resi`, { no_resi: value }, config);
+                          setDataPemantauan(prev => prev.map(item => item.id === id ? { ...item, noResi: value } : item));
+                          setIsInputModalOpen(false);
+                          showAlert('success', 'Berhasil Disimpan', `Nomor Resi berhasil diperbarui.`);
+                        } catch (err) {
+                          console.error(err);
+                          showAlert('error', 'Gagal', err.response?.data?.message || 'Gagal menyimpan Nomor Resi.');
+                        }
+                      } else {
+                        setDataPemantauan(prev => prev.map(item => item.id === id ? { ...item, [keyName]: value } : item));
+                        setIsInputModalOpen(false);
+                        showAlert('success', 'Berhasil Disimpan', `Data ${title} telah diperbarui di UI.`);
+                      }
+                    },
+                    onCancel: () => setAlertConfig(null)
+                  });
                 }}>
                   <div style={{ marginBottom: '20px' }}>
                     <label style={{display: 'block', fontWeight:'bold', fontSize:'0.85rem', color:'#475569', marginBottom: '8px'}}>
@@ -542,9 +569,15 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
                   </td>
                 </tr>
               ) : paginatedData.length > 0 ? (
-                paginatedData.map((item, index) => (
-                <tr key={item.id}>
-                  <td className="text-center" style={{ position: 'sticky', left: 0, backgroundColor: '#fff', zIndex: 1, fontWeight: 'bold' }}>{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                paginatedData.map((item, index) => {
+                  const isNew = (new Date() - new Date(item.created_at) < 3600000) && !readPemantauan.includes(item.id);
+                  
+                  return (
+                  <tr key={item.id} onClick={() => handleMarkAsRead(item.id)} style={{ cursor: 'pointer', transition: 'all 0.2s' }}>
+                    <td className="text-center" style={{ position: 'sticky', left: 0, backgroundColor: '#fff', zIndex: 1, fontWeight: 'bold' }}>
+                      {isNew && <div style={{ position: 'absolute', top: '15px', left: '10px', width: '8px', height: '8px', backgroundColor: '#ef4444', borderRadius: '50%', boxShadow: '0 0 5px rgba(239, 68, 68, 0.5)' }} title="Pemantauan Baru"></div>}
+                      {(currentPage - 1) * itemsPerPage + index + 1}
+                    </td>
                   <td className="text-center"><span className="badge info">{item.pendanaan}</span></td>
                   <td className="text-center">{formatTgl(item.hari1)}</td>
                   <td className="text-center">{formatTgl(item.hari2)}</td>
@@ -618,7 +651,9 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
                     );
                   })()}
                 </tr>
-                ))) : (
+                );
+              })
+              ) : (
                 <tr>
                   <td colSpan="29" style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
                     <i className="fas fa-filter" style={{ fontSize: '2rem', display: 'block', marginBottom: '10px', color: '#cbd5e1' }}></i>

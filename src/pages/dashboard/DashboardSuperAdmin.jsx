@@ -56,7 +56,9 @@ const DashboardSuperAdmin = () => {
       if (response.ok) {
         const data = await response.json();
         // Mengambil array data user dari paginasi Laravel
-        setUsers(data.users.data || []);
+        const dataArray = data.users.data || [];
+        dataArray.sort((a, b) => b.id - a.id);
+        setUsers(dataArray);
       }
     } catch (error) {
       console.error("Gagal mengambil data users:", error);

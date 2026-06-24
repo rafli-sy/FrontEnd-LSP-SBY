@@ -33,7 +33,9 @@ const DataTUK = () => {
     try {
       const statusParam = filterStatus === 'Semua' ? 'semua' : filterStatus.toLowerCase();
       const res = await axios.get(`${baseUrl}/master/jejaring?status=${statusParam}`, config);
-      setTukList(res.data.data || []);
+      const dataTuk = res.data.data || [];
+      dataTuk.sort((a, b) => b.id - a.id);
+      setTukList(dataTuk);
     } catch (error) {
       console.error("Gagal mengambil data TUK:", error);
       showAlert('error', 'Gagal', 'Gagal memuat data dari server.');

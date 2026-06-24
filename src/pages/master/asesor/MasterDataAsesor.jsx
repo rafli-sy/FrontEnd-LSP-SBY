@@ -63,6 +63,7 @@ const MasterDataAsesor = () => {
         status: item.user?.status || 'Non-aktif',
         masaBerlaku: item.masa_berlaku_sertifikat || null
       }));
+      mapped.sort((a, b) => b.id - a.id);
       setAsesorList(mapped);
     } catch (error) {
       console.error("Gagal mengambil data asesor:", error);

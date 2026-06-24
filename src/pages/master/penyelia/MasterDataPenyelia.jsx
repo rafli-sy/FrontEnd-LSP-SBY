@@ -32,7 +32,9 @@ const MasterDataPenyelia = () => {
     try {
       const statusParam = filterStatus === 'Semua' ? 'semua' : filterStatus.toLowerCase();
       const res = await axios.get(`${baseUrl}/admin-lsp/Penyilia?status=${statusParam}`, config);
-      setPenyeliaList(res.data.data || []);
+      const dataPenyelia = res.data.data || [];
+      dataPenyelia.sort((a, b) => b.id - a.id);
+      setPenyeliaList(dataPenyelia);
     } catch (error) {
       console.error("Gagal memuat data penyelia:", error);
     } finally {

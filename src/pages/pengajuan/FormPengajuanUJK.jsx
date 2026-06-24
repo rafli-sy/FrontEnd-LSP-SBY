@@ -100,7 +100,11 @@ const FormPengajuanUJK = () => {
 
       const data = await res.json();
       if (data.status === 'success') {
-        setUsulan(data.data);
+        const sortedData = (data.data || []).sort((a, b) => {
+          if (a.created_at && b.created_at) return new Date(b.created_at) - new Date(a.created_at);
+          return (b.id || 0) - (a.id || 0);
+        });
+        setUsulan(sortedData);
       }
     } catch (error) {
       console.error("Gagal memuat draft:", error);
@@ -120,7 +124,7 @@ const FormPengajuanUJK = () => {
     setSkemaUsulan(skemaUsulan.map(s => s.id === id ? { ...s, [fieldName]: file } : s));
   };
 
-  const handleAddSkema = () => setSkemaUsulan([...skemaUsulan, { ...initialSkema, id: Date.now() }]);
+  const handleAddSkema = () => setSkemaUsulan([...skemaUsulan, { ...initialSkema, id: Date.now(), isNew: true }]);
   const handleRemoveSkema = (id) => setSkemaUsulan(skemaUsulan.filter(s => s.id !== id));
 
   // --- POPUP KONFIRMASI UNTUK MEMBUKA EDIT ---
@@ -161,7 +165,8 @@ const FormPengajuanUJK = () => {
       tglSelesai: ds.tanggal_selesai || '',
       jumlahAsesi: ds.jumlah_peserta || 0,
       fileNominatif: null,
-      fileKurikulum: null
+      fileKurikulum: null,
+      isNew: false
     }));
     
     const initialSkemaData = mappedSkema.length > 0 ? mappedSkema : [{...initialSkema}];
@@ -511,22 +516,20 @@ const FormPengajuanUJK = () => {
 
                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
                           <div>
-                            <label style={labelStyle}>Kurikulum Program (PDF) {editingId ? '' : <span style={{color: '#ef4444'}}>*</span>}</label>
-                            <input type="file" accept=".pdf" style={{ ...inputStyle, padding: '8px', border: '1px dashed #cbd5e1' }} onChange={(e) => handleSkemaFileChange(skema.id, 'fileKurikulum', e.target.files[0])} required={!editingId}/>
+                            <label style={labelStyle}>Kurikulum Program (PDF) {(!editingId || skema.isNew) ? <span style={{color: '#ef4444'}}>*</span> : ''}</label>
+                            <input type="file" accept=".pdf" style={{ ...inputStyle, padding: '8px', border: '1px dashed #cbd5e1' }} onChange={(e) => handleSkemaFileChange(skema.id, 'fileKurikulum', e.target.files[0])} required={!editingId || skema.isNew}/>
                           </div>
                           <div>
-                            <label style={labelStyle}>Data Nominatif Asesi (Excel) {editingId ? '' : <span style={{color: '#ef4444'}}>*</span>}</label>
-                            <input type="file" accept=".xls, .xlsx, .csv" style={{ ...inputStyle, padding: '8px', border: '1px dashed #cbd5e1' }} onChange={(e) => handleSkemaFileChange(skema.id, 'fileNominatif', e.target.files[0])} required={!editingId}/>
+                            <label style={labelStyle}>Data Nominatif Asesi (Excel) {(!editingId || skema.isNew) ? <span style={{color: '#ef4444'}}>*</span> : ''}</label>
+                            <input type="file" accept=".xls, .xlsx, .csv" style={{ ...inputStyle, padding: '8px', border: '1px dashed #cbd5e1' }} onChange={(e) => handleSkemaFileChange(skema.id, 'fileNominatif', e.target.files[0])} required={!editingId || skema.isNew}/>
                           </div>
                        </div>
                     </div>
                   ))}
                   
-                  {!editingId && (
-                    <Button type="button" variant="dashed" size="lg" isFullWidth icon="plus-circle" onClick={handleAddSkema} style={{ borderStyle: 'dashed' }}>
-                      Tambah Skema Ujian Lainnya
-                    </Button>
-                  )}
+                  <Button type="button" variant="dashed" size="lg" isFullWidth icon="plus-circle" onClick={handleAddSkema} style={{ borderStyle: 'dashed' }}>
+                    Tambah Skema Ujian Lainnya
+                  </Button>
                 </div>
              </div>
              
