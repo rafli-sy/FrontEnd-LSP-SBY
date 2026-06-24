@@ -111,6 +111,29 @@ const SuratMenyurat = () => {
   const [uploadBaAsesor, setUploadBaAsesor] = useState({});
   const [sentBaAsesor, setSentBaAsesor] = useState({});
 
+  const [dragStates, setDragStates] = useState({});
+
+  const handleDragOver = (e, key) => {
+    e.preventDefault();
+    setDragStates(prev => ({ ...prev, [key]: true }));
+  };
+
+  const handleDragLeave = (e, key) => {
+    e.preventDefault();
+    setDragStates(prev => ({ ...prev, [key]: false }));
+  };
+
+  const handleDrop = (e, key, type, id) => {
+    e.preventDefault();
+    setDragStates(prev => ({ ...prev, [key]: false }));
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0];
+      if (type === 'balasan') setUploadBalasan(prev => ({ ...prev, [id]: file }));
+      else if (type === 'spt') setUploadSptAsesor(prev => ({ ...prev, [id]: file }));
+      else if (type === 'ba') setUploadBaAsesor(prev => ({ ...prev, [id]: file }));
+    }
+  };
+
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
@@ -849,12 +872,16 @@ const SuratMenyurat = () => {
                             </span>
                           )}
 
-                          <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: isBalasanUploaded ? '#f0fdf4' : '#eff6ff', border: isBalasanUploaded ? '1px solid #10b981' : '1px dashed #3b82f6', borderRadius: '8px', padding: '10px 16px', cursor: 'pointer', transition: '0.2s' }}>
-                            <i className={`fas fa-cloud-upload-alt ${isBalasanUploaded ? 'text-emerald-500' : 'text-blue'}`} style={{fontSize:'1.1rem'}}></i> 
-                            <span style={{fontSize: '0.85rem', fontWeight: '600', color: isBalasanUploaded ? '#10b981' : '#2563eb', maxWidth: '150px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace: 'nowrap'}}>
-                              {uploadBalasan[activeSurat.idUjk]?.name ? uploadBalasan[activeSurat.idUjk].name : 'Ganti/Upload File'}
+                          <label 
+                            onDragOver={(e) => handleDragOver(e, `balasan_${activeSurat.idUjk}`)}
+                            onDragLeave={(e) => handleDragLeave(e, `balasan_${activeSurat.idUjk}`)}
+                            onDrop={(e) => handleDrop(e, `balasan_${activeSurat.idUjk}`, 'balasan', activeSurat.idUjk)}
+                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: isBalasanUploaded ? '#f0fdf4' : dragStates[`balasan_${activeSurat.idUjk}`] ? '#d1fae5' : '#eff6ff', border: isBalasanUploaded || dragStates[`balasan_${activeSurat.idUjk}`] ? '2px dashed #10b981' : '1px dashed #3b82f6', borderRadius: '8px', padding: '10px 16px', cursor: 'pointer', transition: '0.2s', transform: dragStates[`balasan_${activeSurat.idUjk}`] ? 'scale(1.02)' : 'scale(1)' }}>
+                            <i className={`fas fa-cloud-upload-alt ${isBalasanUploaded || dragStates[`balasan_${activeSurat.idUjk}`] ? 'text-emerald-500' : 'text-blue'}`} style={{fontSize:'1.1rem'}}></i> 
+                            <span style={{fontSize: '0.85rem', fontWeight: '600', color: isBalasanUploaded || dragStates[`balasan_${activeSurat.idUjk}`] ? '#10b981' : '#2563eb', maxWidth: '150px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace: 'nowrap'}}>
+                              {dragStates[`balasan_${activeSurat.idUjk}`] ? 'Lepaskan File...' : uploadBalasan[activeSurat.idUjk]?.name ? uploadBalasan[activeSurat.idUjk].name : 'Ganti/Upload File'}
                             </span>
-                            <input type="file" style={{ display: 'none' }} accept=".pdf" onChange={(e) => setUploadBalasan(prev => ({ ...prev, [activeSurat.idUjk]: e.target.files[0] }))} />
+                            <input type="file" style={{ display: 'none' }} accept=".pdf" onChange={(e) => { if(e.target.files.length > 0) setUploadBalasan(prev => ({ ...prev, [activeSurat.idUjk]: e.target.files[0] })) }} />
                           </label>
                           
                           {uploadBalasan[activeSurat.idUjk] && (
@@ -953,13 +980,17 @@ const SuratMenyurat = () => {
                                   {(() => {
                                     const isSpt1Uploaded = cekDokumenDetail(skema, 'spt_asesor_1') || sentSptAsesor[`${skema.idSkema}_1`];
                                     return (
-                                      <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: isSpt1Uploaded ? '#f0fdf4' : '#eff6ff', border: isSpt1Uploaded ? '1px solid #10b981' : '1px dashed #3b82f6', borderRadius: '6px', padding: '8px', cursor: 'pointer', transition: 'all 0.2s ease' }}>
-                                        <i className={`fas fa-cloud-upload-alt ${isSpt1Uploaded ? 'text-emerald-500' : 'text-blue'}`} style={{ fontSize: '1.1rem' }}></i>
-                                        <span style={{ fontSize: '0.7rem', fontWeight: '600', color: isSpt1Uploaded ? '#10b981' : '#2563eb', maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                          {uploadSptAsesor[`${skema.idSkema}_1`]?.name ? uploadSptAsesor[`${skema.idSkema}_1`].name : 'Upload File'}
-                                        </span>
-                                        <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx" onChange={(e) => setUploadSptAsesor(prev => ({ ...prev, [`${skema.idSkema}_1`]: e.target.files[0] }))} />
-                                      </label>
+                                        <label 
+                                          onDragOver={(e) => handleDragOver(e, `spt1_${skema.idSkema}`)}
+                                          onDragLeave={(e) => handleDragLeave(e, `spt1_${skema.idSkema}`)}
+                                          onDrop={(e) => handleDrop(e, `spt1_${skema.idSkema}`, 'spt', `${skema.idSkema}_1`)}
+                                          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: isSpt1Uploaded ? '#f0fdf4' : dragStates[`spt1_${skema.idSkema}`] ? '#d1fae5' : '#eff6ff', border: isSpt1Uploaded || dragStates[`spt1_${skema.idSkema}`] ? '2px dashed #10b981' : '1px dashed #3b82f6', borderRadius: '6px', padding: '8px', cursor: 'pointer', transition: 'all 0.2s ease', transform: dragStates[`spt1_${skema.idSkema}`] ? 'scale(1.02)' : 'scale(1)' }}>
+                                          <i className={`fas fa-cloud-upload-alt ${isSpt1Uploaded || dragStates[`spt1_${skema.idSkema}`] ? 'text-emerald-500' : 'text-blue'}`} style={{ fontSize: '1.1rem' }}></i>
+                                          <span style={{ fontSize: '0.7rem', fontWeight: '600', color: isSpt1Uploaded || dragStates[`spt1_${skema.idSkema}`] ? '#10b981' : '#2563eb', maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                            {dragStates[`spt1_${skema.idSkema}`] ? 'Lepas...' : uploadSptAsesor[`${skema.idSkema}_1`]?.name ? uploadSptAsesor[`${skema.idSkema}_1`].name : 'Upload File'}
+                                          </span>
+                                          <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx" onChange={(e) => { if(e.target.files.length > 0) setUploadSptAsesor(prev => ({ ...prev, [`${skema.idSkema}_1`]: e.target.files[0] })) }} />
+                                        </label>
                                     );
                                   })()}
                                   {uploadSptAsesor[`${skema.idSkema}_1`] && !sentSptAsesor[`${skema.idSkema}_1`] && (
@@ -971,13 +1002,17 @@ const SuratMenyurat = () => {
                                   {(() => {
                                     const isBa1Uploaded = cekDokumenDetail(skema, 'berita_acara_1') || sentBaAsesor[`${skema.idSkema}_1`];
                                     return (
-                                      <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: isBa1Uploaded ? '#f0fdf4' : '#eff6ff', border: isBa1Uploaded ? '1px solid #10b981' : '1px dashed #3b82f6', borderRadius: '6px', padding: '8px', cursor: 'pointer', transition: 'all 0.2s ease' }}>
-                                        <i className={`fas fa-cloud-upload-alt ${isBa1Uploaded ? 'text-emerald-500' : 'text-blue'}`} style={{ fontSize: '1.1rem' }}></i>
-                                        <span style={{ fontSize: '0.7rem', fontWeight: '600', color: isBa1Uploaded ? '#10b981' : '#2563eb', maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                          {uploadBaAsesor[`${skema.idSkema}_1`]?.name ? uploadBaAsesor[`${skema.idSkema}_1`].name : 'Upload File'}
-                                        </span>
-                                        <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx" onChange={(e) => setUploadBaAsesor(prev => ({ ...prev, [`${skema.idSkema}_1`]: e.target.files[0] }))} />
-                                      </label>
+                                        <label 
+                                          onDragOver={(e) => handleDragOver(e, `ba1_${skema.idSkema}`)}
+                                          onDragLeave={(e) => handleDragLeave(e, `ba1_${skema.idSkema}`)}
+                                          onDrop={(e) => handleDrop(e, `ba1_${skema.idSkema}`, 'ba', `${skema.idSkema}_1`)}
+                                          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: isBa1Uploaded ? '#f0fdf4' : dragStates[`ba1_${skema.idSkema}`] ? '#d1fae5' : '#eff6ff', border: isBa1Uploaded || dragStates[`ba1_${skema.idSkema}`] ? '2px dashed #10b981' : '1px dashed #3b82f6', borderRadius: '6px', padding: '8px', cursor: 'pointer', transition: 'all 0.2s ease', transform: dragStates[`ba1_${skema.idSkema}`] ? 'scale(1.02)' : 'scale(1)' }}>
+                                          <i className={`fas fa-cloud-upload-alt ${isBa1Uploaded || dragStates[`ba1_${skema.idSkema}`] ? 'text-emerald-500' : 'text-blue'}`} style={{ fontSize: '1.1rem' }}></i>
+                                          <span style={{ fontSize: '0.7rem', fontWeight: '600', color: isBa1Uploaded || dragStates[`ba1_${skema.idSkema}`] ? '#10b981' : '#2563eb', maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                            {dragStates[`ba1_${skema.idSkema}`] ? 'Lepas...' : uploadBaAsesor[`${skema.idSkema}_1`]?.name ? uploadBaAsesor[`${skema.idSkema}_1`].name : 'Upload File'}
+                                          </span>
+                                          <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx" onChange={(e) => { if(e.target.files.length > 0) setUploadBaAsesor(prev => ({ ...prev, [`${skema.idSkema}_1`]: e.target.files[0] })) }} />
+                                        </label>
                                     );
                                   })()}
                                   {uploadBaAsesor[`${skema.idSkema}_1`] && !sentBaAsesor[`${skema.idSkema}_1`] && (
@@ -1000,13 +1035,17 @@ const SuratMenyurat = () => {
                                   {(() => {
                                     const isSpt2Uploaded = cekDokumenDetail(skema, 'spt_asesor_2') || sentSptAsesor[`${skema.idSkema}_2`];
                                     return (
-                                      <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: isSpt2Uploaded ? '#f0fdf4' : '#eff6ff', border: isSpt2Uploaded ? '1px solid #10b981' : '1px dashed #3b82f6', borderRadius: '6px', padding: '8px', cursor: 'pointer', transition: 'all 0.2s ease' }}>
-                                        <i className={`fas fa-cloud-upload-alt ${isSpt2Uploaded ? 'text-emerald-500' : 'text-blue'}`} style={{ fontSize: '1.1rem' }}></i>
-                                        <span style={{ fontSize: '0.7rem', fontWeight: '600', color: isSpt2Uploaded ? '#10b981' : '#2563eb', maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                          {uploadSptAsesor[`${skema.idSkema}_2`]?.name ? uploadSptAsesor[`${skema.idSkema}_2`].name : 'Upload File'}
-                                        </span>
-                                        <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx" onChange={(e) => setUploadSptAsesor(prev => ({ ...prev, [`${skema.idSkema}_2`]: e.target.files[0] }))} />
-                                      </label>
+                                        <label 
+                                          onDragOver={(e) => handleDragOver(e, `spt2_${skema.idSkema}`)}
+                                          onDragLeave={(e) => handleDragLeave(e, `spt2_${skema.idSkema}`)}
+                                          onDrop={(e) => handleDrop(e, `spt2_${skema.idSkema}`, 'spt', `${skema.idSkema}_2`)}
+                                          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: isSpt2Uploaded ? '#f0fdf4' : dragStates[`spt2_${skema.idSkema}`] ? '#d1fae5' : '#eff6ff', border: isSpt2Uploaded || dragStates[`spt2_${skema.idSkema}`] ? '2px dashed #10b981' : '1px dashed #3b82f6', borderRadius: '6px', padding: '8px', cursor: 'pointer', transition: 'all 0.2s ease', transform: dragStates[`spt2_${skema.idSkema}`] ? 'scale(1.02)' : 'scale(1)' }}>
+                                          <i className={`fas fa-cloud-upload-alt ${isSpt2Uploaded || dragStates[`spt2_${skema.idSkema}`] ? 'text-emerald-500' : 'text-blue'}`} style={{ fontSize: '1.1rem' }}></i>
+                                          <span style={{ fontSize: '0.7rem', fontWeight: '600', color: isSpt2Uploaded || dragStates[`spt2_${skema.idSkema}`] ? '#10b981' : '#2563eb', maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                            {dragStates[`spt2_${skema.idSkema}`] ? 'Lepas...' : uploadSptAsesor[`${skema.idSkema}_2`]?.name ? uploadSptAsesor[`${skema.idSkema}_2`].name : 'Upload File'}
+                                          </span>
+                                          <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx" onChange={(e) => { if(e.target.files.length > 0) setUploadSptAsesor(prev => ({ ...prev, [`${skema.idSkema}_2`]: e.target.files[0] })) }} />
+                                        </label>
                                     );
                                   })()}
                                   {uploadSptAsesor[`${skema.idSkema}_2`] && !sentSptAsesor[`${skema.idSkema}_2`] && (
@@ -1018,13 +1057,17 @@ const SuratMenyurat = () => {
                                   {(() => {
                                     const isBa2Uploaded = cekDokumenDetail(skema, 'berita_acara_2') || sentBaAsesor[`${skema.idSkema}_2`];
                                     return (
-                                      <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: isBa2Uploaded ? '#f0fdf4' : '#eff6ff', border: isBa2Uploaded ? '1px solid #10b981' : '1px dashed #3b82f6', borderRadius: '6px', padding: '8px', cursor: 'pointer', transition: 'all 0.2s ease' }}>
-                                        <i className={`fas fa-cloud-upload-alt ${isBa2Uploaded ? 'text-emerald-500' : 'text-blue'}`} style={{ fontSize: '1.1rem' }}></i>
-                                        <span style={{ fontSize: '0.7rem', fontWeight: '600', color: isBa2Uploaded ? '#10b981' : '#2563eb', maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                          {uploadBaAsesor[`${skema.idSkema}_2`]?.name ? uploadBaAsesor[`${skema.idSkema}_2`].name : 'Upload File'}
-                                        </span>
-                                        <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx" onChange={(e) => setUploadBaAsesor(prev => ({ ...prev, [`${skema.idSkema}_2`]: e.target.files[0] }))} />
-                                      </label>
+                                        <label 
+                                          onDragOver={(e) => handleDragOver(e, `ba2_${skema.idSkema}`)}
+                                          onDragLeave={(e) => handleDragLeave(e, `ba2_${skema.idSkema}`)}
+                                          onDrop={(e) => handleDrop(e, `ba2_${skema.idSkema}`, 'ba', `${skema.idSkema}_2`)}
+                                          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: isBa2Uploaded ? '#f0fdf4' : dragStates[`ba2_${skema.idSkema}`] ? '#d1fae5' : '#eff6ff', border: isBa2Uploaded || dragStates[`ba2_${skema.idSkema}`] ? '2px dashed #10b981' : '1px dashed #3b82f6', borderRadius: '6px', padding: '8px', cursor: 'pointer', transition: 'all 0.2s ease', transform: dragStates[`ba2_${skema.idSkema}`] ? 'scale(1.02)' : 'scale(1)' }}>
+                                          <i className={`fas fa-cloud-upload-alt ${isBa2Uploaded || dragStates[`ba2_${skema.idSkema}`] ? 'text-emerald-500' : 'text-blue'}`} style={{ fontSize: '1.1rem' }}></i>
+                                          <span style={{ fontSize: '0.7rem', fontWeight: '600', color: isBa2Uploaded || dragStates[`ba2_${skema.idSkema}`] ? '#10b981' : '#2563eb', maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                            {dragStates[`ba2_${skema.idSkema}`] ? 'Lepas...' : uploadBaAsesor[`${skema.idSkema}_2`]?.name ? uploadBaAsesor[`${skema.idSkema}_2`].name : 'Upload File'}
+                                          </span>
+                                          <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx" onChange={(e) => { if(e.target.files.length > 0) setUploadBaAsesor(prev => ({ ...prev, [`${skema.idSkema}_2`]: e.target.files[0] })) }} />
+                                        </label>
                                     );
                                   })()}
                                   {uploadBaAsesor[`${skema.idSkema}_2`] && !sentBaAsesor[`${skema.idSkema}_2`] && (

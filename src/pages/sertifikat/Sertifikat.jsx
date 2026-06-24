@@ -21,7 +21,11 @@ const Sertifikat = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [alertConfig, setAlertConfig] = useState(null);
 
-  // State Live Search Peserta
+  // State Live Search Peserta & Upload Excel
+  const [activeTab, setActiveTab] = useState('manual'); // 'manual' or 'excel'
+  const [excelFile, setExcelFile] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
+
   const [formData, setFormData] = useState(INITIAL_FORM);
   const [searchPesertaKeyword, setSearchPesertaKeyword] = useState('');
   const [pesertaSuggestions, setPesertaSuggestions] = useState([]);
@@ -34,22 +38,22 @@ const Sertifikat = () => {
   // ─── CONFIG API UTAMA ────────────────────────────────────────────────────────
   const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://untracked-exponent-oboe.ngrok-free.dev';
   const token = sessionStorage.getItem('auth_token') || localStorage.getItem('access_token');
-  
-  const config = useMemo(() => ({ 
-    headers: { 
+
+  const config = useMemo(() => ({
+    headers: {
       'Authorization': `Bearer ${token}`,
       'Accept': 'application/json',
-      'ngrok-skip-browser-warning': 'true' 
-    } 
+      'ngrok-skip-browser-warning': 'true'
+    }
   }), [token]);
 
   const showAlert = (type, title, text, action = null) => {
-    setAlertConfig({ 
-      type, 
-      title, 
-      text, 
-      onConfirm: () => { if (action) action(); setAlertConfig(null); }, 
-      onCancel: () => setAlertConfig(null) 
+    setAlertConfig({
+      type,
+      title,
+      text,
+      onConfirm: () => { if (action) action(); setAlertConfig(null); },
+      onCancel: () => setAlertConfig(null)
     });
   };
 
@@ -85,10 +89,12 @@ const Sertifikat = () => {
     setIsLoading(true);
     try {
       const response = await axios.get(`${baseUrl}/api/admin-lsp/list-sertifikat`, config);
-      setData(response.data?.data || []);
+      const fetchedData = response.data?.data || [];
+      fetchedData.sort((a, b) => b.id - a.id);
+      setData(fetchedData);
     } catch (error) {
       console.error('Error fetching sertifikat:', error);
-      setData([]); 
+      setData([]);
     } finally {
       setIsLoading(false);
     }
@@ -101,7 +107,7 @@ const Sertifikat = () => {
   // ─── LIVE SEARCH PESERTA KE BACKEND ─────────────────────────────────────────
   const handleSearchPeserta = async (keyword) => {
     setSearchPesertaKeyword(keyword);
-    
+
     if (selectedPesertaData) {
       setFormData({ ...formData, peserta_pengajuan_ujk_id: '' });
       setSelectedPesertaData(null);
@@ -134,6 +140,67 @@ const Sertifikat = () => {
     setSearchPesertaKeyword('');
     setPesertaSuggestions([]);
     setSelectedPesertaData(null);
+    setExcelFile(null);
+    setIsDragging(false);
+    setActiveTab('manual');
+  };
+
+  // ─── DRAG AND DROP LOGIC ───────────────────────────────────────────────────
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0];
+      if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+        setExcelFile(file);
+      } else {
+        showAlert('error', 'Format Tidak Sesuai', 'Harap unggah file dengan format .xlsx atau .xls');
+      }
+    }
+  };
+
+  const handleExcelChange = (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setExcelFile(e.target.files[0]);
+    }
+  };
+
+  // ─── SUBMIT EXCEL KE DATABASE ──────────────────────────────────────────────
+  const handleUploadExcel = async (e) => {
+    e.preventDefault();
+    if (!excelFile) {
+      showAlert('warning', 'Peringatan', 'Pilih file Excel terlebih dahulu.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    const formDataObj = new FormData();
+    formDataObj.append('file_excel', excelFile); // Default key name, adjust as needed
+
+    try {
+      const response = await axios.post(`${baseUrl}/api/admin-lsp/import-sertifikat-excel`, formDataObj, {
+        headers: { ...config.headers, 'Content-Type': 'multipart/form-data' }
+      });
+      showAlert('success', 'Berhasil', response.data?.message || 'Data sertifikat lama berhasil diunggah!');
+      fetchData();
+      closeModal();
+    } catch (error) {
+      const errData = error.response?.data;
+      showAlert('error', 'Gagal Diunggah', errData?.message || 'Terjadi kesalahan sistem saat menghubungi backend.');
+      console.error("Detail Error Upload Excel:", errData);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // ─── SUBMIT DATA ASLI KE DATABASE (REVISI ERROR HANDLING) ────────────────────
@@ -180,10 +247,10 @@ const Sertifikat = () => {
 
   const badgeClass = (status) => {
     switch (status) {
-      case 'Aktif':       return 'badge success';
+      case 'Aktif': return 'badge success';
       case 'Tidak Aktif': return 'badge warning';
       case 'Kedaluwarsa': return 'badge danger';
-      default:            return 'badge success';
+      default: return 'badge success';
     }
   };
 
@@ -192,7 +259,7 @@ const Sertifikat = () => {
 
   return (
     <div className="dashboard-content fade-in-content" style={{ position: 'relative', minHeight: '100vh', backgroundColor: '#f4f7fb', padding: '20px' }}>
-      
+
       {alertConfig && <AlertPopup type={alertConfig.type} title={alertConfig.title} text={alertConfig.text} onConfirm={alertConfig.onConfirm} onCancel={alertConfig.onCancel} />}
 
       <div className="dashboard-header" style={{ marginBottom: '25px' }}>
@@ -201,7 +268,7 @@ const Sertifikat = () => {
       </div>
 
       <div className="dashboard-card" style={{ padding: '0', overflow: 'hidden', backgroundColor: '#fff', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-        
+
         <div style={{ padding: '20px', borderBottom: '1px solid #e2e8f0', backgroundColor: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
           <div style={{ flex: '1', minWidth: '250px', position: 'relative', maxWidth: '400px' }}>
             <i className="fas fa-search" style={{ position: 'absolute', left: '12px', top: '12px', color: '#94a3b8' }}></i>
@@ -214,7 +281,7 @@ const Sertifikat = () => {
           <table className="admin-table">
             <thead>
               <tr>
-                <th style={{ width: '5%',  textAlign: 'center' }}>No.</th>
+                <th style={{ width: '5%', textAlign: 'center' }}>No.</th>
                 <th style={{ width: '25%' }}>No. Dokumen</th>
                 <th style={{ width: '25%' }}>Nama Peserta</th>
                 <th style={{ width: '15%', textAlign: 'center' }}>Tgl. Penerbitan</th>
@@ -261,101 +328,170 @@ const Sertifikat = () => {
       {showModal && (
         <div className="modal-overlay" style={{ zIndex: 9999 }}>
           <div className="modal-content" style={{ width: '100%', maxWidth: '550px', backgroundColor: '#ffffff', borderRadius: '12px', padding: '0' }}>
-            
-            <div className="modal-header" style={{ padding: '20px', borderBottom: '1px solid #e2e8f0', backgroundColor: '#f8fafc', borderRadius: '12px 12px 0 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, color: '#0f172a', fontSize: '1.15rem' }}><i className="fas fa-plus-circle" style={{ marginRight: '8px', color: '#3b82f6' }}></i>Tambah Sertifikat Baru</h3>
-              <button onClick={closeModal} disabled={isSubmitting} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#94a3b8' }}><i className="fas fa-times"></i></button>
+
+            <div className="modal-header" style={{ padding: '0', borderBottom: '1px solid #e2e8f0', backgroundColor: '#f8fafc', borderRadius: '12px 12px 0 0', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h3 style={{ margin: 0, color: '#0f172a', fontSize: '1.15rem' }}><i className="fas fa-plus-circle" style={{ marginRight: '8px', color: '#3b82f6' }}></i>Tambah Sertifikat</h3>
+                <button onClick={closeModal} disabled={isSubmitting} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#94a3b8' }}><i className="fas fa-times"></i></button>
+              </div>
+              <div style={{ display: 'flex', width: '100%', borderTop: '1px solid #e2e8f0' }}>
+                <button
+                  onClick={() => setActiveTab('manual')}
+                  style={{ flex: 1, padding: '12px', background: 'none', border: 'none', borderBottom: activeTab === 'manual' ? '3px solid #3b82f6' : '3px solid transparent', color: activeTab === 'manual' ? '#3b82f6' : '#64748b', fontWeight: activeTab === 'manual' ? 'bold' : 'normal', cursor: 'pointer', transition: '0.2s' }}
+                >
+                  <i className="fas fa-keyboard" style={{ marginRight: '6px' }}></i> Input Sertifikat Baru
+                </button>
+                <button
+                  onClick={() => setActiveTab('excel')}
+                  style={{ flex: 1, padding: '12px', background: 'none', border: 'none', borderBottom: activeTab === 'excel' ? '3px solid #10b981' : '3px solid transparent', color: activeTab === 'excel' ? '#10b981' : '#64748b', fontWeight: activeTab === 'excel' ? 'bold' : 'normal', cursor: 'pointer', transition: '0.2s' }}
+                >
+                  <i className="fas fa-file-excel" style={{ marginRight: '6px' }}></i> Upload Sertifikat Lama
+                </button>
+              </div>
             </div>
 
-            <form onSubmit={handleSubmit}>
-              <div className="modal-body" style={{ padding: '20px' }}>
+            {activeTab === 'manual' ? (
+              <form onSubmit={handleSubmit}>
+                <div className="modal-body" style={{ padding: '20px' }}>
 
-                <div style={{ backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '10px 14px', marginBottom: '18px', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-                  <i className="fas fa-info-circle" style={{ color: '#3b82f6', marginTop: '2px', flexShrink: 0 }}></i>
-                  <span style={{ fontSize: '0.82rem', color: '#1e40af', lineHeight: '1.5' }}>Sertifikat hanya dapat dibuat jika peserta memiliki status keputusan uji <strong>Kompeten</strong> di database.</span>
+                  <div style={{ backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '10px 14px', marginBottom: '18px', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                    <i className="fas fa-info-circle" style={{ color: '#3b82f6', marginTop: '2px', flexShrink: 0 }}></i>
+                    <span style={{ fontSize: '0.82rem', color: '#1e40af', lineHeight: '1.5' }}>Sertifikat hanya dapat dibuat jika peserta memiliki status keputusan uji <strong>Kompeten</strong> di database.</span>
+                  </div>
+
+                  {/* 1. Live Search Input Peserta */}
+                  <div style={{ marginBottom: '15px', position: 'relative' }}>
+                    <label style={labelStyle}>Cari Peserta UJK (Nama / NIK) <span style={{ color: 'red' }}>*</span></label>
+                    <input
+                      type="text"
+                      placeholder="Ketik Nama atau NIK Peserta..."
+                      style={inputStyle}
+                      value={searchPesertaKeyword}
+                      onChange={(e) => handleSearchPeserta(e.target.value)}
+                      required
+                    />
+
+                    {/* Dropdown Hasil Pencarian DB */}
+                    {pesertaSuggestions.length > 0 && (
+                      <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: '#fff', border: '1px solid #cbd5e1', borderRadius: '6px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', zIndex: 10, maxHeight: '200px', overflowY: 'auto', marginTop: '4px' }}>
+                        {pesertaSuggestions.map((peserta) => (
+                          <div
+                            key={peserta.id}
+                            onClick={() => handleSelectPeserta(peserta)}
+                            style={{ padding: '10px 12px', cursor: 'pointer', borderBottom: '1px solid #f1f5f9', fontSize: '0.88rem' }}
+                            onMouseEnter={(e) => e.target.style.backgroundColor = '#f8fafc'}
+                            onMouseLeave={(e) => e.target.style.backgroundColor = '#fff'}
+                          >
+                            <strong>{peserta.namaPeserta}</strong> <span style={{ color: '#64748b' }}>(NIK: {peserta.nik})</span>
+                            <div style={{ fontSize: '0.75rem', color: '#3b82f6' }}>Skema: {peserta.detailPengajuan?.skema?.namaSkema || '-'}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {selectedPesertaData && (
+                      <div style={{ marginTop: '6px', fontSize: '0.8rem', color: '#16a34a', fontWeight: '500' }}>
+                        <i className="fas fa-check-circle" style={{ marginRight: '4px' }}></i> Peserta Terpilih Terkunci.
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 2. Nomor Sertifikat & Registrasi */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+                    <div>
+                      <label style={labelStyle}>Nomor Sertifikat <span style={{ color: 'red' }}>*</span></label>
+                      <input type="text" placeholder="Masukkan No. Sertifikat" style={inputStyle} value={formData.no_sertifikat} onChange={(e) => setFormData({ ...formData, no_sertifikat: e.target.value })} required />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Nomor Registrasi <span style={{ color: 'red' }}>*</span></label>
+                      <input type="text" placeholder="Masukkan No. Registrasi" style={inputStyle} value={formData.no_registrasi} onChange={(e) => setFormData({ ...formData, no_registrasi: e.target.value })} required />
+                    </div>
+                  </div>
+
+                  {/* 3. Tanggal Penerbitan & Masa Berlaku */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+                    <div>
+                      <label style={labelStyle}>Tanggal Penerbitan <span style={{ color: 'red' }}>*</span></label>
+                      <input type="date" style={inputStyle} value={formData.tanggal_penerbitan} onChange={(e) => setFormData({ ...formData, tanggal_penerbitan: e.target.value })} required />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Masa Berlaku <span style={{ color: 'red' }}>*</span></label>
+                      <input type="date" style={inputStyle} value={formData.masa_berlaku} min={formData.tanggal_penerbitan || undefined} onChange={(e) => setFormData({ ...formData, masa_berlaku: e.target.value })} required />
+                    </div>
+                  </div>
+
+                  {/* 4. Tampilan Status Otomatis */}
+                  <div style={{ marginBottom: '5px' }}>
+                    <label style={labelStyle}>Status Sertifikat (Otomatis)</label>
+                    <div style={{ padding: '10px 12px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span className={badgeClass(formData.status)}>{formData.status}</span>
+                      <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                        {formData.status === 'Kedaluwarsa' && '• Melampaui batas masa berlaku.'}
+                        {formData.status === 'Tidak Aktif' && '• Belum memasuki tanggal terbit resmi.'}
+                        {formData.status === 'Aktif' && '• Sertifikat sah dan sedang berjalan.'}
+                      </span>
+                    </div>
+                  </div>
+
                 </div>
 
-                {/* 1. Live Search Input Peserta */}
-                <div style={{ marginBottom: '15px', position: 'relative' }}>
-                  <label style={labelStyle}>Cari Peserta UJK (Nama / NIK) <span style={{ color: 'red' }}>*</span></label>
-                  <input 
-                    type="text" 
-                    placeholder="Ketik Nama atau NIK Peserta..." 
-                    style={inputStyle}
-                    value={searchPesertaKeyword}
-                    onChange={(e) => handleSearchPeserta(e.target.value)}
-                    required
-                  />
-                  
-                  {/* Dropdown Hasil Pencarian DB */}
-                  {pesertaSuggestions.length > 0 && (
-                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: '#fff', border: '1px solid #cbd5e1', borderRadius: '6px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', zIndex: 10, maxHeight: '200px', overflowY: 'auto', marginTop: '4px' }}>
-                      {pesertaSuggestions.map((peserta) => (
-                        <div 
-                          key={peserta.id}
-                          onClick={() => handleSelectPeserta(peserta)}
-                          style={{ padding: '10px 12px', cursor: 'pointer', borderBottom: '1px solid #f1f5f9', fontSize: '0.88rem' }}
-                          onMouseEnter={(e) => e.target.style.backgroundColor = '#f8fafc'}
-                          onMouseLeave={(e) => e.target.style.backgroundColor = '#fff'}
-                        >
-                          <strong>{peserta.namaPeserta}</strong> <span style={{ color: '#64748b' }}>(NIK: {peserta.nik})</span>
-                          <div style={{ fontSize: '0.75rem', color: '#3b82f6' }}>Skema: {peserta.detailPengajuan?.skema?.namaSkema || '-'}</div>
+                <div className="modal-footer" style={{ padding: '15px 20px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', gap: '10px', backgroundColor: '#f8fafc', borderRadius: '0 0 12px 12px' }}>
+                  <Button variant="secondary" onClick={closeModal} disabled={isSubmitting}>Batal</Button>
+                  <Button type="submit" variant="primary" icon={isSubmitting ? 'spinner' : 'save'} disabled={isSubmitting || !formData.peserta_pengajuan_ujk_id}>{isSubmitting ? 'Menyimpan...' : 'Simpan Sertifikat'}</Button>
+                </div>
+              </form>
+            ) : (
+              <form onSubmit={handleUploadExcel}>
+                <div className="modal-body" style={{ padding: '20px' }}>
+                  <div style={{ backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '10px 14px', marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                    <i className="fas fa-lightbulb" style={{ color: '#16a34a', marginTop: '2px', flexShrink: 0 }}></i>
+                    <span style={{ fontSize: '0.82rem', color: '#166534', lineHeight: '1.5' }}>Gunakan fitur ini untuk melakukan mass-upload data sertifikat lama secara sekaligus. Pastikan file menggunakan format <strong>.xlsx</strong>.</span>
+                  </div>
+
+                  <label style={{ ...labelStyle, marginBottom: '10px' }}>Upload File Excel (.xlsx)</label>
+
+                  <label
+                    className={`drag-drop-zone ${isDragging ? 'active' : ''}`}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    style={{
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                      padding: '40px 20px', borderRadius: '12px', minHeight: '200px', textAlign: 'center', position: 'relative'
+                    }}
+                  >
+                    <input
+                      type="file"
+                      accept=".xlsx, .xls"
+                      onChange={handleExcelChange}
+                      style={{ position: 'absolute', width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }}
+                    />
+
+                    {excelFile ? (
+                      <>
+                        <i className="fas fa-file-excel" style={{ fontSize: '3rem', color: '#10b981', marginBottom: '15px' }}></i>
+                        <h4 style={{ margin: '0 0 5px 0', color: '#0f172a', fontSize: '1.1rem' }}>{excelFile.name}</h4>
+                        <span style={{ fontSize: '0.85rem', color: '#64748b' }}>{(excelFile.size / 1024).toFixed(2)} KB</span>
+                        <div style={{ marginTop: '15px', color: '#3b82f6', fontSize: '0.85rem', fontWeight: 'bold' }}>Ganti File</div>
+                      </>
+                    ) : (
+                      <>
+                        <div style={{ width: '70px', height: '70px', borderRadius: '50%', backgroundColor: isDragging ? '#d1fae5' : '#e0e7ff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '15px', transition: 'all 0.3s' }}>
+                          <i className={`fas fa-cloud-upload-alt ${isDragging ? 'text-emerald-500' : 'text-indigo-500'}`} style={{ fontSize: '2rem' }}></i>
                         </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {selectedPesertaData && (
-                    <div style={{ marginTop: '6px', fontSize: '0.8rem', color: '#16a34a', fontWeight: '500' }}>
-                      <i className="fas fa-check-circle" style={{ marginRight: '4px' }}></i> Peserta Terpilih Terkunci.
-                    </div>
-                  )}
+                        <h4 style={{ margin: '0 0 8px 0', color: '#1e293b', fontSize: '1.1rem' }}>Drag & Drop file Excel di sini</h4>
+                        <span style={{ fontSize: '0.85rem', color: '#64748b' }}>atau klik untuk memilih file manual</span>
+                      </>
+                    )}
+                  </label>
                 </div>
 
-                {/* 2. Nomor Sertifikat & Registrasi */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
-                  <div>
-                    <label style={labelStyle}>Nomor Sertifikat <span style={{ color: 'red' }}>*</span></label>
-                    <input type="text" placeholder="Masukkan No. Sertifikat" style={inputStyle} value={formData.no_sertifikat} onChange={(e) => setFormData({ ...formData, no_sertifikat: e.target.value })} required />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Nomor Registrasi <span style={{ color: 'red' }}>*</span></label>
-                    <input type="text" placeholder="Masukkan No. Registrasi" style={inputStyle} value={formData.no_registrasi} onChange={(e) => setFormData({ ...formData, no_registrasi: e.target.value })} required />
-                  </div>
+                <div className="modal-footer" style={{ padding: '15px 20px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', gap: '10px', backgroundColor: '#f8fafc', borderRadius: '0 0 12px 12px' }}>
+                  <Button variant="secondary" onClick={closeModal} disabled={isSubmitting}>Batal</Button>
+                  <Button type="submit" variant="success" icon={isSubmitting ? 'spinner' : 'upload'} disabled={isSubmitting || !excelFile}>{isSubmitting ? 'Mengunggah...' : 'Upload Excel'}</Button>
                 </div>
-
-                {/* 3. Tanggal Penerbitan & Masa Berlaku */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
-                  <div>
-                    <label style={labelStyle}>Tanggal Penerbitan <span style={{ color: 'red' }}>*</span></label>
-                    <input type="date" style={inputStyle} value={formData.tanggal_penerbitan} onChange={(e) => setFormData({ ...formData, tanggal_penerbitan: e.target.value })} required />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Masa Berlaku <span style={{ color: 'red' }}>*</span></label>
-                    <input type="date" style={inputStyle} value={formData.masa_berlaku} min={formData.tanggal_penerbitan || undefined} onChange={(e) => setFormData({ ...formData, masa_berlaku: e.target.value })} required />
-                  </div>
-                </div>
-
-                {/* 4. Tampilan Status Otomatis */}
-                <div style={{ marginBottom: '5px' }}>
-                  <label style={labelStyle}>Status Sertifikat (Otomatis)</label>
-                  <div style={{ padding: '10px 12px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span className={badgeClass(formData.status)}>{formData.status}</span>
-                    <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
-                      {formData.status === 'Kedaluwarsa' && '• Melampaui batas masa berlaku.'}
-                      {formData.status === 'Tidak Aktif' && '• Belum memasuki tanggal terbit resmi.'}
-                      {formData.status === 'Aktif' && '• Sertifikat sah dan sedang berjalan.'}
-                    </span>
-                  </div>
-                </div>
-
-              </div>
-
-              <div className="modal-footer" style={{ padding: '15px 20px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', gap: '10px', backgroundColor: '#f8fafc', borderRadius: '0 0 12px 12px' }}>
-                <Button variant="secondary" onClick={closeModal} disabled={isSubmitting}>Batal</Button>
-                <Button type="submit" variant="primary" icon={isSubmitting ? 'spinner' : 'save'} disabled={isSubmitting || !formData.peserta_pengajuan_ujk_id}>{isSubmitting ? 'Menyimpan...' : 'Simpan Sertifikat'}</Button>
-              </div>
-            </form>
+              </form>
+            )}
           </div>
         </div>
       )}

@@ -35,7 +35,9 @@ const MasterDataSkema = () => {
     try {
       const statusParam = filterStatus === 'Semua' ? 'semua' : filterStatus.toLowerCase();
       const res = await axios.get(`${baseUrl}/master/skema?status=${statusParam}`, config);
-      setSkemaList(res.data.data || []);
+      const dataSkema = res.data.data || [];
+      dataSkema.sort((a, b) => b.id - a.id);
+      setSkemaList(dataSkema);
       const resBidang = await axios.get(`${baseUrl}/master/bidang`, config);
       setListBidang(resBidang.data.data || []);
     } catch (error) {
