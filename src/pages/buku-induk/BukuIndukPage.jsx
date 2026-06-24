@@ -92,11 +92,8 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
           spt: !!jadwal,
           administrasi: false,
           administrasiPleno: false,
-          pelaksanaanStatus: item.status_pelaksanaan === 'Selesai',
-          pembayaran: item.status_pembayaran === 'Selesai',
           tglPleno: item.tanggal_pleno || '',
           noPleno: item.no_pleno || '',
-          draft: item.status_draft === 'Selesai',
           cetak: item.status_cetak === 'Selesai',
           dikirim: item.status_dikirim === 'Selesai',
           noResi: item.no_resi || '',
@@ -189,21 +186,24 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
   };
 
   const handleProgressClick = (id, keyName, title) => {
-    if (['noResi'].includes(keyName)) {
-      setInputModalData({ id, keyName, title, value: '', type: 'text' });
-      setIsInputModalOpen(true);
-      return;
-    }
-
     const currentItem = dataPemantauan.find(x => x.id === id);
     const currentStatus = currentItem ? currentItem[keyName] : false;
     const newStatus = !currentStatus;
     const stringStatusLabel = newStatus ? 'Selesai' : 'Belum Selesai';
 
+    if (keyName === 'dikirim' && newStatus) {
+      setInputModalData({ id, keyName, title: 'Input No Resi Pengiriman', value: currentItem?.noResi || '', type: 'text' });
+      setIsInputModalOpen(true);
+      return;
+    }
+
+    if (keyName === 'noResi') {
+      setInputModalData({ id, keyName, title: 'Ubah No Resi', value: currentItem?.noResi || '', type: 'text' });
+      setIsInputModalOpen(true);
+      return;
+    }
+
     const mapJenisStatus = {
-      pelaksanaanStatus: 'pelaksanaan',
-      pembayaran: 'pembayaran',
-      draft: 'draft',
       cetak: 'cetak',
       dikirim: 'dikirim',
       diterima: 'diterima',
@@ -224,7 +224,7 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
             status: stringStatusLabel
           }, config);
 
-          setDataPemantauan(prev => prev.map(item => item.id === id ? { ...item, [keyName]: newStatus } : item));
+          setDataPemantauan(prev => prev.map(item => item.id === id ? { ...item, [keyName]: newStatus, ...(keyName==='dikirim' && !newStatus ? {noResi:''} : {}) } : item));
           showAlert('success', 'Status Diperbarui', `Tahapan ${title} telah diperbarui di sistem.`);
         } catch (error) {
           console.error(error);
@@ -235,9 +235,55 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
     });
   };
 
+  const handleModalSave = async () => {
+    if (!inputModalData.value.trim()) {
+      showAlert('error', 'Gagal', `${inputModalData.title} tidak boleh kosong!`);
+      return;
+    }
+    setIsInputModalOpen(false);
+    try {
+      const rolePath = isAdminView ? 'admin-lsp' : 'staf-lsp';
+      let payload = { 
+          jenis_status: inputModalData.keyName, 
+          status: 'Selesai', 
+          no_resi: inputModalData.value 
+      };
+      await axios.patch(`${baseUrl}/${rolePath}/pemantauan/${inputModalData.id}/status`, payload, config);
+
+      // Update state: dikirim jadi true DAN noResi otomatis terisi
+      setDataPemantauan(prev => prev.map(item => item.id === inputModalData.id ? { 
+          ...item, 
+          noResi: inputModalData.value,
+          dikirim: true
+      } : item));
+      showAlert('success', 'Berhasil', `${inputModalData.title} berhasil disimpan.`);
+    } catch (error) {
+      console.error(error);
+      showAlert('error', 'Gagal', error.response?.data?.message || 'Terjadi kesalahan saat menyimpan data.');
+    }
+  };
+
   const renderProgressButton = (status, id, keyName, title) => {
     if (typeof status === 'string') {
-      if (status !== '') return <span style={{ fontWeight: 700, color: '#0f172a', whiteSpace: 'nowrap' }}>{keyName === 'tglPleno' ? formatTgl(status) : status}</span>;
+      if (status !== '') {
+        if (keyName === 'noResi') {
+          return (
+            <span 
+              onClick={() => handleProgressClick(id, keyName, title)} 
+              style={{ fontWeight: 700, color: '#2563eb', whiteSpace: 'nowrap', cursor: 'pointer', textDecoration: 'underline' }}
+              title="Klik untuk mengubah resi"
+            >
+              {status}
+            </span>
+          );
+        }
+        return <span style={{ fontWeight: 700, color: '#0f172a', whiteSpace: 'nowrap' }}>{keyName === 'tglPleno' ? formatTgl(status) : status}</span>;
+      }
+
+      // Kolom noResi: tampilkan strip jika belum ada resi (otomatis terisi saat klik Di Kirim)
+      if (keyName === 'noResi') {
+        return <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>-</span>;
+      }
       
       if (keyName === 'tglPleno' || keyName === 'noPleno') {
         return (
@@ -392,14 +438,31 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
                   e.preventDefault();
                   const { id, keyName, value, title } = inputModalData;
 
-                  if (keyName === 'noResi') {
+                  if (keyName === 'dikirim') {
+                    // Klik "Di Kirim": simpan status dikirim + no_resi ke backend sekaligus
+                    try {
+                      const rolePath = isAdminView ? 'admin-lsp' : 'staf-lsp';
+                      await axios.patch(`${baseUrl}/${rolePath}/pemantauan/${id}/status`, {
+                        jenis_status: 'dikirim',
+                        status: 'Selesai',
+                        no_resi: value
+                      }, config);
+                      // Update state: kolom "Di Kirim" jadi true (Selesai) DAN kolom "No Resi" otomatis terisi
+                      setDataPemantauan(prev => prev.map(item => item.id === id ? { ...item, dikirim: true, noResi: value } : item));
+                      setIsInputModalOpen(false);
+                      showAlert('success', 'Berhasil Disimpan', `Status dikirim dan nomor resi berhasil disimpan.`);
+                    } catch (err) {
+                      console.error(err);
+                      showAlert('error', 'Gagal', err.response?.data?.message || 'Gagal menyimpan data.');
+                    }
+                  } else if (keyName === 'noResi') {
+                    // Edit resi: hanya update no_resi di backend, kolom "Di Kirim" tidak berubah
                     try {
                       const rolePath = isAdminView ? 'admin-lsp' : 'staf-lsp';
                       await axios.post(`${baseUrl}/${rolePath}/pemantauan/${id}/resi`, { no_resi: value }, config);
-                      
-                      setDataPemantauan(prev => prev.map(item => item.id === id ? { ...item, [keyName]: value } : item));
+                      setDataPemantauan(prev => prev.map(item => item.id === id ? { ...item, noResi: value } : item));
                       setIsInputModalOpen(false);
-                      showAlert('success', 'Berhasil Disimpan', `Nomor Resi berhasil ditambahkan ke sistem.`);
+                      showAlert('success', 'Berhasil Disimpan', `Nomor Resi berhasil diperbarui.`);
                     } catch (err) {
                       console.error(err);
                       showAlert('error', 'Gagal', err.response?.data?.message || 'Gagal menyimpan Nomor Resi.');
@@ -455,16 +518,13 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
                 <th rowSpan="2">Adminis<br/>trasi</th>
                 <th rowSpan="2">Adminis<br/>trasi Pleno</th>
 
-                <th rowSpan="2" style={{ minWidth: '150px' }}>Pelaksanaan</th>
-                <th rowSpan="2" style={{ minWidth: '150px' }}>Pembayaran</th>
                 <th rowSpan="2" style={{ minWidth: '150px' }}>Tgl PLENO</th>
                 <th rowSpan="2" style={{ minWidth: '150px' }}>NO. PLENO</th>
-                <th rowSpan="2" style={{ minWidth: '120px' }}>DRAFT</th>
                 <th rowSpan="2" style={{ minWidth: '120px' }}>CETAK</th>
                 <th rowSpan="2" style={{ minWidth: '120px' }}>Di Kirim</th>
                 <th rowSpan="2" style={{ minWidth: '150px' }}>No Resi</th>
                 <th rowSpan="2" style={{ minWidth: '120px' }}>Di Terima</th>
-                <th rowSpan="2" style={{ minWidth: '180px' }}>TT Sertifikat</th>
+                <th rowSpan="2" style={{ minWidth: '150px' }}>TT Sertifikat</th>
               </tr>
               <tr>
                 <th className="col-date" style={{ minWidth: '120px' }}>Hari 1</th>
@@ -518,16 +578,45 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
                   <td className="text-center">{renderSurat(item.administrasi, item, 'Administrasi')}</td>
                   <td className="text-center">{renderSurat(item.administrasiPleno, item, 'Administrasi Pleno')}</td>
 
-                  <td className="text-center">{renderProgressButton(item.pelaksanaanStatus, item.id, 'pelaksanaanStatus', 'Pelaksanaan')}</td>
-                  <td className="text-center">{renderProgressButton(item.pembayaran, item.id, 'pembayaran', 'Pembayaran')}</td>
                   <td className="text-center">{renderProgressButton(item.tglPleno, item.id, 'tglPleno', 'Tanggal Pleno')}</td>
                   <td className="text-center">{renderProgressButton(item.noPleno, item.id, 'noPleno', 'Nomor Pleno')}</td>
-                  <td className="text-center">{renderProgressButton(item.draft, item.id, 'draft', 'Draft Blanko')}</td>
-                  <td className="text-center">{renderProgressButton(item.cetak, item.id, 'cetak', 'Cetak Blanko')}</td>
-                  <td className="text-center">{renderProgressButton(item.dikirim, item.id, 'dikirim', 'Status Kirim BNSP')}</td>
-                  <td className="text-center">{renderProgressButton(item.noResi, item.id, 'noResi', 'Input Resi')}</td>
-                  <td className="text-center">{renderProgressButton(item.diterima, item.id, 'diterima', 'Blanko Diterima')}</td>
-                  <td className="text-center">{renderProgressButton(item.ttSertifikat, item.id, 'ttSertifikat', 'Tanda Terima Sertifikat')}</td>
+                  {/* Kolom sertifikat: terkunci jika asesor belum diplot */}
+                  {(() => {
+                    const isPlotted = !!item.asesor1;
+                    const lockedCell = (
+                      <div title="Asesor belum diplot, kolom ini terkunci" style={{ background: '#f8fafc', color: '#cbd5e1', border: '1px dashed #e2e8f0', padding: '6px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap', cursor: 'not-allowed' }}>
+                        <i className="fas fa-lock"></i> Terkunci
+                      </div>
+                    );
+                    return (
+                      <>
+                        <td className="text-center">
+                          {isPlotted ? renderProgressButton(item.cetak, item.id, 'cetak', 'Cetak Blanko') : lockedCell}
+                        </td>
+                        <td className="text-center">
+                          {isPlotted ? renderProgressButton(item.dikirim, item.id, 'dikirim', 'Status Kirim BNSP') : lockedCell}
+                        </td>
+                        <td className="text-center">
+                          {isPlotted ? renderProgressButton(item.noResi, item.id, 'noResi', 'Input Resi') : lockedCell}
+                        </td>
+                        <td className="text-center">
+                          {isPlotted ? renderProgressButton(item.diterima, item.id, 'diterima', 'Blanko Diterima') : lockedCell}
+                        </td>
+                        {/* TT Sertifikat: read-only badge, dikendalikan oleh Admin BLK */}
+                        <td className="text-center">
+                          {!isPlotted ? lockedCell : item.ttSertifikat ? (
+                            <div style={{ background: '#ecfdf5', color: '#10b981', border: '1px solid #10b981', padding: '6px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap' }}>
+                              <i className="fas fa-check-circle"></i> Selesai
+                            </div>
+                          ) : (
+                            <div style={{ background: '#f8fafc', color: '#94a3b8', border: '1px dashed #cbd5e1', padding: '6px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap' }}>
+                              <i className="fas fa-clock"></i> Belum
+                            </div>
+                          )}
+                        </td>
+                      </>
+                    );
+                  })()}
                 </tr>
                 ))) : (
                 <tr>
@@ -579,6 +668,24 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
     return (
       <div className="embedded-buku-induk fade-in-content">
         {alertConfig && <AlertPopup type={alertConfig.type} title={alertConfig.title} text={alertConfig.text} onConfirm={alertConfig.onConfirm} onCancel={alertConfig.onCancel} />}
+        {isInputModalOpen && (
+          <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <div className="modal-content" style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '8px', minWidth: '300px' }}>
+              <h3 style={{ marginTop: 0 }}>{inputModalData.title}</h3>
+              <input 
+                type={inputModalData.type}
+                value={inputModalData.value}
+                onChange={(e) => setInputModalData({...inputModalData, value: e.target.value})}
+                placeholder="Masukkan Nomor Resi"
+                style={{ width: '100%', padding: '10px', margin: '15px 0', border: '1px solid #cbd5e1', borderRadius: '6px' }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <Button variant="outline" onClick={() => setIsInputModalOpen(false)}>Batal</Button>
+                <Button variant="primary" onClick={handleModalSave}>Simpan</Button>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="embedded-header">
           <div>
              <h3 className="embedded-header-title">Pemantauan</h3>
@@ -596,6 +703,24 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
   return (
     <div className="dashboard-content fade-in-content">
       {alertConfig && <AlertPopup type={alertConfig.type} title={alertConfig.title} text={alertConfig.text} onConfirm={alertConfig.onConfirm} onCancel={alertConfig.onCancel} />}
+      {isInputModalOpen && (
+        <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <div className="modal-content" style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '8px', minWidth: '300px' }}>
+            <h3 style={{ marginTop: 0 }}>{inputModalData.title}</h3>
+            <input 
+              type={inputModalData.type}
+              value={inputModalData.value}
+              onChange={(e) => setInputModalData({...inputModalData, value: e.target.value})}
+              placeholder="Masukkan Nomor Resi"
+              style={{ width: '100%', padding: '10px', margin: '15px 0', border: '1px solid #cbd5e1', borderRadius: '6px', boxSizing: 'border-box' }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <Button variant="outline" onClick={() => setIsInputModalOpen(false)}>Batal</Button>
+              <Button variant="primary" onClick={handleModalSave}>Simpan</Button>
+            </div>
+          </div>
+        </div>
+      )}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px', flexWrap: 'wrap', gap: '15px' }}>
         <div>
           <h2 style={{ margin: '0 0 5px 0', color: '#0f172a' }}>Pemantauan Uji Kompetensi</h2>

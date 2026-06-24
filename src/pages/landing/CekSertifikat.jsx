@@ -91,7 +91,7 @@ const CekSertifikat = () => {
             <form onSubmit={handleSearch}>
               <input 
                 type="text" 
-                placeholder="Masukkan No. Registrasi BNSP atau NIK Kandidat..." 
+                placeholder="Masukkan No. Sertifikat Peserta Asesi....." 
                 value={searchQuery} 
                 onChange={(e) => setSearchQuery(e.target.value)} 
                 className="cert-input" 
@@ -125,7 +125,7 @@ const CekSertifikat = () => {
                   <div>
                     <i className="fas fa-times-circle" style={{ fontSize: '3rem', marginBottom: '15px', color: '#ef4444' }}></i>
                     <h3 className="res-head">Data Tidak Ditemukan</h3>
-                    <p style={{ fontSize: '0.95rem' }}>Pastikan nomor registrasi atau NIK kandidat yang Anda masukkan sudah benar.</p>
+                    <p style={{ fontSize: '0.95rem' }}>Pastikan nomor sertifikat peserta asesi yang Anda masukkan sudah benar.</p>
                   </div>
                 )}
               </div>
@@ -155,7 +155,7 @@ const CekSertifikat = () => {
               />
             </div>
             <p className="cert-instruction">
-              Perhatikan contoh sertifikat di atas untuk menemukan letak <strong>Nomor Registrasi BNSP</strong> atau <strong>NIK</strong> Anda.
+              Perhatikan contoh sertifikat di atas untuk menemukan letak <strong>Nomor Sertifikat Peserta Asesi</strong> Anda.
             </p>
           </div>
 
