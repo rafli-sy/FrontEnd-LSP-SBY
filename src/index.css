@@ -164,6 +164,11 @@ body {
   color: #3730a3;
   border: 1px solid #c7d2fe;
 }
+.badge.secondary {
+  background-color: #e2e8f0;
+  color: #334155;
+  border: 1px solid #94a3b8;
+}
 
 @keyframes fadeIn {
   from {

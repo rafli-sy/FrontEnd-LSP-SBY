@@ -38,7 +38,7 @@ const CekSertifikat = () => {
         if (result.status === 'success') {
           const data = result.data;
           setSearchResult({ 
-            status: 'valid', 
+            status: data.status, // Menyimpan status asli dari DB: 'Aktif', 'Kadaluwarsa', 'Tidak-Aktif'
             nama: data.nama_peserta, 
             skema: data.skema_sertifikasi, 
             noReg: data.nomor_registrasi, 
@@ -107,10 +107,13 @@ const CekSertifikat = () => {
             </form>
 
             {searchResult && (
-              <div className={`cert-result ${searchResult.status === 'valid' ? 'result-valid' : 'result-invalid'}`}>
-                {searchResult.status === 'valid' ? (
+              <div className={`cert-result ${searchResult.status === 'Aktif' ? 'result-valid' : (searchResult.status === 'Tidak-Aktif' ? 'result-warning' : 'result-invalid')}`}>
+                {searchResult.status !== 'invalid' ? (
                   <div>
-                    <h3 className="res-head"><i className="fas fa-check-circle"></i> SERTIFIKAT VALID</h3>
+                    <h3 className="res-head" style={{ color: searchResult.status === 'Aktif' ? '#059669' : (searchResult.status === 'Tidak-Aktif' ? '#b45309' : '#ef4444') }}>
+                      <i className={searchResult.status === 'Aktif' ? "fas fa-check-circle" : "fas fa-exclamation-circle"}></i> 
+                      {searchResult.status === 'Aktif' ? ' SERTIFIKAT AKTIF' : (searchResult.status === 'Kadaluwarsa' ? ' SERTIFIKAT KADALUWARSA ' : ' SERTIFIKAT TIDAK AKTIF')}
+                    </h3>
                     <table className="res-table">
                       <tbody>
                         <tr><td className="label">Nama Kandidat</td><td className="value">: {searchResult.nama}</td></tr>
@@ -118,6 +121,7 @@ const CekSertifikat = () => {
                         <tr><td className="label">No. Registrasi</td><td className="value">: {searchResult.noReg}</td></tr>
                         <tr><td className="label">Tanggal Terbit</td><td className="value">: {searchResult.tanggalTerbit}</td></tr>
                         <tr><td className="label">Masa Berlaku</td><td className="value">: {searchResult.masaBerlaku}</td></tr>
+                        <tr><td className="label">Status</td><td className="value" style={{ fontWeight: 'bold', color: searchResult.status === 'Aktif' ? '#059669' : (searchResult.status === 'Tidak-Aktif' ? '#b45309' : '#ef4444') }}>: {searchResult.status}</td></tr>
                       </tbody>
                     </table>
                   </div>
