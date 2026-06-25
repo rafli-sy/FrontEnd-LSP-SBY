@@ -196,6 +196,8 @@ const Sidebar = (props) => {
                   <Link to="/admin-lsp/asesor" className={getActiveClass('/admin-lsp/asesor')} onClick={handleMenuClick}><i className="fas fa-user-tie"></i> Data Asesor</Link>
                   <Link to="/admin-lsp/penyelia" className={getActiveClass('/admin-lsp/penyelia')} onClick={handleMenuClick}><i className="fas fa-user-shield"></i> Data Penyelia</Link>
                   <Link to="/admin-lsp/tuk" className={getActiveClass('/admin-lsp/tuk')} onClick={handleMenuClick}><i className="fas fa-map-marker-alt"></i> Data TUK</Link>
+                  <p className="menu-label">Template Excel</p>
+                  <Link to="/admin-lsp/manajemen-template" className={getActiveClass('/admin-lsp/manajemen-template')} onClick={handleMenuClick}><i className="fas fa-file-excel"></i> Manajemen Template Excel</Link>
                 </>
               )}
               {primaryRole === 'staff-lsp' && (

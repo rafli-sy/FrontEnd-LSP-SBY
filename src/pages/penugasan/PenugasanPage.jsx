@@ -168,7 +168,7 @@ const PenugasanPage = () => {
   };
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 8;
 
   const listSuratTugas = [{ code: 'SPT.01', name: 'Surat Tugas Asesor 1', icon: 'fa-user-tie' }, { code: 'SPT.02', name: 'Surat Tugas Asesor 2', icon: 'fa-user-tie' }, { code: 'SPT.03', name: 'Surat Tugas Penyelia', icon: 'fa-user-shield' }];
   const listSuratPermohonan = [{ code: 'SPM.01', name: 'Permohonan Asesor 1', icon: 'fa-user-tie' }, { code: 'SPM.02', name: 'Permohonan Asesor 2', icon: 'fa-user-tie' }, { code: 'SPM.03', name: 'Permohonan Penyelia', icon: 'fa-user-shield' }];
@@ -650,12 +650,12 @@ const PenugasanPage = () => {
     setSelectedSubDoc(doc);
 
     // --- PERBAIKAN: INISIALISASI KOMITE 2 & KOMITE 3 ---
-    const initialForm = targetUjk?.skema?.savedForms?.[doc.code] || { 
-      noSurat: ``, 
-      tanggalSurat: '', 
-      noDokumen: '', 
-      edisiRevisi: '', 
-      tanggalBerlaku: '', 
+    const initialForm = targetUjk?.skema?.savedForms?.[doc.code] || {
+      noSurat: ``,
+      tanggalSurat: '',
+      noDokumen: '',
+      edisiRevisi: '',
+      tanggalBerlaku: '',
       halaman: '',
       tanggalVerif: '',
       noSptAsesor: '',
@@ -1053,7 +1053,7 @@ const PenugasanPage = () => {
                             </span>
                           )}
 
-                          <label 
+                          <label
                             onDragOver={(e) => handleDragOver(e, `balasan_${activeSurat.idUjk}`)}
                             onDragLeave={(e) => handleDragLeave(e, `balasan_${activeSurat.idUjk}`)}
                             onDrop={(e) => handleDrop(e, `balasan_${activeSurat.idUjk}`, 'balasan', activeSurat.idUjk)}
@@ -1062,7 +1062,7 @@ const PenugasanPage = () => {
                             <span style={{ fontSize: '0.85rem', fontWeight: '600', color: isBalasanUploaded || dragStates[`balasan_${activeSurat.idUjk}`] ? '#10b981' : '#2563eb', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {dragStates[`balasan_${activeSurat.idUjk}`] ? 'Lepaskan File...' : uploadBalasan[activeSurat.idUjk]?.name ? uploadBalasan[activeSurat.idUjk].name : 'Ganti/Upload File'}
                             </span>
-                            <input type="file" style={{ display: 'none' }} accept=".pdf" onChange={(e) => { if(e.target.files.length > 0) setUploadBalasan(prev => ({ ...prev, [activeSurat.idUjk]: e.target.files[0] })) }} />
+                            <input type="file" style={{ display: 'none' }} accept=".pdf" onChange={(e) => { if (e.target.files.length > 0) setUploadBalasan(prev => ({ ...prev, [activeSurat.idUjk]: e.target.files[0] })) }} />
                           </label>
 
                           {uploadBalasan[activeSurat.idUjk] && (
@@ -1260,7 +1260,7 @@ const PenugasanPage = () => {
                                     {(() => {
                                       const isSpt1Uploaded = cekDokumenDetail(skema, 'spt_asesor_1') || sentSptAsesor[`${skema.idSkema}_1`];
                                       return (
-                                        <label 
+                                        <label
                                           onDragOver={(e) => handleDragOver(e, `spt1_${skema.idSkema}`)}
                                           onDragLeave={(e) => handleDragLeave(e, `spt1_${skema.idSkema}`)}
                                           onDrop={(e) => handleDrop(e, `spt1_${skema.idSkema}`, 'spt', `${skema.idSkema}_1`)}
@@ -1269,7 +1269,7 @@ const PenugasanPage = () => {
                                           <span style={{ fontSize: '0.7rem', fontWeight: '600', color: isSpt1Uploaded || dragStates[`spt1_${skema.idSkema}`] ? '#10b981' : '#2563eb', maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                             {dragStates[`spt1_${skema.idSkema}`] ? 'Lepas...' : uploadSptAsesor[`${skema.idSkema}_1`]?.name ? uploadSptAsesor[`${skema.idSkema}_1`].name : 'Upload File'}
                                           </span>
-                                          <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx" onChange={(e) => { if(e.target.files.length > 0) setUploadSptAsesor(prev => ({ ...prev, [`${skema.idSkema}_1`]: e.target.files[0] })) }} />
+                                          <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx" onChange={(e) => { if (e.target.files.length > 0) setUploadSptAsesor(prev => ({ ...prev, [`${skema.idSkema}_1`]: e.target.files[0] })) }} />
                                         </label>
                                       );
                                     })()}
@@ -1282,7 +1282,7 @@ const PenugasanPage = () => {
                                     {(() => {
                                       const isBa1Uploaded = cekDokumenDetail(skema, 'berita_acara_1') || sentBaAsesor[`${skema.idSkema}_1`];
                                       return (
-                                        <label 
+                                        <label
                                           onDragOver={(e) => handleDragOver(e, `ba1_${skema.idSkema}`)}
                                           onDragLeave={(e) => handleDragLeave(e, `ba1_${skema.idSkema}`)}
                                           onDrop={(e) => handleDrop(e, `ba1_${skema.idSkema}`, 'ba', `${skema.idSkema}_1`)}
@@ -1291,7 +1291,7 @@ const PenugasanPage = () => {
                                           <span style={{ fontSize: '0.7rem', fontWeight: '600', color: isBa1Uploaded || dragStates[`ba1_${skema.idSkema}`] ? '#10b981' : '#2563eb', maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                             {dragStates[`ba1_${skema.idSkema}`] ? 'Lepas...' : uploadBaAsesor[`${skema.idSkema}_1`]?.name ? uploadBaAsesor[`${skema.idSkema}_1`].name : 'Upload File'}
                                           </span>
-                                          <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx" onChange={(e) => { if(e.target.files.length > 0) setUploadBaAsesor(prev => ({ ...prev, [`${skema.idSkema}_1`]: e.target.files[0] })) }} />
+                                          <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx" onChange={(e) => { if (e.target.files.length > 0) setUploadBaAsesor(prev => ({ ...prev, [`${skema.idSkema}_1`]: e.target.files[0] })) }} />
                                         </label>
                                       );
                                     })()}
@@ -1315,7 +1315,7 @@ const PenugasanPage = () => {
                                     {(() => {
                                       const isSpt2Uploaded = cekDokumenDetail(skema, 'spt_asesor_2') || sentSptAsesor[`${skema.idSkema}_2`];
                                       return (
-                                        <label 
+                                        <label
                                           onDragOver={(e) => handleDragOver(e, `spt2_${skema.idSkema}`)}
                                           onDragLeave={(e) => handleDragLeave(e, `spt2_${skema.idSkema}`)}
                                           onDrop={(e) => handleDrop(e, `spt2_${skema.idSkema}`, 'spt', `${skema.idSkema}_2`)}
@@ -1324,7 +1324,7 @@ const PenugasanPage = () => {
                                           <span style={{ fontSize: '0.7rem', fontWeight: '600', color: isSpt2Uploaded || dragStates[`spt2_${skema.idSkema}`] ? '#10b981' : '#2563eb', maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                             {dragStates[`spt2_${skema.idSkema}`] ? 'Lepas...' : uploadSptAsesor[`${skema.idSkema}_2`]?.name ? uploadSptAsesor[`${skema.idSkema}_2`].name : 'Upload File'}
                                           </span>
-                                          <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx" onChange={(e) => { if(e.target.files.length > 0) setUploadSptAsesor(prev => ({ ...prev, [`${skema.idSkema}_2`]: e.target.files[0] })) }} />
+                                          <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx" onChange={(e) => { if (e.target.files.length > 0) setUploadSptAsesor(prev => ({ ...prev, [`${skema.idSkema}_2`]: e.target.files[0] })) }} />
                                         </label>
                                       );
                                     })()}
@@ -1337,7 +1337,7 @@ const PenugasanPage = () => {
                                     {(() => {
                                       const isBa2Uploaded = cekDokumenDetail(skema, 'berita_acara_2') || sentBaAsesor[`${skema.idSkema}_2`];
                                       return (
-                                        <label 
+                                        <label
                                           onDragOver={(e) => handleDragOver(e, `ba2_${skema.idSkema}`)}
                                           onDragLeave={(e) => handleDragLeave(e, `ba2_${skema.idSkema}`)}
                                           onDrop={(e) => handleDrop(e, `ba2_${skema.idSkema}`, 'ba', `${skema.idSkema}_2`)}
@@ -1346,7 +1346,7 @@ const PenugasanPage = () => {
                                           <span style={{ fontSize: '0.7rem', fontWeight: '600', color: isBa2Uploaded || dragStates[`ba2_${skema.idSkema}`] ? '#10b981' : '#2563eb', maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                             {dragStates[`ba2_${skema.idSkema}`] ? 'Lepas...' : uploadBaAsesor[`${skema.idSkema}_2`]?.name ? uploadBaAsesor[`${skema.idSkema}_2`].name : 'Upload File'}
                                           </span>
-                                          <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx" onChange={(e) => { if(e.target.files.length > 0) setUploadBaAsesor(prev => ({ ...prev, [`${skema.idSkema}_2`]: e.target.files[0] })) }} />
+                                          <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx" onChange={(e) => { if (e.target.files.length > 0) setUploadBaAsesor(prev => ({ ...prev, [`${skema.idSkema}_2`]: e.target.files[0] })) }} />
                                         </label>
                                       );
                                     })()}
@@ -1447,7 +1447,7 @@ const PenugasanPage = () => {
                         <td style={{ verticalAlign: 'top', paddingTop: '20px' }}><strong style={{ display: 'block', color: '#0f172a', fontSize: '1.05rem' }}>{item.idUjk}</strong><small className="text-muted"><i className="fas fa-building"></i> {item.pengusul}</small></td>
 
                         <td style={{ textAlign: 'center', verticalAlign: 'top', paddingTop: '20px' }}>
-                          <Button variant="outline" size="sm" icon="file-pdf" onClick={async () => { 
+                          <Button variant="outline" size="sm" icon="file-pdf" onClick={async () => {
                             try {
                               setAlertConfig({ type: 'info', title: 'Memuat Dokumen...', text: 'Mengambil file PDF dari server...' });
                               const response = await fetch(`${baseUrl}/admin-lsp/pengajuan/surat/${item.pengajuan.id}`, {
@@ -1504,7 +1504,7 @@ const PenugasanPage = () => {
                             >
                               {isSemuaDiplot ? 'Kelola Dokumen' : 'Mulai Plotting'}
                             </button>
-                            
+
                             <button
                               type="button"
                               onClick={() => handleHapusPengajuan(item.pengajuan_id)}
@@ -1710,11 +1710,11 @@ const PenugasanPage = () => {
                     <div style={{ display: 'flex', gap: '10px' }}>
                       <div style={{ flex: 1 }}>
                         <label style={{ fontWeight: 'bold', fontSize: '0.75rem', color: '#475569', marginBottom: '6px', display: 'block' }}>Nama Komite 2 <span style={{ color: 'red' }}>*</span></label>
-                        <select 
-                          style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '10px', backgroundColor: 'white' }} 
-                          name="komite2" 
-                          value={formData.komite2 || ''} 
-                          onChange={handleInputChange} 
+                        <select
+                          style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '10px', backgroundColor: 'white' }}
+                          name="komite2"
+                          value={formData.komite2 || ''}
+                          onChange={handleInputChange}
                           required
                         >
                           <option value="">-- Pilih Anggota 1 --</option>
@@ -1727,11 +1727,11 @@ const PenugasanPage = () => {
                       </div>
                       <div style={{ flex: 1 }}>
                         <label style={{ fontWeight: 'bold', fontSize: '0.75rem', color: '#475569', marginBottom: '6px', display: 'block' }}>Nama Komite 3 <span style={{ color: 'red' }}>*</span></label>
-                        <select 
-                          style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '10px', backgroundColor: 'white' }} 
-                          name="komite3" 
-                          value={formData.komite3 || ''} 
-                          onChange={handleInputChange} 
+                        <select
+                          style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '10px', backgroundColor: 'white' }}
+                          name="komite3"
+                          value={formData.komite3 || ''}
+                          onChange={handleInputChange}
                           required
                         >
                           <option value="">-- Pilih Anggota 2 --</option>

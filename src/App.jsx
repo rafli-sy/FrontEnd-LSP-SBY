@@ -30,6 +30,7 @@ import Sertifikat from './pages/sertifikat/Sertifikat';
 import PenugasanPage from './pages/penugasan/PenugasanPage';
 import BukuIndukPage from './pages/buku-induk/BukuIndukPage';
 import SuratMenyurat from './pages/surat/SuratMenyurat';
+import ManajemenTemplate from './pages/template/ManajemenTemplate';
 import TablePeserta from './pages/TablePeserta/TablePeserta'; 
 import FormPengajuanUJK from './pages/pengajuan/FormPengajuanUJK';
 
@@ -122,6 +123,7 @@ function App() {
               <Route path="/admin-lsp/penugasan" element={<PenugasanPage />} />
               <Route path="/admin-lsp/buku-induk" element={<BukuIndukPage />} />
               <Route path="/admin-lsp/sertifikat" element={<Sertifikat />} />
+              <Route path="/admin-lsp/manajemen-template" element={<ManajemenTemplate />} />
             </Route>
 
             {/* Role: Staff LSP */}

@@ -27,6 +27,7 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
   const [filterBulan, setFilterBulan] = useState('Semua');
   const [filterTuk, setFilterTuk] = useState('Semua');
   const [filterPendanaan, setFilterPendanaan] = useState('Semua');
+  const [searchTermBukuInduk, setSearchTermBukuInduk] = useState('');
 
   const [dataPemantauan, setDataPemantauan] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -167,7 +168,7 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [filterTahun, filterBulan, filterTuk, filterPendanaan]);
+  }, [filterTahun, filterBulan, filterTuk, filterPendanaan, searchTermBukuInduk]);
 
   // Ekstrak hanya Opsi Tahun dari tabel karena Tahun bersifat dinamis
   const filterOptionsTahun = useMemo(() => {
@@ -185,12 +186,24 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
 
   const sortedDataPemantauan = useMemo(() => {
     let filtered = [...dataPemantauan];
-    if (filterTahun !== 'Semua') filtered = filtered.filter(item => item.hari1.startsWith(filterTahun));
-    if (filterBulan !== 'Semua') filtered = filtered.filter(item => item.hari1.split('-')[1] === filterBulan);
+    if (filterTahun !== 'Semua') filtered = filtered.filter(item => item.hari1 && item.hari1.startsWith(filterTahun));
+    if (filterBulan !== 'Semua') filtered = filtered.filter(item => item.hari1 && item.hari1.split('-')[1] === filterBulan);
     if (filterTuk !== 'Semua') filtered = filtered.filter(item => item.tuk === filterTuk);
     if (filterPendanaan !== 'Semua') filtered = filtered.filter(item => item.pendanaan === filterPendanaan);
+    if (searchTermBukuInduk.trim() !== '') {
+      const q = searchTermBukuInduk.toLowerCase();
+      filtered = filtered.filter(item => 
+        (item.tuk || '').toLowerCase().includes(q) ||
+        (item.bidang || '').toLowerCase().includes(q) ||
+        (item.skema || '').toLowerCase().includes(q) ||
+        (item.pendanaan || '').toLowerCase().includes(q) ||
+        (item.asesor1 || '').toLowerCase().includes(q) ||
+        (item.asesor2 || '').toLowerCase().includes(q) ||
+        (item.penyelia || '').toLowerCase().includes(q)
+      );
+    }
     return filtered.sort((a, b) => new Date(b.created_at || b.hari1 || '1970-01-01') - new Date(a.created_at || a.hari1 || '1970-01-01'));
-  }, [dataPemantauan, filterTahun, filterBulan, filterTuk, filterPendanaan]);
+  }, [dataPemantauan, filterTahun, filterBulan, filterTuk, filterPendanaan, searchTermBukuInduk]);
 
   const totalPages = Math.ceil(sortedDataPemantauan.length / itemsPerPage);
   const paginatedData = sortedDataPemantauan.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -210,7 +223,7 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
     const stringStatusLabel = newStatus ? 'Selesai' : 'Belum Selesai';
 
     if (keyName === 'dikirim' && newStatus) {
-      setInputModalData({ id, keyName, title: 'Input No Resi Pengiriman', value: currentItem?.noResi || '', type: 'text' });
+      setInputModalData({ id, keyName, title: 'No Resi Pengiriman', value: currentItem?.noResi || '', type: 'text' });
       setIsInputModalOpen(true);
       return;
     }
@@ -381,6 +394,20 @@ const BukuIndukPage = ({ isEmbedded = false, role = '' }) => {
 
   const filterUI = (
     <div style={{ display: 'flex', gap: '15px', marginBottom: '20px', flexWrap: 'wrap', background: '#f8fafc', padding: '15px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+      
+      {/* SEARCH INPUT */}
+      <div style={{ flex: '1 1 100%' }}>
+        <div style={{ position: 'relative' }}>
+          <i className="fas fa-search" style={{ position: 'absolute', left: '12px', top: '12px', color: '#94a3b8' }}></i>
+          <input 
+            type="text" 
+            placeholder="Pencarian cepat (TUK, Bidang, Skema, Pendanaan, Asesor, atau Penyelia)..." 
+            value={searchTermBukuInduk} 
+            onChange={(e) => setSearchTermBukuInduk(e.target.value)} 
+            style={{ width: '100%', padding: '10px 10px 10px 35px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', backgroundColor: '#fff', fontSize: '0.95rem' }} 
+          />
+        </div>
+      </div>
       
       {/* FILTER TAHUN */}
       <div style={{ flex: 1, minWidth: '150px' }}>

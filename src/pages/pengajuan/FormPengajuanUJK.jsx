@@ -141,6 +141,32 @@ const FormPengajuanUJK = () => {
     });
   };
 
+  const handleDownloadTemplateNominatif = async () => {
+    try {
+      const response = await fetch(`${apiUrl}/api/admin-blk/download-template-nominatif`, {
+        headers: { 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' }
+      });
+
+      if (!response.ok) {
+        setAlert({ type: 'error', title: 'Gagal', text: 'Template tidak ditemukan. Hubungi administrator.', showConfirm: false });
+        return;
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Template Nominatif UJK 2026.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setAlert({ type: 'error', title: 'Gagal', text: 'Terjadi kesalahan saat mengunduh template.', showConfirm: false });
+      console.error('Download template error:', err);
+    }
+  };
+
   const handleExecuteEdit = (item) => {
     setShowForm(true);
     setEditingId(item.id);
@@ -520,7 +546,23 @@ const FormPengajuanUJK = () => {
                             <input type="file" accept=".pdf" style={{ ...inputStyle, padding: '8px', border: '1px dashed #cbd5e1' }} onChange={(e) => handleSkemaFileChange(skema.id, 'fileKurikulum', e.target.files[0])} required={!editingId || skema.isNew}/>
                           </div>
                           <div>
-                            <label style={labelStyle}>Data Nominatif Asesi (Excel) {(!editingId || skema.isNew) ? <span style={{color: '#ef4444'}}>*</span> : ''}</label>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                              <label style={{...labelStyle, marginBottom: 0}}>Data Nominatif Asesi (Excel) {(!editingId || skema.isNew) ? <span style={{color: '#ef4444'}}>*</span> : ''}</label>
+                              <button
+                                type="button"
+                                onClick={handleDownloadTemplateNominatif}
+                                style={{
+                                  display: 'flex', alignItems: 'center', gap: '4px',
+                                  padding: '4px 8px', border: '1px solid #10b981', borderRadius: '4px',
+                                  backgroundColor: '#f0fdf4', color: '#059669', fontSize: '0.75rem',
+                                  fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s', whiteSpace: 'nowrap'
+                                }}
+                                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#10b981'; e.currentTarget.style.color = '#fff'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#f0fdf4'; e.currentTarget.style.color = '#059669'; }}
+                              >
+                                <i className="fas fa-download" /> Download Template
+                              </button>
+                            </div>
                             <input type="file" accept=".xls, .xlsx, .csv" style={{ ...inputStyle, padding: '8px', border: '1px dashed #cbd5e1' }} onChange={(e) => handleSkemaFileChange(skema.id, 'fileNominatif', e.target.files[0])} required={!editingId || skema.isNew}/>
                           </div>
                        </div>

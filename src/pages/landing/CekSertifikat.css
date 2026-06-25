@@ -178,6 +178,10 @@
   background: #fef2f2;
   text-align: center;
 }
+.result-warning {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
 
 .res-head {
   display: flex;
@@ -193,6 +197,9 @@
 .result-invalid .res-head {
   color: #b91c1c;
   justify-content: center;
+}
+.result-warning .res-head {
+  color: #b45309;
 }
 
 .res-table {
