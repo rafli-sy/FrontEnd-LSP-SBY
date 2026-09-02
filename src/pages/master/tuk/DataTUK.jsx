@@ -144,8 +144,10 @@ const DataTUK = () => {
   };
 
   const filteredTUK = tukList.filter(tuk => {
-    const matchSearch = tuk.namaInstitusi.toLowerCase().includes(searchQuery.toLowerCase()) || tuk.kodeInstitusi.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchSearch;
+    const nama = (tuk.namaInstitusi ?? '').toLowerCase();
+    const kode = (tuk.kodeInstitusi ?? '').toLowerCase();
+    const query = searchQuery.toLowerCase();
+    return nama.includes(query) || kode.includes(query);
   });
 
   const totalPages = Math.ceil(filteredTUK.length / itemsPerPage) || 1;

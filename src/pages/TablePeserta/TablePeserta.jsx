@@ -37,6 +37,7 @@ const TablePeserta = ({ dataPeserta, detail_id, skemaName, asesorList, isAdmin, 
         rw: p.rw,
         kelurahan: p.kelurahan,
         kecamatan: p.kecamatan,
+        kabupaten: p.kabupaten,
         hp: p.nomorTelepon,
         email: p.email,
         pendidikan: p.pendidikanTerakhir,
@@ -120,36 +121,29 @@ const TablePeserta = ({ dataPeserta, detail_id, skemaName, asesorList, isAdmin, 
       onCancel: () => setAlertConfig(null)
     });
   };
-
-  const handleDownloadExcel = () => {
-    let header = "No,Nama,NIK,Jenis Kelamin,Tempat Lahir,Tanggal Lahir,Alamat,RT,RW,Kelurahan,Kecamatan,No. HP,Email,Pendidikan,Asesor ID,Keputusan\n";
-    let csvContent = header;
-    peserta.forEach((p, index) => {
-      let row = [index + 1, `"${p.nama}"`, `"${p.nik}"`, `"${p.jk}"`, `"${p.tempatLahir}"`, `"${p.tanggalLahir}"`, `"${p.alamat}"`, p.rt, p.rw, `"${p.kelurahan}"`, `"${p.kecamatan}"`, `"${p.hp}"`, `"${p.email}"`, `"${p.pendidikan}"`, p.asesor_id, p.keputusan];
-      csvContent += row.join(",") + "\n";
-    });
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `Data_Peserta_${skemaName}.csv`;
-    link.click();
-  };
-
   return (
     <div className="table-peserta-wrapper">
       {alertConfig && <AlertPopup {...alertConfig} onCancel={() => setAlertConfig(null)} />}
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
-        <Button variant="success" icon="file-excel" onClick={handleDownloadExcel}>Download Excel</Button>
-      </div>
 
       <div className="table-responsive-excel">
         <table className="excel-table">
           <thead>
             <tr>
-              <th>No.</th><th>Nama</th><th>NIK</th><th>L/P</th>
-              <th>Alamat</th><th>Kontak</th><th>Pendidikan</th>
+              <th>No.</th>
+              <th>Nama</th>
+              <th>NIK</th>
+              <th>L/P</th>
+              <th>Tempat Lahir</th>
+              <th>Tanggal Lahir</th>
+              <th>Alamat</th>
+              <th>RT</th>
+              <th>RW</th>
+              <th>Kelurahan</th>
+              <th>Kecamatan</th>
+              <th>Kabupaten</th>
+              <th>No. HP</th>
+              <th>Email</th>
+              <th>Pendidikan Terakhir</th>
               {showAsesorKeputusan && <th>Asesor Penguji</th>}
               {showAsesorKeputusan && <th>Keputusan Uji</th>}
             </tr>
@@ -161,10 +155,18 @@ const TablePeserta = ({ dataPeserta, detail_id, skemaName, asesorList, isAdmin, 
                 <td><strong>{item.nama}</strong></td>
                 <td>{item.nik}</td>
                 <td>{item.jk}</td>
-                <td style={{ fontSize: '0.85rem' }}>{item.alamat} RT {item.rt}/RW {item.rw}, {item.kelurahan}, {item.kecamatan}</td>
-                <td style={{ fontSize: '0.85rem' }}>{item.hp} <br/> {item.email}</td>
-                <td>{item.pendidikan}</td>
-                
+                <td style={{ fontSize: '0.85rem' }}>{item.tempatLahir}</td>
+                <td style={{ fontSize: '0.85rem', whiteSpace: 'nowrap' }}>{item.tanggalLahir}</td>
+                <td style={{ fontSize: '0.85rem' }}>{item.alamat}</td>
+                <td style={{ textAlign: 'center' }}>{item.rt}</td>
+                <td style={{ textAlign: 'center' }}>{item.rw}</td>
+                <td style={{ fontSize: '0.85rem' }}>{item.kelurahan}</td>
+                <td style={{ fontSize: '0.85rem' }}>{item.kecamatan}</td>
+                <td style={{ fontSize: '0.85rem' }}>{item.kabupaten || '-'}</td>
+                <td style={{ fontSize: '0.85rem', whiteSpace: 'nowrap' }}>{item.hp}</td>
+                <td style={{ fontSize: '0.85rem' }}>{item.email}</td>
+                <td style={{ fontSize: '0.85rem' }}>{item.pendidikan}</td>
+
                 {showAsesorKeputusan && (
                   <td>
                     <select value={item.asesor_id || ''} onChange={(e) => handleUpdatePeserta(index, 'asesor_id', e.target.value)} className="form-select">
@@ -187,13 +189,16 @@ const TablePeserta = ({ dataPeserta, detail_id, skemaName, asesorList, isAdmin, 
         </table>
       </div>
 
-      <div style={{ marginTop: '20px', textAlign: 'right' }}>
-        <Button variant="primary" onClick={handleSimpanData} isLoading={isLoading}>
-          {isLoading ? 'Menyimpan...' : 'Simpan & Selesai'}
-        </Button>
-      </div>
+      {/* Tombol Simpan hanya muncul untuk Admin LSP / Staff Asesor — bukan Admin BLK */}
+      {showAsesorKeputusan && (
+        <div style={{ marginTop: '20px', textAlign: 'right' }}>
+          <Button variant="primary" onClick={handleSimpanData} isLoading={isLoading}>
+            {isLoading ? 'Menyimpan...' : 'Simpan & Selesai'}
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
 
-export default TablePeserta;
+export default TablePeserta;

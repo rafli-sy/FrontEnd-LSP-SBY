@@ -132,7 +132,10 @@ const MasterDataPenyelia = () => {
   };
 
   const filteredPenyelia = penyeliaList.filter(p => {
-    const matchSearch = p.namaPenyilia.toLowerCase().includes(searchQuery.toLowerCase()) || p.noRegistrasi.toLowerCase().includes(searchQuery.toLowerCase());
+    const nama = (p.namaPenyilia ?? '').toLowerCase();
+    const noReg = (p.noRegistrasi ?? '').toLowerCase();
+    const query = searchQuery.toLowerCase();
+    const matchSearch = nama.includes(query) || noReg.includes(query);
     const matchStatus = filterStatus === 'Semua' ? true : p.status === filterStatus;
     return matchSearch && matchStatus;
   });

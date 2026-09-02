@@ -510,12 +510,12 @@ const PenugasanPage = () => {
     setViewPesertaUjk(skema);
   };
 
-  const handleMulaiPlotting = (skema) => { setEditingId(skema.idSkema); setEditData({ ...skema }); };
+  const handleMulaiPlotting = (skema) => { setEditingId(skema.idSkema); setEditData({ ...skema, isEditMode: !!skema.asesor1 }); };
   const handleBatalEdit = () => setEditingId(null);
 
   const handleSimpanPlotting = () => {
-    if (!editData.asesor1_id || !editData.penyelia_id || !editData.hari1 || !editData.hari2 || !editData.tuk) {
-      showAlert('warning', 'Data Belum Lengkap', 'Pastikan Lokasi TUK, Tanggal Ujian, Asesor 1, dan Penyelia telah terisi.'); return;
+    if ((!editData.asesor1_id && !editData.asesor2_id) || !editData.penyelia_id || !editData.hari1 || !editData.hari2 || !editData.tuk) {
+      showAlert('warning', 'Data Belum Lengkap', 'Pastikan Lokasi TUK, Tanggal Ujian, Penyelia, dan MINIMAL 1 Asesor telah terisi.'); return;
     }
     showAlert('save', 'Simpan Plotting', 'Apakah Anda yakin ingin menetapkan jadwal dan tim asesor ini?', async () => {
       try {
@@ -526,9 +526,14 @@ const PenugasanPage = () => {
           tanggal_selesai_asesmen: editData.hari2,
           asesor_ids: [editData.asesor1_id, editData.asesor2_id].filter(Boolean)
         };
-        await axios.post(`${baseUrl}/${rolePath}/ploting-jadwal/${editingId}`, payload, config);
+        
+        if (editData.isEditMode) {
+          await axios.put(`${baseUrl}/${rolePath}/ploting-jadwal/${editingId}`, payload, config);
+        } else {
+          await axios.post(`${baseUrl}/${rolePath}/ploting-jadwal/${editingId}`, payload, config);
+        }
 
-        showAlert('success', 'Plotting Berhasil', 'Tim Asesor telah ditetapkan! Selanjutnya, silakan lengkapi Pembagian Asesi pada tabel.');
+        showAlert('success', 'Plotting Berhasil', editData.isEditMode ? 'Plotting Tim Asesor berhasil diperbarui!' : 'Tim Asesor telah ditetapkan! Selanjutnya, silakan lengkapi Pembagian Asesi pada tabel.');
         setEditingId(null);
         fetchPengajuan();
       } catch (error) {
@@ -1184,41 +1189,55 @@ const PenugasanPage = () => {
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                               <div>
                                 <label style={{ fontSize: '0.75rem', fontWeight: '800', color: '#475569', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Asesor 1</label>
-                                <Button
-                                  variant="outline"
-                                  icon="user-tie"
-                                  isFullWidth
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    if (!editData.hari1 || !editData.hari2) {
-                                      showAlert('warning', 'Tanggal Belum Diatur', 'Silakan isi Mulai dan Selesai Asesmen terlebih dahulu untuk mengecek ketersediaan Asesor.');
-                                      return;
-                                    }
-                                    handleOpenAsesorModal('asesor1', editData.bidang || editData.kejuruan, editData.judul, skema.skema_id_db);
-                                  }}
-                                  style={{ justifyContent: 'flex-start', backgroundColor: '#fff', textAlign: 'left' }}
-                                >
-                                  {editData.asesor1 || 'Pilih Asesor 1...'}
-                                </Button>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                  <Button
+                                    variant="outline"
+                                    icon="user-tie"
+                                    isFullWidth
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      if (!editData.hari1 || !editData.hari2) {
+                                        showAlert('warning', 'Tanggal Belum Diatur', 'Silakan isi Mulai dan Selesai Asesmen terlebih dahulu untuk mengecek ketersediaan Asesor.');
+                                        return;
+                                      }
+                                      handleOpenAsesorModal('asesor1', editData.bidang || editData.kejuruan, editData.judul, skema.skema_id_db);
+                                    }}
+                                    style={{ justifyContent: 'flex-start', backgroundColor: '#fff', textAlign: 'left', flex: 1 }}
+                                  >
+                                    {editData.asesor1 || 'Pilih Asesor 1...'}
+                                  </Button>
+                                  {editData.asesor1_id && (
+                                    <button type="button" onClick={() => setEditData({ ...editData, asesor1: null, asesor1_id: null, noReg1: null })} style={{ backgroundColor: '#fef2f2', color: '#ef4444', border: '1px solid #fca5a5', borderRadius: '6px', padding: '0 15px', cursor: 'pointer' }} title="Kosongkan Asesor 1">
+                                      <i className="fas fa-trash-alt"></i>
+                                    </button>
+                                  )}
+                                </div>
                               </div>
                               <div>
                                 <label style={{ fontSize: '0.75rem', fontWeight: '800', color: '#475569', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Asesor 2</label>
-                                <Button
-                                  variant="outline"
-                                  icon="user-tie"
-                                  isFullWidth
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    if (!editData.hari1 || !editData.hari2) {
-                                      showAlert('warning', 'Tanggal Belum Diatur', 'Silakan isi Mulai dan Selesai Asesmen terlebih dahulu untuk mengecek ketersediaan Asesor.');
-                                      return;
-                                    }
-                                    handleOpenAsesorModal('asesor2', editData.bidang || editData.kejuruan, editData.judul, skema.skema_id_db);
-                                  }}
-                                  style={{ justifyContent: 'flex-start', backgroundColor: '#fff', textAlign: 'left' }}
-                                >
-                                  {editData.asesor2 || 'Pilih Asesor 2...'}
-                                </Button>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                  <Button
+                                    variant="outline"
+                                    icon="user-tie"
+                                    isFullWidth
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      if (!editData.hari1 || !editData.hari2) {
+                                        showAlert('warning', 'Tanggal Belum Diatur', 'Silakan isi Mulai dan Selesai Asesmen terlebih dahulu untuk mengecek ketersediaan Asesor.');
+                                        return;
+                                      }
+                                      handleOpenAsesorModal('asesor2', editData.bidang || editData.kejuruan, editData.judul, skema.skema_id_db);
+                                    }}
+                                    style={{ justifyContent: 'flex-start', backgroundColor: '#fff', textAlign: 'left', flex: 1 }}
+                                  >
+                                    {editData.asesor2 || 'Pilih Asesor 2...'}
+                                  </Button>
+                                  {editData.asesor2_id && (
+                                    <button type="button" onClick={() => setEditData({ ...editData, asesor2: null, asesor2_id: null, noReg2: null })} style={{ backgroundColor: '#fef2f2', color: '#ef4444', border: '1px solid #fca5a5', borderRadius: '6px', padding: '0 15px', cursor: 'pointer' }} title="Kosongkan Asesor 2">
+                                      <i className="fas fa-trash-alt"></i>
+                                    </button>
+                                  )}
+                                </div>
                               </div>
                               <div>
                                 <label style={{ fontSize: '0.75rem', fontWeight: '800', color: '#475569', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Penyelia LSP</label>
@@ -1247,7 +1266,13 @@ const PenugasanPage = () => {
                           </div>
                         ) : (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-
+                            {skema.asesor1 && (
+                              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '-4px' }}>
+                                <button type="button" onClick={() => handleMulaiPlotting(skema)} style={{ backgroundColor: '#f59e0b', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', boxShadow: '0 2px 4px rgba(245,158,11,0.2)' }}>
+                                  <i className="fas fa-edit"></i> Edit Ploting
+                                </button>
+                              </div>
+                            )}
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '15px', borderRadius: '10px', border: skema.asesor1 ? '1px solid #93c5fd' : '1px dashed #cbd5e1', background: skema.asesor1 ? '#ffffff' : '#f8fafc', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                 <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#eff6ff', color: '#2563eb', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '1rem' }}><i className="fas fa-user-tie"></i></div>

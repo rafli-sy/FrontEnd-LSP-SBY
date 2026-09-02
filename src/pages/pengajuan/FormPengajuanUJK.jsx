@@ -130,7 +130,7 @@ const FormPengajuanUJK = () => {
   // --- POPUP KONFIRMASI UNTUK MEMBUKA EDIT ---
   const handleConfirmEdit = (item) => {
     setAlert({
-      type: 'info',
+      type: 'confirm',
       title: 'Edit Draft?',
       text: 'Anda akan membuka mode edit untuk draft pengajuan ini. Lanjutkan?',
       onConfirm: () => {
