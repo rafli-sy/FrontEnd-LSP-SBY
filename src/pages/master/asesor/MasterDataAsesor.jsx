@@ -115,7 +115,10 @@ const MasterDataAsesor = () => {
   };
 
   const filteredAsesor = asesorList.filter(a => {
-    const matchSearch = a.nama.toLowerCase().includes(searchQuery.toLowerCase()) || a.noReg.toLowerCase().includes(searchQuery.toLowerCase());
+    const nama = (a.nama ?? '').toLowerCase();
+    const noReg = (a.noReg ?? '').toLowerCase();
+    const query = searchQuery.toLowerCase();
+    const matchSearch = nama.includes(query) || noReg.includes(query);
     const matchStatus = filterStatus === 'Semua' ? true : a.status === filterStatus;
     return matchSearch && matchStatus;
   });
